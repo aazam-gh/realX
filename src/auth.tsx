@@ -6,6 +6,9 @@ import {
   type AuthProvider,
   signInWithPopup,
   signOut,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile,
 } from 'firebase/auth'
 import { flushSync } from 'react-dom'
 import { auth } from './firebase/config'
@@ -14,6 +17,8 @@ export type AuthContextType = {
   isAuthenticated: boolean
   isInitialLoading: boolean
   login: (provider: AuthProvider) => Promise<void>
+  loginWithEmail: (email: string, password: string) => Promise<void>
+  signupWithEmail: (email: string, password: string, displayName?: string) => Promise<void>
   logout: () => Promise<void>
   user: User | null
 }
@@ -54,9 +59,28 @@ export function AuthContextProvider({
     })
   }, [])
 
+  const loginWithEmail = React.useCallback(async (email: string, password: string) => {
+    const result = await signInWithEmailAndPassword(auth, email, password)
+    flushSync(() => {
+      setUser(result.user)
+      setIsInitialLoading(false)
+    })
+  }, [])
+
+  const signupWithEmail = React.useCallback(async (email: string, password: string, displayName?: string) => {
+    const result = await createUserWithEmailAndPassword(auth, email, password)
+    if (displayName) {
+      await updateProfile(result.user, { displayName })
+    }
+    flushSync(() => {
+      setUser(result.user)
+      setIsInitialLoading(false)
+    })
+  }, [])
+
   return (
     <AuthContext.Provider
-      value={{ isInitialLoading, isAuthenticated, user, login, logout }}
+      value={{ isInitialLoading, isAuthenticated, user, login, loginWithEmail, signupWithEmail, logout }}
     >
       {children}
     </AuthContext.Provider>

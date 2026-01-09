@@ -1,11 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { redirect, useRouter } from '@tanstack/react-router'
+import { redirect } from '@tanstack/react-router'
 import { z } from 'zod'
-
-import { useAuth } from '../auth'
-import { siGoogle } from 'simple-icons'
-
-import { GoogleAuthProvider } from 'firebase/auth'
+import { GalleryVerticalEnd } from 'lucide-react'
+import { LoginForm } from '@/components/login-form'
 
 // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 const fallback = '/dashboard' as const
@@ -23,75 +20,25 @@ export const Route = createFileRoute('/login')({
 })
 
 function LoginComponent() {
-  const router = useRouter()
-  const { login } = useAuth()
-
-  const handleSignIn = async (provider: 'google') => {
-    console.log(`Clicked ${provider} sign in!`)
-    try {
-      const providers = {
-        google: new GoogleAuthProvider(),
-        // Other providers can be allocated here
-      }
-
-      const typedProvider =
-        providers[provider] ??
-        (() => {
-          throw new Error('Invalid provider')
-        })()
-
-      await login(typedProvider)
-      router.invalidate() // This should force the user to route to /dashboard
-    } catch (error) {
-      console.error('Sign in error:', error)
-    }
-  }
-
   return (
-    <div className="flex justify-center items-center min-h-screen">
-      <div className="w-full max-w-md px-4 animate-fade-up relative z-10">
-        <div className="w-full backdrop-blur-xs bg-card/80 p-8 space-y-8 shadow-md border border-border">
-          <div className="space-y-4">
-            {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
-            <button
-              className="w-full h-12 font-medium bg-background hover:bg-secondary border-2 transition-all hover:scale-[1.02]"
-              onClick={() => handleSignIn('google')}
-            >
-              <div className="flex items-center justify-center w-full">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  className="mr-2 h-5 w-5"
-                  fill="currentColor"
-                  aria-labelledby="googleIconTitle"
-                  role="img"
-                  style={{ minWidth: '20px' }}
-                >
-                  <title id="googleIconTitle">Google Logo</title>
-                  <path d={siGoogle.path} />
-                </svg>
-                <span>Continue with Google</span>
-              </div>
-            </button>
-          </div>
-
-          <div className="text-center text-sm text-muted-foreground">
-            By continuing, you agree to our{' '}
-            <a
-              href="#"
-              className="underline underline-offset-4 hover:text-primary transition-colors"
-            >
-              Terms of Service
-            </a>{' '}
-            and{' '}
-            <a
-              href="#"
-              className="underline underline-offset-4 hover:text-primary transition-colors"
-            >
-              Privacy Policy
-            </a>
+    <div className="grid min-h-svh lg:grid-cols-2">
+      <div className="flex flex-col gap-4 p-6 md:p-10">
+        <div className="flex justify-center gap-2 md:justify-start">
+          <a href="#" className="flex items-center gap-2 font-medium">
+            <div className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-md">
+              <GalleryVerticalEnd className="size-4" />
+            </div>
+            ReelX
+          </a>
+        </div>
+        <div className="flex flex-1 items-center justify-center">
+          <div className="w-full max-w-xs">
+            <LoginForm />
           </div>
         </div>
+      </div>
+      <div className="bg-muted relative hidden lg:block">
+        <div className="absolute inset-0 h-full w-full bg-gradient-to-br from-primary/20 via-primary/10 to-background dark:from-primary/10 dark:via-primary/5 dark:to-background" />
       </div>
     </div>
   )
