@@ -2,15 +2,15 @@ import * as React from "react"
 import {
   IconCamera,
   IconChartBar,
-  IconDashboard,
   IconFileAi,
   IconFileDescription,
-  IconFolder,
-  IconHelp,
+  IconHistory,
   IconInnerShadowTop,
-  IconListDetails,
+  IconLayoutDashboard,
+  IconMail,
   IconSettings,
-  IconUsers,
+  IconShieldCheck,
+  IconStar,
 } from "@tabler/icons-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -35,13 +35,13 @@ const data = {
   navMain: [
     {
       title: "Dashboard",
-      url: "#",
-      icon: IconDashboard,
+      url: "/dashboard",
+      icon: IconLayoutDashboard,
     },
     {
       title: "Transaction History",
       url: "#",
-      icon: IconListDetails,
+      icon: IconHistory,
     },
     {
       title: "Analytics",
@@ -51,12 +51,12 @@ const data = {
     {
       title: "Reviews",
       url: "#",
-      icon: IconFolder,
+      icon: IconStar,
     },
     {
       title: "Vendor PIN",
-      url: "#",
-      icon: IconUsers,
+      url: "/vendor",
+      icon: IconShieldCheck,
     },
   ],
   navClouds: [
@@ -116,7 +116,7 @@ const data = {
     {
       title: "Contact Us",
       url: "#",
-      icon: IconHelp,
+      icon: IconMail,
     },
   ],
 }

@@ -4,6 +4,8 @@ import { z } from 'zod'
 import { GalleryVerticalEnd } from 'lucide-react'
 import { LoginForm } from '@/components/login-form'
 
+import background from '@/assets/auth-background.png'
+
 // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 const fallback = '/dashboard' as const
 
@@ -37,8 +39,12 @@ function LoginComponent() {
           </div>
         </div>
       </div>
-      <div className="bg-muted relative hidden lg:block">
-        <div className="absolute inset-0 h-full w-full bg-gradient-to-br from-primary/20 via-primary/10 to-background dark:from-primary/10 dark:via-primary/5 dark:to-background" />
+      <div className="relative hidden lg:block">
+        <img
+          src={background}
+          alt="Background"
+          className="absolute inset-0 h-full w-full object-contain"
+        />
       </div>
     </div>
   )

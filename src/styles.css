@@ -38,6 +38,7 @@
 
   --animate-fade-in: fade-in 0.7s ease-out forwards;
   --animate-fade-up: fade-in 0.7s ease-out forwards;
+  --font-sans: "Montserrat", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
 @layer utilities {
@@ -96,7 +97,7 @@
 
 @layer base {
   html {
-    font-family: system-ui, sans-serif;
+    font-family: "Montserrat", ui-sans-serif, system-ui, sans-serif;
   }
 
   body {
