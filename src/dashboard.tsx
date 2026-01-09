@@ -1,4 +1,3 @@
-import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { AppSidebar } from "@/components/app-sidebar"
 import { ChartAreaInteractive } from "@/components/chart-area-interactive"
 import { DataTable } from "@/components/data-table"
@@ -8,34 +7,10 @@ import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar"
-import data from "../data.json"
-import { useAuth } from '../auth'
 
-export const Route = createFileRoute('/_auth/dashboard')({
-  component: DashboardPage,
-})
+import data from "./data.json"
 
-function DashboardPage() {
-  const { user, logout } = useAuth()
-  const router = useRouter()
-  const navigate = Route.useNavigate()
-
-  const handleLogout = () => {
-    if (window.confirm('Are you sure you want to logout?')) {
-      logout().then(() => {
-        router.invalidate().finally(() => {
-          navigate({ to: '/login' })
-        })
-      })
-    }
-  }
-
-  const sidebarUser = {
-    name: user?.displayName || 'User',
-    email: user?.email || '',
-    avatar: user?.photoURL || '',
-  }
-
+export default function Page() {
   return (
     <SidebarProvider
       style={
@@ -45,7 +20,7 @@ function DashboardPage() {
         } as React.CSSProperties
       }
     >
-      <AppSidebar variant="inset" user={sidebarUser} onLogout={handleLogout} />
+      <AppSidebar variant="inset" />
       <SidebarInset>
         <SiteHeader />
         <div className="flex flex-1 flex-col">
