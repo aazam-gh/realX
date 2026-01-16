@@ -1,11 +1,7 @@
 import * as React from "react"
 import {
-  IconCamera,
   IconChartBar,
-  IconFileAi,
-  IconFileDescription,
   IconHistory,
-  IconInnerShadowTop,
   IconLayoutDashboard,
   IconMail,
   IconSettings,
@@ -59,64 +55,16 @@ const data = {
       icon: IconShieldCheck,
     },
   ],
-  navClouds: [
-    {
-      title: "Capture",
-      icon: IconCamera,
-      isActive: true,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Proposal",
-      icon: IconFileDescription,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Prompts",
-      icon: IconFileAi,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-  ],
   navSecondary: [
+    {
+      title: "Contact Us",
+      url: "/contact-us",
+      icon: IconMail,
+    },
     {
       title: "Settings",
       url: "#",
       icon: IconSettings,
-    },
-    {
-      title: "Contact Us",
-      url: "#",
-      icon: IconMail,
     },
   ],
 }
@@ -144,9 +92,8 @@ export function AppSidebar({
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
-              <a href="#">
-                <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">ReelX</span>
+              <a href="/">
+                <span className="text-2xl font-bold text-[#18521C] ml-1">ReelX</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>

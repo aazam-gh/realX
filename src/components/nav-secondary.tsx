@@ -11,6 +11,8 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
+import { Link } from "@tanstack/react-router"
+
 export function NavSecondary({
   items,
   ...props
@@ -28,10 +30,18 @@ export function NavSecondary({
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild>
-                <a href={item.url}>
-                  <item.icon />
-                  <span>{item.title}</span>
-                </a>
+                <Link
+                  to={item.url}
+                  activeProps={{ "data-active": "true" } as any}
+                  className={
+                    item.title === "Contact Us"
+                      ? "data-[active=true]:bg-[#7C3AED] data-[active=true]:text-black data-[active=true]:before:hidden rounded-xl py-6"
+                      : ""
+                  }
+                >
+                  <item.icon className={item.title === "Contact Us" ? "!size-5" : ""} />
+                  <span className={item.title === "Contact Us" ? "text-base font-semibold" : ""}>{item.title}</span>
+                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}

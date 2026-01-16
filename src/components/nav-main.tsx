@@ -1,5 +1,5 @@
 import { type Icon } from "@tabler/icons-react"
-import { Link, useLocation } from "@tanstack/react-router"
+import { Link } from "@tanstack/react-router"
 
 import {
   SidebarGroup,
@@ -18,8 +18,6 @@ export function NavMain({
     icon?: Icon
   }[]
 }) {
-  const location = useLocation()
-
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
@@ -29,9 +27,11 @@ export function NavMain({
               <SidebarMenuButton
                 tooltip={item.title}
                 asChild
-                isActive={location.pathname === item.url}
               >
-                <Link to={item.url}>
+                <Link
+                  to={item.url}
+                  activeProps={{ "data-active": "true" } as any}
+                >
                   {item.icon && <item.icon />}
                   <span>{item.title}</span>
                 </Link>
