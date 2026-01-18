@@ -16,12 +16,15 @@ import { auth } from './firebase/config'
 export type AuthContextType = {
   isAuthenticated: boolean
   isInitialLoading: boolean
+  isAdmin: boolean
   login: (provider: AuthProvider) => Promise<void>
   loginWithEmail: (email: string, password: string) => Promise<void>
   signupWithEmail: (email: string, password: string, displayName?: string) => Promise<void>
   logout: () => Promise<void>
   user: User | null
 }
+
+
 
 const AuthContext = React.createContext<AuthContextType | null>(null)
 
@@ -33,17 +36,32 @@ export function AuthContextProvider({
   const [user, setUser] = React.useState<User | null>(auth.currentUser)
   const [isInitialLoading, setIsInitialLoading] = React.useState(true)
   const isAuthenticated = !!user
+  const [isAdmin, setIsAdmin] = React.useState(false)
 
   React.useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        flushSync(() => {
+          setUser(null)
+          setIsAdmin(false)
+          setIsInitialLoading(false)
+        })
+        return
+      }
+
+      // Fetch ID token & custom claims
+      const tokenResult = await user.getIdTokenResult()
+
       flushSync(() => {
         setUser(user)
+        setIsAdmin(tokenResult.claims.admin === true)
         setIsInitialLoading(false)
       })
     })
     return () => unsubscribe()
   }, [])
 
+  
   const logout = React.useCallback(async () => {
     console.log('Logging out...')
     await signOut(auth)
@@ -78,9 +96,32 @@ export function AuthContextProvider({
     })
   }, [])
 
+    const contextValue = React.useMemo(
+    () => ({
+      isAuthenticated,
+      isInitialLoading,
+      isAdmin,
+      user,
+      login,
+      loginWithEmail,
+      signupWithEmail,
+      logout,
+    }),
+    [
+      isAuthenticated,
+      isInitialLoading,
+      isAdmin,
+      user,
+      login,
+      loginWithEmail,
+      signupWithEmail,
+      logout,
+    ],
+  )
+
   return (
     <AuthContext.Provider
-      value={{ isInitialLoading, isAuthenticated, user, login, loginWithEmail, signupWithEmail, logout }}
+      value={contextValue}
     >
       {children}
     </AuthContext.Provider>
@@ -90,7 +131,7 @@ export function AuthContextProvider({
 export function useAuth() {
   const context = React.useContext(AuthContext)
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider')
+    throw new Error('useAuth must be used within an AuthContextProvider')
   }
   return context
 }

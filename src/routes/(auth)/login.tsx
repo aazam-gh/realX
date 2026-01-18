@@ -9,7 +9,7 @@ import background from '@/assets/auth-background.png'
 // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 const fallback = '/dashboard' as const
 
-export const Route = createFileRoute('/login')({
+export const Route = createFileRoute('/(auth)/login')({
   validateSearch: z.object({
     redirect: z.string().optional().catch(''),
   }),

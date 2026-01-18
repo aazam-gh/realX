@@ -1,9 +1,29 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Link } from '@tanstack/react-router'
+import { Button } from '@/components/ui/button'
 
 export const Route = createFileRoute('/')({
   component: HomeComponent,
 })
+
+import { getAuth } from "firebase/auth";
+
+const auth = getAuth();
+const user = auth.currentUser;
+
+ const buttonClick = async () => {  
+if (user) {
+  const idTokenResult = await user.getIdTokenResult();
+  
+  if (!!idTokenResult.claims.admin) {
+    // Show admin dashboard or specific UI
+    console.log("User is an admin");
+  } else {
+    console.log("User is a regular user");
+  }
+} 
+}
+
 
 function HomeComponent() {
   return (
@@ -35,6 +55,9 @@ function HomeComponent() {
             Go to Dashboard
           </Link>
         </div>
+        <Button onClick={buttonClick}>
+          Button
+          </Button>
       </div>
     </div>
   )

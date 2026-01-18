@@ -9,30 +9,16 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SignupRouteImport } from './routes/signup'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AuthVendorRouteImport } from './routes/_auth.vendor'
 import { Route as AuthDashboardRouteImport } from './routes/_auth.dashboard'
 import { Route as AuthContactUsRouteImport } from './routes/_auth.contact-us'
+import { Route as authUnauthorizedRouteImport } from './routes/(auth)/unauthorized'
+import { Route as authSignupRouteImport } from './routes/(auth)/signup'
+import { Route as authLoginRouteImport } from './routes/(auth)/login'
 
-const SignupRoute = SignupRouteImport.update({
-  id: '/signup',
-  path: '/signup',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/_auth',
   getParentRoute: () => rootRouteImport,
@@ -40,6 +26,11 @@ const AuthRoute = AuthRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthVendorRoute = AuthVendorRouteImport.update({
@@ -57,98 +48,99 @@ const AuthContactUsRoute = AuthContactUsRouteImport.update({
   path: '/contact-us',
   getParentRoute: () => AuthRoute,
 } as any)
+const authUnauthorizedRoute = authUnauthorizedRouteImport.update({
+  id: '/(auth)/unauthorized',
+  path: '/unauthorized',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const authSignupRoute = authSignupRouteImport.update({
+  id: '/(auth)/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const authLoginRoute = authLoginRouteImport.update({
+  id: '/(auth)/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
-  '/login': typeof LoginRoute
-  '/signup': typeof SignupRoute
+  '/login': typeof authLoginRoute
+  '/signup': typeof authSignupRoute
+  '/unauthorized': typeof authUnauthorizedRoute
   '/contact-us': typeof AuthContactUsRoute
   '/dashboard': typeof AuthDashboardRoute
   '/vendor': typeof AuthVendorRoute
+  '/admin': typeof AdminIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
-  '/login': typeof LoginRoute
-  '/signup': typeof SignupRoute
+  '/login': typeof authLoginRoute
+  '/signup': typeof authSignupRoute
+  '/unauthorized': typeof authUnauthorizedRoute
   '/contact-us': typeof AuthContactUsRoute
   '/dashboard': typeof AuthDashboardRoute
   '/vendor': typeof AuthVendorRoute
+  '/admin': typeof AdminIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_auth': typeof AuthRouteWithChildren
-  '/admin': typeof AdminRoute
-  '/login': typeof LoginRoute
-  '/signup': typeof SignupRoute
+  '/(auth)/login': typeof authLoginRoute
+  '/(auth)/signup': typeof authSignupRoute
+  '/(auth)/unauthorized': typeof authUnauthorizedRoute
   '/_auth/contact-us': typeof AuthContactUsRoute
   '/_auth/dashboard': typeof AuthDashboardRoute
   '/_auth/vendor': typeof AuthVendorRoute
+  '/admin/': typeof AdminIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/admin'
     | '/login'
     | '/signup'
+    | '/unauthorized'
     | '/contact-us'
     | '/dashboard'
     | '/vendor'
+    | '/admin'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/admin'
     | '/login'
     | '/signup'
+    | '/unauthorized'
     | '/contact-us'
     | '/dashboard'
     | '/vendor'
+    | '/admin'
   id:
     | '__root__'
     | '/'
     | '/_auth'
-    | '/admin'
-    | '/login'
-    | '/signup'
+    | '/(auth)/login'
+    | '/(auth)/signup'
+    | '/(auth)/unauthorized'
     | '/_auth/contact-us'
     | '/_auth/dashboard'
     | '/_auth/vendor'
+    | '/admin/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRouteWithChildren
-  AdminRoute: typeof AdminRoute
-  LoginRoute: typeof LoginRoute
-  SignupRoute: typeof SignupRoute
+  authLoginRoute: typeof authLoginRoute
+  authSignupRoute: typeof authSignupRoute
+  authUnauthorizedRoute: typeof authUnauthorizedRoute
+  AdminIndexRoute: typeof AdminIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/signup': {
-      id: '/signup'
-      path: '/signup'
-      fullPath: '/signup'
-      preLoaderRoute: typeof SignupRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_auth': {
       id: '/_auth'
       path: ''
@@ -161,6 +153,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_auth/vendor': {
@@ -184,6 +183,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthContactUsRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/(auth)/unauthorized': {
+      id: '/(auth)/unauthorized'
+      path: '/unauthorized'
+      fullPath: '/unauthorized'
+      preLoaderRoute: typeof authUnauthorizedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(auth)/signup': {
+      id: '/(auth)/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof authSignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(auth)/login': {
+      id: '/(auth)/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof authLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -204,9 +224,10 @@ const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRouteWithChildren,
-  AdminRoute: AdminRoute,
-  LoginRoute: LoginRoute,
-  SignupRoute: SignupRoute,
+  authLoginRoute: authLoginRoute,
+  authSignupRoute: authSignupRoute,
+  authUnauthorizedRoute: authUnauthorizedRoute,
+  AdminIndexRoute: AdminIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
