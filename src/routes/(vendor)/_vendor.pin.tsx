@@ -5,11 +5,11 @@ import {
     InputOTPSlot,
 } from "@/components/ui/input-otp"
 
-export const Route = createFileRoute('/_auth/vendor')({
-    component: VendorPage,
+export const Route = createFileRoute('/(vendor)/_vendor/pin')({
+    component: PinPage,
 })
 
-function VendorPage() {
+function PinPage() {
     return (
         <div className="flex flex-1 flex-col p-8 md:p-12">
             <div className="space-y-2">

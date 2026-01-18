@@ -5,9 +5,9 @@ import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar"
-import { useAuth } from '../auth'
+import { useAuth } from '../../auth'
 
-export const Route = createFileRoute('/_auth')({
+export const Route = createFileRoute('/(vendor)/_vendor')({
   beforeLoad: ({ context, location }) => {
     // Check if user is authenticated
     if (!context.auth.isAuthenticated) {

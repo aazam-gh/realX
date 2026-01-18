@@ -51,7 +51,7 @@ const data = {
     },
     {
       title: "Vendor PIN",
-      url: "/vendor",
+      url: "/pin",
       icon: IconShieldCheck,
     },
   ],

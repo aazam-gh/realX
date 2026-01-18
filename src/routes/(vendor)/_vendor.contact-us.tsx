@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Label } from "@/components/ui/label"
 
-export const Route = createFileRoute('/_auth/contact-us')({
+export const Route = createFileRoute('/(vendor)/_vendor/contact-us')({
     component: ContactUsPage,
 })
 
