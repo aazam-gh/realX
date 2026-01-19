@@ -9,8 +9,11 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AdminVendorsRouteImport } from './routes/admin/vendors'
+import { Route as AdminTransactionsRouteImport } from './routes/admin/transactions'
 import { Route as vendorVendorRouteImport } from './routes/(vendor)/_vendor'
 import { Route as authUnauthorizedRouteImport } from './routes/(auth)/unauthorized'
 import { Route as authSignupRouteImport } from './routes/(auth)/signup'
@@ -19,15 +22,30 @@ import { Route as vendorVendorPinRouteImport } from './routes/(vendor)/_vendor.p
 import { Route as vendorVendorDashboardRouteImport } from './routes/(vendor)/_vendor.dashboard'
 import { Route as vendorVendorContactUsRouteImport } from './routes/(vendor)/_vendor.contact-us'
 
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
-  id: '/admin/',
-  path: '/admin/',
-  getParentRoute: () => rootRouteImport,
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminVendorsRoute = AdminVendorsRouteImport.update({
+  id: '/vendors',
+  path: '/vendors',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminTransactionsRoute = AdminTransactionsRouteImport.update({
+  id: '/transactions',
+  path: '/transactions',
+  getParentRoute: () => AdminRoute,
 } as any)
 const vendorVendorRoute = vendorVendorRouteImport.update({
   id: '/(vendor)/_vendor',
@@ -66,10 +84,13 @@ const vendorVendorContactUsRoute = vendorVendorContactUsRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/login': typeof authLoginRoute
   '/signup': typeof authSignupRoute
   '/unauthorized': typeof authUnauthorizedRoute
-  '/admin': typeof AdminIndexRoute
+  '/admin/transactions': typeof AdminTransactionsRoute
+  '/admin/vendors': typeof AdminVendorsRoute
+  '/admin/': typeof AdminIndexRoute
   '/contact-us': typeof vendorVendorContactUsRoute
   '/dashboard': typeof vendorVendorDashboardRoute
   '/pin': typeof vendorVendorPinRoute
@@ -79,6 +100,8 @@ export interface FileRoutesByTo {
   '/login': typeof authLoginRoute
   '/signup': typeof authSignupRoute
   '/unauthorized': typeof authUnauthorizedRoute
+  '/admin/transactions': typeof AdminTransactionsRoute
+  '/admin/vendors': typeof AdminVendorsRoute
   '/admin': typeof AdminIndexRoute
   '/contact-us': typeof vendorVendorContactUsRoute
   '/dashboard': typeof vendorVendorDashboardRoute
@@ -87,10 +110,13 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/(auth)/login': typeof authLoginRoute
   '/(auth)/signup': typeof authSignupRoute
   '/(auth)/unauthorized': typeof authUnauthorizedRoute
   '/(vendor)/_vendor': typeof vendorVendorRouteWithChildren
+  '/admin/transactions': typeof AdminTransactionsRoute
+  '/admin/vendors': typeof AdminVendorsRoute
   '/admin/': typeof AdminIndexRoute
   '/(vendor)/_vendor/contact-us': typeof vendorVendorContactUsRoute
   '/(vendor)/_vendor/dashboard': typeof vendorVendorDashboardRoute
@@ -100,10 +126,13 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/login'
     | '/signup'
     | '/unauthorized'
-    | '/admin'
+    | '/admin/transactions'
+    | '/admin/vendors'
+    | '/admin/'
     | '/contact-us'
     | '/dashboard'
     | '/pin'
@@ -113,6 +142,8 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/unauthorized'
+    | '/admin/transactions'
+    | '/admin/vendors'
     | '/admin'
     | '/contact-us'
     | '/dashboard'
@@ -120,10 +151,13 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/(auth)/login'
     | '/(auth)/signup'
     | '/(auth)/unauthorized'
     | '/(vendor)/_vendor'
+    | '/admin/transactions'
+    | '/admin/vendors'
     | '/admin/'
     | '/(vendor)/_vendor/contact-us'
     | '/(vendor)/_vendor/dashboard'
@@ -132,15 +166,22 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
   authLoginRoute: typeof authLoginRoute
   authSignupRoute: typeof authSignupRoute
   authUnauthorizedRoute: typeof authUnauthorizedRoute
   vendorVendorRoute: typeof vendorVendorRouteWithChildren
-  AdminIndexRoute: typeof AdminIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -150,10 +191,24 @@ declare module '@tanstack/react-router' {
     }
     '/admin/': {
       id: '/admin/'
-      path: '/admin'
-      fullPath: '/admin'
+      path: '/'
+      fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/vendors': {
+      id: '/admin/vendors'
+      path: '/vendors'
+      fullPath: '/admin/vendors'
+      preLoaderRoute: typeof AdminVendorsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/transactions': {
+      id: '/admin/transactions'
+      path: '/transactions'
+      fullPath: '/admin/transactions'
+      preLoaderRoute: typeof AdminTransactionsRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/(vendor)/_vendor': {
       id: '/(vendor)/_vendor'
@@ -207,6 +262,20 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AdminRouteChildren {
+  AdminTransactionsRoute: typeof AdminTransactionsRoute
+  AdminVendorsRoute: typeof AdminVendorsRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminTransactionsRoute: AdminTransactionsRoute,
+  AdminVendorsRoute: AdminVendorsRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 interface vendorVendorRouteChildren {
   vendorVendorContactUsRoute: typeof vendorVendorContactUsRoute
   vendorVendorDashboardRoute: typeof vendorVendorDashboardRoute
@@ -225,11 +294,11 @@ const vendorVendorRouteWithChildren = vendorVendorRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
   authLoginRoute: authLoginRoute,
   authSignupRoute: authSignupRoute,
   authUnauthorizedRoute: authUnauthorizedRoute,
   vendorVendorRoute: vendorVendorRouteWithChildren,
-  AdminIndexRoute: AdminIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

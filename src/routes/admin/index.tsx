@@ -1,77 +1,18 @@
-import { createFileRoute, redirect, Outlet } from '@tanstack/react-router'
-import { useAuth } from '../../auth'
-import { useRouter } from '@tanstack/react-router'
-import { AppSidebar } from "@/components/app-sidebar"
-import { SiteHeader } from "@/components/site-header"
-import {
-  SidebarInset,
-  SidebarProvider,
-} from "@/components/ui/sidebar"
-
+import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/admin/')({
-  beforeLoad: ({ context, location }) => {
-    const { auth } = context
-
-    // Wait until Firebase auth has resolved
-    if (auth.isInitialLoading) {
-      return
-    }
-
-    // Not logged in at all
-    if (!auth.isAuthenticated) {
-      throw redirect({
-        to: '/login',
-        search: { redirect: location.href },
-      })
-    }
-
-    // Logged in but NOT admin
-    if (!auth.isAdmin) {
-      throw redirect({
-        to: '/unauthorized',
-      })
-    }
-  },
-  component: AdminLayout,
+  component: AdminDashboard,
 })
 
-
-function AdminLayout() {
-  const { user, logout } = useAuth()
-  const router = useRouter()
-  const navigate = Route.useNavigate()
-
-  const handleLogout = () => {
-    if (window.confirm('Are you sure you want to logout?')) {
-      logout().then(() => {
-        router.invalidate().finally(() => {
-          navigate({ to: '/login' })
-        })
-      })
-    }
-  }
-
-  const sidebarUser = {
-    name: user?.displayName || 'User',
-    email: user?.email || '',
-    avatar: user?.photoURL || '',
-  }
-
+function AdminDashboard() {
   return (
-    <SidebarProvider
-      style={
-        {
-          "--sidebar-width": "calc(var(--spacing) * 72)",
-          "--header-height": "calc(var(--spacing) * 12)",
-        } as React.CSSProperties
-      }
-    >
-      <AppSidebar variant="inset" user={sidebarUser} onLogout={handleLogout} />
-      <SidebarInset>
-        <SiteHeader />
-        <Outlet />
-      </SidebarInset>
-    </SidebarProvider>
+    <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+      <div className="grid auto-rows-min gap-4 md:grid-cols-3">
+        <div className="aspect-video rounded-xl bg-muted/50" />
+        <div className="aspect-video rounded-xl bg-muted/50" />
+        <div className="aspect-video rounded-xl bg-muted/50" />
+      </div>
+      <div className="min-h-[100vh] flex-1 rounded-xl bg-muted/50 md:min-h-min" />
+    </div>
   )
 }
