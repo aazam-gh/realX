@@ -1,4 +1,5 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, useSearch } from '@tanstack/react-router'
+import { z } from 'zod'
 import {
     Table,
     TableBody,
@@ -17,8 +18,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
-import { Search, Upload, Plus, ChevronRight } from 'lucide-react'
-import { useState } from 'react'
+import { Search, Upload, Plus } from 'lucide-react'
+import { useState, useRef } from 'react'
 import {
     Dialog,
     DialogContent,
@@ -29,13 +30,19 @@ import {
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { db, functions } from '@/firebase/config'
-import { collection, getDocs, query } from 'firebase/firestore'
+import { collection, getDocs, query, limit, orderBy, getCountFromServer, startAt } from 'firebase/firestore'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { httpsCallable } from 'firebase/functions'
 
 
+const vendorsSearchSchema = z.object({
+    pageSize: z.number().catch(10),
+    page: z.number().catch(1),
+})
+
 export const Route = createFileRoute('/admin/vendors/')({
     component: RouteComponent,
+    validateSearch: (search) => vendorsSearchSchema.parse(search),
 })
 
 interface Vendor {
@@ -52,36 +59,85 @@ interface Vendor {
 
 function RouteComponent() {
     const queryClient = useQueryClient()
+    const { page, pageSize } = useSearch({ from: '/admin/vendors/' })
+    const cursors = useRef<Record<number, string>>({})
     const [open, setOpen] = useState(false)
     const [form, setForm] = useState({ name: '', email: '', password: '' })
 
-    const { data: vendorList = [], isLoading: isQueryLoading } = useQuery({
-        queryKey: ['vendors'],
+    const { data, isLoading: isQueryLoading } = useQuery({
+        queryKey: ['vendors', page, pageSize],
         queryFn: async () => {
-            console.log('Fetching vendors...')
-            const q = query(collection(db, 'vendors'))
+            console.log(`Loading page ${page}...`)
+            const collRef = collection(db, 'vendors')
+
+            const countSnapshot = await getCountFromServer(collRef)
+            const totalCount = countSnapshot.data().count
+
+            // Check if we have a cursor for THIS page
+            const currentCursor = cursors.current[page]
+
+            let q;
+            if (currentCursor) {
+                // Efficiently fetch using stored cursor
+                q = query(
+                    collRef,
+                    orderBy('name'),
+                    startAt(currentCursor),
+                    limit(pageSize)
+                )
+            } else {
+                // Initial load or jump - fetch up to this page
+                q = query(
+                    collRef,
+                    orderBy('name'),
+                    limit(page * pageSize)
+                )
+            }
+
             const snapshot = await getDocs(q)
-            return snapshot.docs.map((doc) => {
+
+            // If we used a cursor, we have the exact documents.
+            // If not, we fetched from the start, so slice.
+            const pageDocs = currentCursor
+                ? snapshot.docs
+                : snapshot.docs.slice((page - 1) * pageSize);
+
+            const vendors = pageDocs.map((doc) => {
                 const data = doc.data()
                 return {
                     id: doc.id,
-                    name: data.name || 'Unnamed Vendor',
+                    name: data.name || data.vendorName || 'Unnamed Vendor',
                     status: data.status ? ('Active' as const) : ('Inactive' as const),
                     contact: data.phoneNumber?.toString() || data.contact || '',
                     offersCount: data.offers || 0,
                     logoURL: data.logoURL || '',
                 } as Vendor
             })
+
+            // Cache the start of the NEXT page if it's not already cached
+            if (pageDocs.length === pageSize) {
+                const nextDocIndex = currentCursor ? pageSize : page * pageSize;
+                const nextDoc = snapshot.docs[nextDocIndex];
+                if (nextDoc) {
+                    const nextDocData = nextDoc.data();
+                    cursors.current[page + 1] = nextDocData.name || nextDocData.vendorName;
+                }
+            }
+
+            return { vendors, totalCount }
         },
-        staleTime: 1000 * 60 * 5, // 5 minutes
+        staleTime: 1000 * 60 * 5,
     })
+
+    const vendorList = data?.vendors || []
+    const totalVendors = data?.totalCount || 0
 
 
     const addVendorMutation = useMutation({
         mutationFn: async (formData: typeof form) => {
             const createVendorUser = httpsCallable(functions, 'createVendorUser')
             const result = await createVendorUser({
-                vendorName: formData.name,
+                name: formData.name,
                 email: formData.email,
                 password: formData.password,
             })
@@ -104,6 +160,10 @@ function RouteComponent() {
         if (!form.name || !form.email || !form.password) return
         addVendorMutation.mutate(form)
     }
+
+    // Simplified Pagination logic
+    const hasNextPage = page * pageSize < totalVendors
+    const hasPrevPage = page > 1
 
     return (
         <div className="p-8 space-y-6 w-full max-w-[1600px] mx-auto">
@@ -220,7 +280,7 @@ function RouteComponent() {
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            vendorList.map((vendor) => (
+                            vendorList.map((vendor: Vendor) => (
                                 <TableRow key={vendor.id} className="h-16 border-b border-gray-100 hover:bg-gray-50/50">
                                     <TableCell>
                                         <Checkbox />
@@ -259,39 +319,52 @@ function RouteComponent() {
                 </Table>
             </div>
 
-            {/* Pagination */}
-            <div className="flex items-center justify-center gap-2 pt-4">
-                <Button variant="outline" size="sm" className="h-8 w-auto px-3 text-xs text-gray-500">
-                    « First
-                </Button>
-                <Button variant="outline" size="sm" className="h-8 w-auto px-3 text-xs text-gray-500">
-                    ‹ Back
-                </Button>
-                <Button variant="outline" size="sm" className="h-8 w-8 p-0 text-xs text-gray-500">
-                    1
-                </Button>
-                <Button size="sm" className="h-8 w-8 p-0 text-xs bg-[#8b5cf6] hover:bg-[#7c3aed] text-white">
-                    2
-                </Button>
-                <Button variant="outline" size="sm" className="h-8 w-8 p-0 text-xs text-gray-500">
-                    3
-                </Button>
-                <Button variant="outline" size="sm" className="h-8 w-8 p-0 text-xs text-gray-500">
-                    4
-                </Button>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-xs text-gray-500" disabled>
-                    ...
-                </Button>
-                <Button variant="outline" size="sm" className="h-8 w-8 p-0 text-xs text-gray-500">
-                    25
-                </Button>
-                <Button variant="outline" size="sm" className="h-8 w-auto px-3 text-xs text-gray-500">
-                    Next ›
-                </Button>
-                <Button variant="outline" size="sm" className="h-8 w-auto px-3 text-xs text-gray-500">
-                    Last »
-                </Button>
-            </div>
+            {/* Simple Pagination */}
+            {(hasPrevPage || hasNextPage) && (
+                <div className="flex items-center justify-center gap-4 pt-4">
+                    <Link
+                        from={Route.fullPath}
+                        search={(prev) => ({
+                            ...prev,
+                            page: Math.max(1, page - 1),
+                        })}
+                        disabled={!hasPrevPage}
+                        className={!hasPrevPage ? 'pointer-events-none opacity-50' : ''}
+                    >
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-10 w-auto px-4 gap-2 text-sm font-medium"
+                            disabled={!hasPrevPage}
+                        >
+                            ‹ Previous
+                        </Button>
+                    </Link>
+
+                    <div className="text-sm font-medium text-muted-foreground">
+                        Page {page}
+                    </div>
+
+                    <Link
+                        from={Route.fullPath}
+                        search={(prev) => ({
+                            ...prev,
+                            page: page + 1,
+                        })}
+                        disabled={!hasNextPage}
+                        className={!hasNextPage ? 'pointer-events-none opacity-50' : ''}
+                    >
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-10 w-auto px-4 gap-2 text-sm font-medium"
+                            disabled={!hasNextPage}
+                        >
+                            Next ›
+                        </Button>
+                    </Link>
+                </div>
+            )}
         </div>
     )
 }

@@ -1,20 +1,20 @@
-import {setGlobalOptions} from "firebase-functions";
-import {onCall, HttpsError} from "firebase-functions/v2/https";
+import { setGlobalOptions } from "firebase-functions";
+import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
 
-import {initializeApp} from "firebase-admin/app";
-import {getAuth} from "firebase-admin/auth";
-import {getFirestore, FieldValue} from "firebase-admin/firestore";
+import { initializeApp } from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
+import { getFirestore, FieldValue } from "firebase-admin/firestore";
 
 // Init Admin SDK
 initializeApp();
 
-setGlobalOptions({maxInstances: 10});
+setGlobalOptions({ maxInstances: 10 });
 
 export const createVendorUser = onCall(
-  {region: "me-central1"},
+  { region: "me-central1" },
   async (request) => {
-    const {auth, data} = request;
+    const { auth, data } = request;
 
     // 1️⃣ Auth required
     if (!auth) {
@@ -26,13 +26,13 @@ export const createVendorUser = onCall(
       throw new HttpsError("permission-denied", "Admin access required");
     }
 
-    const {vendorName, email, password} = data;
+    const { name, email, password } = data;
 
     // 3️⃣ Validate input
-    if (!vendorName || !email || !password) {
+    if (!name || !email || !password) {
       throw new HttpsError(
         "invalid-argument",
-        "vendorName, email, and password are required"
+        "name, email, and password are required"
       );
     }
 
@@ -43,13 +43,13 @@ export const createVendorUser = onCall(
     const user = await authAdmin.createUser({
       email,
       password,
-      displayName: vendorName,
+      displayName: name,
       emailVerified: true, // optional since you're onboarding manually
     });
 
     // 6️⃣ Create vendor Firestore document
     await db.collection("vendors").doc(user.uid).set({
-      vendorName,
+      name,
       email,
       createdAt: FieldValue.serverTimestamp(),
     });
