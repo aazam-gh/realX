@@ -1,20 +1,20 @@
-import { setGlobalOptions } from "firebase-functions";
-import { onCall, HttpsError } from "firebase-functions/v2/https";
+import {setGlobalOptions} from "firebase-functions";
+import {onCall, HttpsError} from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
 
-import { initializeApp } from "firebase-admin/app";
-import { getAuth } from "firebase-admin/auth";
-import { getFirestore, FieldValue } from "firebase-admin/firestore";
+import {initializeApp} from "firebase-admin/app";
+import {getAuth} from "firebase-admin/auth";
+import {getFirestore, FieldValue} from "firebase-admin/firestore";
 
 // Init Admin SDK
 initializeApp();
 
-setGlobalOptions({ maxInstances: 10 });
+setGlobalOptions({maxInstances: 10});
 
 export const createVendorUser = onCall(
-  { region: "me-central1" },
+  {region: "me-central1"},
   async (request) => {
-    const { auth, data } = request;
+    const {auth, data} = request;
 
     // 1️⃣ Auth required
     if (!auth) {
@@ -26,7 +26,7 @@ export const createVendorUser = onCall(
       throw new HttpsError("permission-denied", "Admin access required");
     }
 
-    const { name, email, password } = data;
+    const {name, email, password} = data;
 
     // 3️⃣ Validate input
     if (!name || !email || !password) {

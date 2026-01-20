@@ -21,6 +21,7 @@ import { Route as AdminVendorsIndexRouteImport } from './routes/admin/vendors/in
 import { Route as vendorPanelVendorPinRouteImport } from './routes/(vendor-panel)/_vendor.pin'
 import { Route as vendorPanelVendorDashboardRouteImport } from './routes/(vendor-panel)/_vendor.dashboard'
 import { Route as vendorPanelVendorContactUsRouteImport } from './routes/(vendor-panel)/_vendor.contact-us'
+import { Route as AdminVendorsVendorIdSettingsRouteImport } from './routes/admin/vendors/$vendorId.settings'
 
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
@@ -83,6 +84,12 @@ const vendorPanelVendorContactUsRoute =
     path: '/contact-us',
     getParentRoute: () => vendorPanelVendorRoute,
   } as any)
+const AdminVendorsVendorIdSettingsRoute =
+  AdminVendorsVendorIdSettingsRouteImport.update({
+    id: '/vendors/$vendorId/settings',
+    path: '/vendors/$vendorId/settings',
+    getParentRoute: () => AdminRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -96,6 +103,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof vendorPanelVendorDashboardRoute
   '/pin': typeof vendorPanelVendorPinRoute
   '/admin/vendors': typeof AdminVendorsIndexRoute
+  '/admin/vendors/$vendorId/settings': typeof AdminVendorsVendorIdSettingsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -108,6 +116,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof vendorPanelVendorDashboardRoute
   '/pin': typeof vendorPanelVendorPinRoute
   '/admin/vendors': typeof AdminVendorsIndexRoute
+  '/admin/vendors/$vendorId/settings': typeof AdminVendorsVendorIdSettingsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -123,6 +132,7 @@ export interface FileRoutesById {
   '/(vendor-panel)/_vendor/dashboard': typeof vendorPanelVendorDashboardRoute
   '/(vendor-panel)/_vendor/pin': typeof vendorPanelVendorPinRoute
   '/admin/vendors/': typeof AdminVendorsIndexRoute
+  '/admin/vendors/$vendorId/settings': typeof AdminVendorsVendorIdSettingsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -138,6 +148,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/pin'
     | '/admin/vendors'
+    | '/admin/vendors/$vendorId/settings'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -150,6 +161,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/pin'
     | '/admin/vendors'
+    | '/admin/vendors/$vendorId/settings'
   id:
     | '__root__'
     | '/'
@@ -164,6 +176,7 @@ export interface FileRouteTypes {
     | '/(vendor-panel)/_vendor/dashboard'
     | '/(vendor-panel)/_vendor/pin'
     | '/admin/vendors/'
+    | '/admin/vendors/$vendorId/settings'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -261,6 +274,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof vendorPanelVendorContactUsRouteImport
       parentRoute: typeof vendorPanelVendorRoute
     }
+    '/admin/vendors/$vendorId/settings': {
+      id: '/admin/vendors/$vendorId/settings'
+      path: '/vendors/$vendorId/settings'
+      fullPath: '/admin/vendors/$vendorId/settings'
+      preLoaderRoute: typeof AdminVendorsVendorIdSettingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
@@ -268,12 +288,14 @@ interface AdminRouteChildren {
   AdminTransactionsRoute: typeof AdminTransactionsRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminVendorsIndexRoute: typeof AdminVendorsIndexRoute
+  AdminVendorsVendorIdSettingsRoute: typeof AdminVendorsVendorIdSettingsRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminTransactionsRoute: AdminTransactionsRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminVendorsIndexRoute: AdminVendorsIndexRoute,
+  AdminVendorsVendorIdSettingsRoute: AdminVendorsVendorIdSettingsRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)

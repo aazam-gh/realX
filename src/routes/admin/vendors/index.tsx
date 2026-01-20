@@ -18,7 +18,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
-import { Search, Upload, Plus } from 'lucide-react'
+import { Search, Upload, Plus, ChevronRight } from 'lucide-react'
 import { useState, useRef } from 'react'
 import {
     Dialog,
@@ -306,11 +306,11 @@ function RouteComponent() {
                                     {/* <TableCell className="font-medium text-gray-900">{vendor.mainOffer}</TableCell> */}
                                     <TableCell className="text-center font-medium text-gray-900">{vendor.offersCount}</TableCell>
                                     <TableCell className="text-right">
-                                        {/* <Link from={Route.fullPath} to="settings">
+                                        <Link to="/admin/vendors/$vendorId/settings" params={{ vendorId: vendor.id }}>
                                             <Button variant="outline" size="sm" className="rounded-full h-8 px-4 gap-1 text-xs font-semibold">
                                                 Manage <ChevronRight className="h-3 w-3" />
                                             </Button>
-                                        </Link> */}
+                                        </Link>
                                     </TableCell>
                                 </TableRow>
                             ))
