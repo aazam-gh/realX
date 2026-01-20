@@ -5,7 +5,7 @@ import {
     InputOTPSlot,
 } from "@/components/ui/input-otp"
 
-export const Route = createFileRoute('/(vendor)/_vendor/pin')({
+export const Route = createFileRoute('/(vendor-panel)/_vendor/pin')({
     component: PinPage,
 })
 

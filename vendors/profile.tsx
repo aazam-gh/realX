@@ -1,0 +1,26 @@
+import { createFileRoute, Link } from '@tanstack/react-router'
+import { Button } from '@/components/ui/button'
+import { ArrowLeft } from 'lucide-react'
+
+export const Route = createFileRoute('/admin/vendors/profile')({
+  component: RouteComponent,
+})
+
+function RouteComponent() {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-4">
+        <Link from={Route.fullPath} to="..">
+          <Button variant="ghost" size="sm" className="gap-2">
+            <ArrowLeft className="h-4 w-4" /> Back to Menu
+          </Button>
+        </Link>
+        <h2 className="text-2xl font-bold tracking-tight">Profile & Branding</h2>
+      </div>
+
+      <div className="bg-white border rounded-xl p-8">
+        <p className="text-gray-500 text-lg">Vendor profile settings and branding configuration will be here.</p>
+      </div>
+    </div>
+  )
+}

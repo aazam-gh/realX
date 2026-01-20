@@ -1,0 +1,31 @@
+import { createFileRoute, Link, Outlet } from '@tanstack/react-router'
+import { Button } from '@/components/ui/button'
+import { ArrowLeft } from 'lucide-react'
+
+export const Route = createFileRoute('/admin/(vendor)/vendors/settings')({
+    component: VendorSettingsLayout,
+})
+
+function VendorSettingsLayout() {
+    return (
+        <div className="flex-1 p-8 bg-white min-h-screen">
+            <div className="max-w-6xl mx-auto space-y-12">
+                {/* Header Section */}
+                <div className="flex items-center gap-6">
+                    <Link from={Route.fullPath} to="..">
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            className="rounded-full h-12 w-12 border-gray-200 hover:bg-gray-50 flex items-center justify-center transition-colors"
+                        >
+                            <ArrowLeft className="h-6 w-6 text-gray-700" />
+                        </Button>
+                    </Link>
+                    <h1 className="text-4xl font-bold tracking-tight text-gray-900 font-sans">Tim Hortons</h1>
+                </div>
+
+                <Outlet />
+            </div>
+        </div>
+    )
+}

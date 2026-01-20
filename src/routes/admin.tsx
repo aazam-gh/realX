@@ -38,6 +38,7 @@ export const Route = createFileRoute('/admin')({
 function AdminLayout() {
     const { user, logout } = useAuth()
     const router = useRouter()
+    // Use useNavigate from @tanstack/react-router as we are in the layout route
     const navigate = Route.useNavigate()
 
     const handleLogout = () => {

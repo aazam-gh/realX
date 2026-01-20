@@ -1,0 +1,76 @@
+import { createFileRoute } from '@tanstack/react-router'
+import { ArrowLeft, ChevronRight } from 'lucide-react'
+
+export const Route = createFileRoute('/admin/vendors/settings')({
+    component: RouteComponent,
+})
+
+function RouteComponent() {
+    const settingsOptions = [
+        {
+            title: 'Profile & Branding',
+            icon: '📝',
+            to: 'profile',
+        },
+        {
+            title: 'Contact Information',
+            icon: '📞',
+            to: 'contact',
+        },
+        {
+            title: 'Offers & Discounts',
+            icon: '🎉',
+            to: 'offers',
+        },
+        {
+            title: 'Admin Controls',
+            icon: '⚙️',
+            to: 'admin-controls',
+        },
+    ]
+
+    return (
+        <div className="max-w-5xl mx-auto py-8 px-4 space-y-10">
+            {/* Header with Back Button */}
+            <div className="flex items-center gap-4">
+                <Link
+                    to="/admin/vendors"
+                    className="w-10 h-10 flex items-center justify-center rounded-full border border-gray-200 hover:bg-gray-50 transition-colors"
+                >
+                    <ArrowLeft className="w-5 h-5 text-gray-600" />
+                </Link>
+                <h1 className="text-3xl font-bold text-gray-900">Tim Hortons</h1>
+            </div>
+
+            <div className="space-y-6">
+                <h2 className="text-xl font-bold text-gray-800">Navigation Menu / Tabs:</h2>
+
+                {/* List of Settings Options */}
+                <div className="grid gap-5">
+                    {settingsOptions.map((option) => (
+                        <div
+                            key={option.title}
+                            className="flex items-center justify-between p-5 bg-white border border-gray-200 rounded-[1.5rem] shadow-sm hover:shadow-md hover:border-gray-300 transition-all duration-200"
+                        >
+                            <div className="flex items-center gap-4">
+                                <div className="text-2xl">
+                                    {/* Using text for emoji-like appearance if possible, or just the icon */}
+                                    {option.icon}
+                                </div>
+                                <span className="text-xl font-semibold text-gray-800">{option.title}</span>
+                            </div>
+
+                            <Link from={Route.fullPath} to={option.to}>
+                                <Button
+                                    className="bg-gray-500 hover:bg-gray-600 text-white rounded-full px-8 py-6 h-auto flex items-center gap-2 text-sm font-semibold transition-all active:scale-95"
+                                >
+                                    Manage <ChevronRight className="h-4 w-4" />
+                                </Button>
+                            </Link>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    )
+}

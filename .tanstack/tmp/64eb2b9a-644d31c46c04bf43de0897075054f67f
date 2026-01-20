@@ -4,7 +4,7 @@ import { DataTable } from "@/components/data-table"
 import { SectionCards } from "@/components/section-cards"
 import data from "../../data.json"
 
-export const Route = createFileRoute('/(vendor)/_vendor/dashboard')({
+export const Route = createFileRoute('/(vendor-panel)/_vendor/dashboard')({
   component: DashboardPage,
 })
 

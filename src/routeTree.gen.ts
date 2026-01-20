@@ -12,15 +12,15 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
-import { Route as AdminVendorsRouteImport } from './routes/admin/vendors'
 import { Route as AdminTransactionsRouteImport } from './routes/admin/transactions'
-import { Route as vendorVendorRouteImport } from './routes/(vendor)/_vendor'
+import { Route as vendorPanelVendorRouteImport } from './routes/(vendor-panel)/_vendor'
 import { Route as authUnauthorizedRouteImport } from './routes/(auth)/unauthorized'
 import { Route as authSignupRouteImport } from './routes/(auth)/signup'
 import { Route as authLoginRouteImport } from './routes/(auth)/login'
-import { Route as vendorVendorPinRouteImport } from './routes/(vendor)/_vendor.pin'
-import { Route as vendorVendorDashboardRouteImport } from './routes/(vendor)/_vendor.dashboard'
-import { Route as vendorVendorContactUsRouteImport } from './routes/(vendor)/_vendor.contact-us'
+import { Route as AdminVendorsIndexRouteImport } from './routes/admin/vendors/index'
+import { Route as vendorPanelVendorPinRouteImport } from './routes/(vendor-panel)/_vendor.pin'
+import { Route as vendorPanelVendorDashboardRouteImport } from './routes/(vendor-panel)/_vendor.dashboard'
+import { Route as vendorPanelVendorContactUsRouteImport } from './routes/(vendor-panel)/_vendor.contact-us'
 
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
@@ -37,18 +37,13 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminVendorsRoute = AdminVendorsRouteImport.update({
-  id: '/vendors',
-  path: '/vendors',
-  getParentRoute: () => AdminRoute,
-} as any)
 const AdminTransactionsRoute = AdminTransactionsRouteImport.update({
   id: '/transactions',
   path: '/transactions',
   getParentRoute: () => AdminRoute,
 } as any)
-const vendorVendorRoute = vendorVendorRouteImport.update({
-  id: '/(vendor)/_vendor',
+const vendorPanelVendorRoute = vendorPanelVendorRouteImport.update({
+  id: '/(vendor-panel)/_vendor',
   getParentRoute: () => rootRouteImport,
 } as any)
 const authUnauthorizedRoute = authUnauthorizedRouteImport.update({
@@ -66,21 +61,28 @@ const authLoginRoute = authLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const vendorVendorPinRoute = vendorVendorPinRouteImport.update({
+const AdminVendorsIndexRoute = AdminVendorsIndexRouteImport.update({
+  id: '/vendors/',
+  path: '/vendors/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const vendorPanelVendorPinRoute = vendorPanelVendorPinRouteImport.update({
   id: '/pin',
   path: '/pin',
-  getParentRoute: () => vendorVendorRoute,
+  getParentRoute: () => vendorPanelVendorRoute,
 } as any)
-const vendorVendorDashboardRoute = vendorVendorDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => vendorVendorRoute,
-} as any)
-const vendorVendorContactUsRoute = vendorVendorContactUsRouteImport.update({
-  id: '/contact-us',
-  path: '/contact-us',
-  getParentRoute: () => vendorVendorRoute,
-} as any)
+const vendorPanelVendorDashboardRoute =
+  vendorPanelVendorDashboardRouteImport.update({
+    id: '/dashboard',
+    path: '/dashboard',
+    getParentRoute: () => vendorPanelVendorRoute,
+  } as any)
+const vendorPanelVendorContactUsRoute =
+  vendorPanelVendorContactUsRouteImport.update({
+    id: '/contact-us',
+    path: '/contact-us',
+    getParentRoute: () => vendorPanelVendorRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -89,11 +91,11 @@ export interface FileRoutesByFullPath {
   '/signup': typeof authSignupRoute
   '/unauthorized': typeof authUnauthorizedRoute
   '/admin/transactions': typeof AdminTransactionsRoute
-  '/admin/vendors': typeof AdminVendorsRoute
   '/admin/': typeof AdminIndexRoute
-  '/contact-us': typeof vendorVendorContactUsRoute
-  '/dashboard': typeof vendorVendorDashboardRoute
-  '/pin': typeof vendorVendorPinRoute
+  '/contact-us': typeof vendorPanelVendorContactUsRoute
+  '/dashboard': typeof vendorPanelVendorDashboardRoute
+  '/pin': typeof vendorPanelVendorPinRoute
+  '/admin/vendors': typeof AdminVendorsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -101,11 +103,11 @@ export interface FileRoutesByTo {
   '/signup': typeof authSignupRoute
   '/unauthorized': typeof authUnauthorizedRoute
   '/admin/transactions': typeof AdminTransactionsRoute
-  '/admin/vendors': typeof AdminVendorsRoute
   '/admin': typeof AdminIndexRoute
-  '/contact-us': typeof vendorVendorContactUsRoute
-  '/dashboard': typeof vendorVendorDashboardRoute
-  '/pin': typeof vendorVendorPinRoute
+  '/contact-us': typeof vendorPanelVendorContactUsRoute
+  '/dashboard': typeof vendorPanelVendorDashboardRoute
+  '/pin': typeof vendorPanelVendorPinRoute
+  '/admin/vendors': typeof AdminVendorsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -114,13 +116,13 @@ export interface FileRoutesById {
   '/(auth)/login': typeof authLoginRoute
   '/(auth)/signup': typeof authSignupRoute
   '/(auth)/unauthorized': typeof authUnauthorizedRoute
-  '/(vendor)/_vendor': typeof vendorVendorRouteWithChildren
+  '/(vendor-panel)/_vendor': typeof vendorPanelVendorRouteWithChildren
   '/admin/transactions': typeof AdminTransactionsRoute
-  '/admin/vendors': typeof AdminVendorsRoute
   '/admin/': typeof AdminIndexRoute
-  '/(vendor)/_vendor/contact-us': typeof vendorVendorContactUsRoute
-  '/(vendor)/_vendor/dashboard': typeof vendorVendorDashboardRoute
-  '/(vendor)/_vendor/pin': typeof vendorVendorPinRoute
+  '/(vendor-panel)/_vendor/contact-us': typeof vendorPanelVendorContactUsRoute
+  '/(vendor-panel)/_vendor/dashboard': typeof vendorPanelVendorDashboardRoute
+  '/(vendor-panel)/_vendor/pin': typeof vendorPanelVendorPinRoute
+  '/admin/vendors/': typeof AdminVendorsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -131,11 +133,11 @@ export interface FileRouteTypes {
     | '/signup'
     | '/unauthorized'
     | '/admin/transactions'
-    | '/admin/vendors'
     | '/admin/'
     | '/contact-us'
     | '/dashboard'
     | '/pin'
+    | '/admin/vendors'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -143,11 +145,11 @@ export interface FileRouteTypes {
     | '/signup'
     | '/unauthorized'
     | '/admin/transactions'
-    | '/admin/vendors'
     | '/admin'
     | '/contact-us'
     | '/dashboard'
     | '/pin'
+    | '/admin/vendors'
   id:
     | '__root__'
     | '/'
@@ -155,13 +157,13 @@ export interface FileRouteTypes {
     | '/(auth)/login'
     | '/(auth)/signup'
     | '/(auth)/unauthorized'
-    | '/(vendor)/_vendor'
+    | '/(vendor-panel)/_vendor'
     | '/admin/transactions'
-    | '/admin/vendors'
     | '/admin/'
-    | '/(vendor)/_vendor/contact-us'
-    | '/(vendor)/_vendor/dashboard'
-    | '/(vendor)/_vendor/pin'
+    | '/(vendor-panel)/_vendor/contact-us'
+    | '/(vendor-panel)/_vendor/dashboard'
+    | '/(vendor-panel)/_vendor/pin'
+    | '/admin/vendors/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -170,7 +172,7 @@ export interface RootRouteChildren {
   authLoginRoute: typeof authLoginRoute
   authSignupRoute: typeof authSignupRoute
   authUnauthorizedRoute: typeof authUnauthorizedRoute
-  vendorVendorRoute: typeof vendorVendorRouteWithChildren
+  vendorPanelVendorRoute: typeof vendorPanelVendorRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -196,13 +198,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/vendors': {
-      id: '/admin/vendors'
-      path: '/vendors'
-      fullPath: '/admin/vendors'
-      preLoaderRoute: typeof AdminVendorsRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/admin/transactions': {
       id: '/admin/transactions'
       path: '/transactions'
@@ -210,11 +205,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminTransactionsRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/(vendor)/_vendor': {
-      id: '/(vendor)/_vendor'
+    '/(vendor-panel)/_vendor': {
+      id: '/(vendor-panel)/_vendor'
       path: ''
       fullPath: ''
-      preLoaderRoute: typeof vendorVendorRouteImport
+      preLoaderRoute: typeof vendorPanelVendorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(auth)/unauthorized': {
@@ -238,59 +233,65 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/(vendor)/_vendor/pin': {
-      id: '/(vendor)/_vendor/pin'
+    '/admin/vendors/': {
+      id: '/admin/vendors/'
+      path: '/vendors'
+      fullPath: '/admin/vendors'
+      preLoaderRoute: typeof AdminVendorsIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/(vendor-panel)/_vendor/pin': {
+      id: '/(vendor-panel)/_vendor/pin'
       path: '/pin'
       fullPath: '/pin'
-      preLoaderRoute: typeof vendorVendorPinRouteImport
-      parentRoute: typeof vendorVendorRoute
+      preLoaderRoute: typeof vendorPanelVendorPinRouteImport
+      parentRoute: typeof vendorPanelVendorRoute
     }
-    '/(vendor)/_vendor/dashboard': {
-      id: '/(vendor)/_vendor/dashboard'
+    '/(vendor-panel)/_vendor/dashboard': {
+      id: '/(vendor-panel)/_vendor/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
-      preLoaderRoute: typeof vendorVendorDashboardRouteImport
-      parentRoute: typeof vendorVendorRoute
+      preLoaderRoute: typeof vendorPanelVendorDashboardRouteImport
+      parentRoute: typeof vendorPanelVendorRoute
     }
-    '/(vendor)/_vendor/contact-us': {
-      id: '/(vendor)/_vendor/contact-us'
+    '/(vendor-panel)/_vendor/contact-us': {
+      id: '/(vendor-panel)/_vendor/contact-us'
       path: '/contact-us'
       fullPath: '/contact-us'
-      preLoaderRoute: typeof vendorVendorContactUsRouteImport
-      parentRoute: typeof vendorVendorRoute
+      preLoaderRoute: typeof vendorPanelVendorContactUsRouteImport
+      parentRoute: typeof vendorPanelVendorRoute
     }
   }
 }
 
 interface AdminRouteChildren {
   AdminTransactionsRoute: typeof AdminTransactionsRoute
-  AdminVendorsRoute: typeof AdminVendorsRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminVendorsIndexRoute: typeof AdminVendorsIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminTransactionsRoute: AdminTransactionsRoute,
-  AdminVendorsRoute: AdminVendorsRoute,
   AdminIndexRoute: AdminIndexRoute,
+  AdminVendorsIndexRoute: AdminVendorsIndexRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
-interface vendorVendorRouteChildren {
-  vendorVendorContactUsRoute: typeof vendorVendorContactUsRoute
-  vendorVendorDashboardRoute: typeof vendorVendorDashboardRoute
-  vendorVendorPinRoute: typeof vendorVendorPinRoute
+interface vendorPanelVendorRouteChildren {
+  vendorPanelVendorContactUsRoute: typeof vendorPanelVendorContactUsRoute
+  vendorPanelVendorDashboardRoute: typeof vendorPanelVendorDashboardRoute
+  vendorPanelVendorPinRoute: typeof vendorPanelVendorPinRoute
 }
 
-const vendorVendorRouteChildren: vendorVendorRouteChildren = {
-  vendorVendorContactUsRoute: vendorVendorContactUsRoute,
-  vendorVendorDashboardRoute: vendorVendorDashboardRoute,
-  vendorVendorPinRoute: vendorVendorPinRoute,
+const vendorPanelVendorRouteChildren: vendorPanelVendorRouteChildren = {
+  vendorPanelVendorContactUsRoute: vendorPanelVendorContactUsRoute,
+  vendorPanelVendorDashboardRoute: vendorPanelVendorDashboardRoute,
+  vendorPanelVendorPinRoute: vendorPanelVendorPinRoute,
 }
 
-const vendorVendorRouteWithChildren = vendorVendorRoute._addFileChildren(
-  vendorVendorRouteChildren,
-)
+const vendorPanelVendorRouteWithChildren =
+  vendorPanelVendorRoute._addFileChildren(vendorPanelVendorRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -298,7 +299,7 @@ const rootRouteChildren: RootRouteChildren = {
   authLoginRoute: authLoginRoute,
   authSignupRoute: authSignupRoute,
   authUnauthorizedRoute: authUnauthorizedRoute,
-  vendorVendorRoute: vendorVendorRouteWithChildren,
+  vendorPanelVendorRoute: vendorPanelVendorRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
