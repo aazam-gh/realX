@@ -1,17 +1,16 @@
 import * as React from "react"
 import {
-  IconChartBar,
-  IconHistory,
-  IconLayoutDashboard,
-  IconMail,
-  IconSettings,
-  IconShieldCheck,
-  IconTableExport,
-  IconUser,
+  IconCircleCheck,
+  IconHome,
+  IconInfoCircle,
+  IconReceipt,
+  IconReportAnalytics,
+  IconShield,
+  IconStar,
+  IconUsers,
 } from "@tabler/icons-react"
 
 import { NavMain } from "@/components/nav-main"
-import { NavSecondary } from "@/components/nav-secondary"
 import { NavUser } from "@/components/nav-user"
 import {
   Sidebar,
@@ -33,49 +32,42 @@ const data = {
     {
       title: "Dashboard",
       url: "/admin/dashboard",
-      icon: IconLayoutDashboard,
+      icon: IconHome,
     },
     {
-      title: "Transaction History",
+      title: "Transactions",
       url: "/admin/transactions",
-      icon: IconHistory,
+      icon: IconReceipt,
     },
     {
       title: "Vendors",
       url: "/admin/vendors",
-      icon: IconHistory,
+      icon: IconShield,
     },
     {
       title: "Analytics",
       url: "/admin/analytics",
-      icon: IconChartBar,
-    },
-    {
-      title: "App CMS",
-      url: "/admin/cms",
-      icon: IconTableExport,
+      icon: IconReportAnalytics,
     },
     {
       title: "Users/Students",
       url: "/admin/users",
-      icon: IconUser,
+      icon: IconUsers,
     },
     {
-      title: "Pins",
+      title: "App CMS",
+      url: "/admin/cms",
+      icon: IconInfoCircle,
+    },
+    {
+      title: "Student Requests",
+      url: "/admin/requests",
+      icon: IconCircleCheck,
+    },
+    {
+      title: "PINS",
       url: "/admin/pins",
-      icon: IconShieldCheck,
-    },
-  ],
-  navSecondary: [
-    {
-      title: "Contact Us",
-      url: "/admin/contact-us",
-      icon: IconMail,
-    },
-    {
-      title: "Settings",
-      url: "/admin/settings",
-      icon: IconSettings,
+      icon: IconStar,
     },
   ],
 }
@@ -95,26 +87,25 @@ export function AdminSidebar({
   ...props
 }: AdminSidebarProps) {
   return (
-    <Sidebar collapsible="offcanvas" {...props}>
-      <SidebarHeader>
+    <Sidebar collapsible="offcanvas" className="border-none" {...props}>
+      <SidebarHeader className="pt-6 px-4">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
-              className="data-[slot=sidebar-menu-button]:!p-1.5"
+              className="hover:bg-transparent"
             >
               <a href="/">
-                <span className="text-2xl font-bold text-[#18521C] ml-1">ReelX</span>
+                <span className="text-3xl font-black text-[#18521C] tracking-tighter">ReelX</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="px-2 mt-4">
         <NavMain items={data.navMain} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter className="p-4 mb-4">
         <NavUser user={user || data.user} onLogout={onLogout} />
       </SidebarFooter>
     </Sidebar>
