@@ -138,7 +138,12 @@ export function BrandingSettings({ formData, setFormData, vendorId }: BrandingSe
                             {uploadingProfile ? (
                                 <Loader2 className="w-8 h-8 text-slate-400 animate-spin" />
                             ) : formData.profilePicture ? (
-                                <img src={formData.profilePicture} alt="Profile" className="w-full h-full object-cover" />
+                                <img
+                                    key={formData.profilePicture}
+                                    src={formData.profilePicture}
+                                    alt="Profile"
+                                    className="w-full h-full object-cover"
+                                />
                             ) : (
                                 <Upload className="w-8 h-8 text-slate-300" />
                             )}
@@ -168,7 +173,12 @@ export function BrandingSettings({ formData, setFormData, vendorId }: BrandingSe
                             {uploadingCover ? (
                                 <Loader2 className="w-8 h-8 text-slate-400 animate-spin" />
                             ) : formData.coverImage ? (
-                                <img src={formData.coverImage} alt="Cover" className="w-full h-full object-cover" />
+                                <img
+                                    key={formData.coverImage}
+                                    src={formData.coverImage}
+                                    alt="Cover"
+                                    className="w-full h-full object-cover"
+                                />
                             ) : (
                                 <div className="flex flex-col items-center gap-2">
                                     <Upload className="w-8 h-8 text-slate-300" />

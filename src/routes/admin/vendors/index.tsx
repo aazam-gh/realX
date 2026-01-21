@@ -52,7 +52,7 @@ interface Vendor {
     contact: string
     // mainOffer: string
     offersCount: number
-    logoURL?: string
+    profilePicture?: string
 }
 
 
@@ -110,7 +110,7 @@ function RouteComponent() {
                     status: data.status ? ('Active' as const) : ('Inactive' as const),
                     contact: data.phoneNumber?.toString() || data.contact || '',
                     offersCount: data.offers || 0,
-                    logoURL: data.logoURL || '',
+                    profilePicture: data.profilePicture || '',
                 } as Vendor
             })
 
@@ -287,8 +287,8 @@ function RouteComponent() {
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex items-center gap-3">
-                                            {vendor.logoURL ? (
-                                                <img src={vendor.logoURL} alt={vendor.name} className="h-10 w-10 rounded-lg object-cover shrink-0" />
+                                            {vendor.profilePicture ? (
+                                                <img src={vendor.profilePicture} alt={vendor.name} className="h-10 w-10 rounded-lg object-cover shrink-0" />
                                             ) : (
                                                 <div className="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
                                                     <span className="text-gray-400 text-xs font-bold">{vendor.name.charAt(0)}</span>

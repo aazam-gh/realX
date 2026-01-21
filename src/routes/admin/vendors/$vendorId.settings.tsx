@@ -12,6 +12,7 @@ import { ArrowLeft, Save, Globe, Mail, Phone, Shield } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { BrandingSettings } from '@/components/admin/vendors/BrandingSettings'
+import { toast } from 'sonner'
 
 export const Route = createFileRoute('/admin/vendors/$vendorId/settings')({
     component: VendorSettingsComponent
@@ -67,7 +68,15 @@ function VendorSettingsComponent() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['vendor', vendorId] })
-            alert('Settings updated successfully!')
+            toast.success('Settings updated successfully!', {
+                description: 'The vendor information has been synchronized with the database.',
+                duration: 3000,
+            })
+        },
+        onError: (error) => {
+            toast.error('Failed to update settings', {
+                description: error instanceof Error ? error.message : 'An unknown error occurred',
+            })
         }
     })
 
