@@ -1,42 +1,99 @@
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { SquarePen, Plus } from 'lucide-react'
-import { useState } from 'react'
-import type { Vendor } from '@/routes/admin/vendors/$vendorId.settings'
+import { SquarePen, Plus, Loader2 } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { db } from '@/firebase/config'
+import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore'
+import { toast } from 'sonner'
 
-interface OffersSettingsProps {
-    formData: Vendor | null
-    setFormData: (val: any) => void
+interface Offer {
+    id: string
+    name: string
+    description: string
+    amount: number
+    banner: string
+    vendorID: string
+    isActive?: boolean
 }
 
-export function OffersSettings({ formData: _formData, setFormData: _setFormData }: OffersSettingsProps) {
-    const [offers] = useState([
-        {
-            id: 1,
-            title: '20% Student Discount',
-            description: 'Get a 20% Student Discount on the Total Bill.',
-            details: 'The discount is available for Dine-In and Takeaway across all branches.',
-            active: true
+interface OffersSettingsProps {
+    vendorId: string | undefined
+}
+
+export function OffersSettings({ vendorId }: OffersSettingsProps) {
+    const queryClient = useQueryClient()
+
+    const { data: offers, isLoading, error } = useQuery({
+        queryKey: ['offers', vendorId],
+        queryFn: async () => {
+            if (!vendorId) return []
+            const q = query(
+                collection(db, 'offers'),
+                where('vendorID', '==', vendorId)
+            )
+            const snapshot = await getDocs(q)
+            return snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            })) as Offer[]
         },
-        {
-            id: 2,
-            title: 'B1G1 Donuts',
-            description: 'Buy any Medium Size Latte & Get any Classic Donut FREE.',
-            details: 'The discount is available for Dine-In and Takeaway across all branches.\n\n*This applies to Hot or Iced Latte (Regular or Spanish).',
-            active: true
+        enabled: !!vendorId,
+        staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+        refetchOnWindowFocus: false,
+    })
+
+    const toggleMutation = useMutation({
+        mutationFn: async ({ offerId, isActive }: { offerId: string; isActive: boolean }) => {
+            const docRef = doc(db, 'offers', offerId)
+            await updateDoc(docRef, { isActive })
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['offers', vendorId] })
+            toast.success('Offer status updated')
+        },
+        onError: () => {
+            toast.error('Failed to update offer status')
         }
-    ])
+    })
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center py-20 w-full text-slate-400">
+                <Loader2 className="h-8 w-8 animate-spin text-[#7c3aed] mb-2" />
+                <span>Loading offers...</span>
+            </div>
+        )
+    }
+
+    if (error) {
+        return (
+            <div className="flex flex-col items-center justify-center py-20 w-full text-red-500">
+                <p>Error loading offers: {error instanceof Error ? error.message : 'Unknown error'}</p>
+                <Button
+                    variant="outline"
+                    onClick={() => queryClient.invalidateQueries({ queryKey: ['offers', vendorId] })}
+                    className="mt-4"
+                >
+                    Retry
+                </Button>
+            </div>
+        )
+    }
 
     return (
         <div className="flex flex-wrap gap-8 items-start py-4 overflow-x-auto pb-8">
-            {offers.map((offer) => (
+            {offers?.map((offer) => (
                 <div key={offer.id} className="flex items-center gap-6">
                     <Card className="flex flex-col w-[340px] h-[360px] rounded-[32px] border-none shadow-[0_8px_30px_rgb(0,0,0,0.06)] bg-white p-8 group transition-all duration-300 hover:shadow-[0_20px_40px_rgba(124,58,237,0.1)]">
                         <div className="flex justify-between items-start mb-6">
                             <h3 className="text-2xl font-black text-[#1a1a1a] pr-4 leading-[1.1] tracking-tight">
-                                {offer.title}
+                                {offer.name}
                             </h3>
-                            <Switch checked={offer.active} />
+                            <Switch
+                                checked={offer.isActive ?? true}
+                                onChange={(checked) => toggleMutation.mutate({ offerId: offer.id, isActive: checked })}
+                                disabled={toggleMutation.isPending}
+                            />
                         </div>
 
                         <div className="flex-grow space-y-4">
@@ -44,7 +101,7 @@ export function OffersSettings({ formData: _formData, setFormData: _setFormData 
                                 {offer.description}
                             </p>
                             <p className="text-slate-400 text-sm leading-normal whitespace-pre-wrap font-medium">
-                                {offer.details}
+                                {offer.amount}% discount available
                             </p>
                         </div>
 
@@ -95,11 +152,12 @@ export function OffersSettings({ formData: _formData, setFormData: _setFormData 
     )
 }
 
-function Switch({ checked }: { checked: boolean }) {
+function Switch({ checked, onChange, disabled }: { checked: boolean; onChange: (val: boolean) => void; disabled?: boolean }) {
     return (
         <div
             className={`w-[52px] h-[28px] rounded-full transition-all duration-300 cursor-pointer relative ${checked ? 'bg-[#7c3aed]' : 'bg-slate-200'
-                }`}
+                } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+            onClick={() => !disabled && onChange(!checked)}
         >
             <div
                 className={`absolute top-1 left-1 w-[20px] h-[20px] bg-white rounded-full transition-all duration-300 shadow-sm ${checked ? 'translate-x-[24px]' : 'translate-x-0'

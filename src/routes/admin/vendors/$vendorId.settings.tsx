@@ -131,7 +131,7 @@ function VendorSettingsComponent() {
                 </TabsContent>
 
                 <TabsContent value="offers">
-                    <OffersSettings formData={formData} setFormData={setFormData} />
+                    <OffersSettings vendorId={vendorId} />
                 </TabsContent>
             </Tabs>
 
