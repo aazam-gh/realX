@@ -106,7 +106,7 @@ function RouteComponent() {
                 const data = doc.data()
                 return {
                     id: doc.id,
-                    name: data.name || data.vendorName || 'Unnamed Vendor',
+                    name: data.name || 'Unnamed Vendor',
                     status: data.status ? ('Active' as const) : ('Inactive' as const),
                     contact: data.phoneNumber?.toString() || data.contact || '',
                     offersCount: data.offers || 0,
@@ -120,7 +120,7 @@ function RouteComponent() {
                 const nextDoc = snapshot.docs[nextDocIndex];
                 if (nextDoc) {
                     const nextDocData = nextDoc.data();
-                    cursors.current[page + 1] = nextDocData.name || nextDocData.vendorName;
+                    cursors.current[page + 1] = nextDocData.name;
                 }
             }
 

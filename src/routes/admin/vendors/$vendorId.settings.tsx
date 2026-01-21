@@ -11,6 +11,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Save, Globe, Mail, Phone, Shield } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
+import { BrandingSettings } from '@/components/admin/vendors/BrandingSettings'
 
 export const Route = createFileRoute('/admin/vendors/$vendorId/settings')({
     component: VendorSettingsComponent
@@ -19,12 +20,20 @@ export const Route = createFileRoute('/admin/vendors/$vendorId/settings')({
 interface Vendor {
     id: string
     name?: string
-    vendorName?: string
+    nameAr?: string
     email?: string
     phoneNumber?: string
     website?: string
     status?: string
     isFeatured?: boolean
+    shortDescriptionEn?: string
+    shortDescriptionAr?: string
+    keywordsEn?: string[]
+    keywordsAr?: string[]
+    tagsEn?: string[]
+    tagsAr?: string[]
+    profilePicture?: string
+    coverImage?: string
 }
 
 function VendorSettingsComponent() {
@@ -89,8 +98,9 @@ function VendorSettingsComponent() {
                     <ArrowLeft className="h-5 w-5" />
                 </Link>
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Vendor Settings</h1>
-                    <p className="text-muted-foreground">Manage configuration for {vendor?.name || vendor?.vendorName || 'Unnamed Vendor'}</p>
+                    <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+                        <span className="text-slate-400 font-medium">{vendor?.name || 'Vendor'}</span>
+                    </h1>
                 </div>
             </div>
 
@@ -113,7 +123,7 @@ function VendorSettingsComponent() {
                                     <Label htmlFor="name">Brand Name</Label>
                                     <Input
                                         id="name"
-                                        value={formData?.name || formData?.vendorName || ''}
+                                        value={formData?.name || ''}
                                         onChange={(e) => setFormData(prev => prev ? ({ ...prev, name: e.target.value }) : null)}
                                     />
                                 </div>
@@ -190,29 +200,10 @@ function VendorSettingsComponent() {
                     </Card>
                 </TabsContent>
 
-                <TabsContent value="branding" className="space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Notification Preferences</CardTitle>
-                            <CardDescription>Choose what updates the vendor receives.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            <div className="flex items-center justify-between">
-                                <div className="space-y-0.5">
-                                    <Label className="text-base">Email Alerts</Label>
-                                    <p className="text-sm text-muted-foreground">Receive emails for new transactions.</p>
-                                </div>
-                                <Checkbox defaultChecked />
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <div className="space-y-0.5">
-                                    <Label className="text-base">System Messages</Label>
-                                    <p className="text-sm text-muted-foreground">Get notified about platform updates.</p>
-                                </div>
-                                <Checkbox defaultChecked />
-                            </div>
-                        </CardContent>
-                    </Card>
+                <TabsContent value="branding" className="space-y-6 pt-6">
+                    {formData && (
+                        <BrandingSettings formData={formData} setFormData={setFormData} vendorId={vendorId} />
+                    )}
                 </TabsContent>
 
                 <TabsContent value="offers" className="space-y-6">
