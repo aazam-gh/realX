@@ -8,12 +8,12 @@ import {
   FieldSeparator,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { siGoogle } from "simple-icons"
+import { siGithub } from "simple-icons"
 import { useAuth } from "@/auth"
 import { useRouter } from "@tanstack/react-router"
 import * as React from "react"
 import { Link } from "@tanstack/react-router"
-import { GoogleAuthProvider } from "firebase/auth"
+import { GithubAuthProvider } from "firebase/auth"
 
 export function LoginForm({
   className,
@@ -44,15 +44,15 @@ export function LoginForm({
     }
   }
 
-  const handleGoogleLogin = async () => {
+  const handleGithubLogin = async () => {
     setError(null)
     setIsLoading(true)
     try {
-      await login(new GoogleAuthProvider())
+      await login(new GithubAuthProvider())
       router.invalidate()
     } catch (err) {
-      console.error("Google login error:", err)
-      setError(err instanceof Error ? err.message : "Failed to sign in with Google.")
+      console.error("GitHub login error:", err)
+      setError(err instanceof Error ? err.message : "Failed to sign in with GitHub.")
     } finally {
       setIsLoading(false)
     }
@@ -95,19 +95,19 @@ export function LoginForm({
         </Field>
         <FieldSeparator>Or continue with</FieldSeparator>
         <Field>
-          <Button variant="outline" type="button" onClick={handleGoogleLogin} disabled={isLoading}>
+          <Button variant="outline" type="button" onClick={handleGithubLogin} disabled={isLoading}>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
               className="mr-2 h-5 w-5"
               fill="currentColor"
-              aria-labelledby="googleIconTitle"
+              aria-labelledby="githubIconTitle"
               role="img"
             >
-              <title id="googleIconTitle">Google Logo</title>
-              <path d={siGoogle.path} />
+              <title id="githubIconTitle">GitHub Logo</title>
+              <path d={siGithub.path} />
             </svg>
-            Continue with Google
+            Continue with GitHub
           </Button>
           <FieldDescription className="text-center">
             Don&apos;t have an account?{" "}

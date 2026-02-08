@@ -8,12 +8,12 @@ import {
   FieldSeparator,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { siGoogle } from "simple-icons"
+import { siGithub } from "simple-icons"
 import { useAuth } from "@/auth"
 import { useRouter } from "@tanstack/react-router"
 import * as React from "react"
 import { Link } from "@tanstack/react-router"
-import { GoogleAuthProvider } from "firebase/auth"
+import { GithubAuthProvider } from "firebase/auth"
 
 export function SignupForm({
   className,
@@ -58,15 +58,15 @@ export function SignupForm({
     }
   }
 
-  const handleGoogleSignup = async () => {
+  const handleGithubSignup = async () => {
     setError(null)
     setIsLoading(true)
     try {
-      await login(new GoogleAuthProvider())
+      await login(new GithubAuthProvider())
       router.invalidate()
     } catch (err) {
-      console.error("Google signup error:", err)
-      setError(err instanceof Error ? err.message : "Failed to sign up with Google.")
+      console.error("GitHub signup error:", err)
+      setError(err instanceof Error ? err.message : "Failed to sign up with GitHub.")
     } finally {
       setIsLoading(false)
     }
@@ -117,19 +117,19 @@ export function SignupForm({
         </Field>
         <FieldSeparator>Or continue with</FieldSeparator>
         <Field>
-          <Button variant="outline" type="button" onClick={handleGoogleSignup} disabled={isLoading}>
+          <Button variant="outline" type="button" onClick={handleGithubSignup} disabled={isLoading}>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
               className="mr-2 h-5 w-5"
               fill="currentColor"
-              aria-labelledby="googleSignupIconTitle"
+              aria-labelledby="githubSignupIconTitle"
               role="img"
             >
-              <title id="googleSignupIconTitle">Google Logo</title>
-              <path d={siGoogle.path} />
+              <title id="githubSignupIconTitle">GitHub Logo</title>
+              <path d={siGithub.path} />
             </svg>
-            Sign up with Google
+            Sign up with GitHub
           </Button>
           <FieldDescription className="px-6 text-center">
             Already have an account?{" "}
