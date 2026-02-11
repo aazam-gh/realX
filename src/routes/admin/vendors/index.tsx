@@ -183,7 +183,7 @@ function RouteComponent() {
                     </Button>
                     <Dialog open={open} onOpenChange={setOpen}>
                         <DialogTrigger asChild>
-                            <Button className="bg-[#8b5cf6] hover:bg-[#7c3aed] text-white gap-2 h-10">
+                            <Button className="bg-[#18B852] hover:bg-[#18B852] text-white gap-2 h-10">
                                 <Plus className="h-4 w-4" /> Add New Vendor
                             </Button>
                         </DialogTrigger>
@@ -227,7 +227,7 @@ function RouteComponent() {
                                     Cancel
                                 </Button>
                                 <Button
-                                    className="bg-[#8b5cf6] hover:bg-[#7c3aed] text-white"
+                                    className="bg-[#18B852] hover:bg-[#18B852] text-white"
                                     onClick={handleAddVendor}
                                 >
                                     Add Vendor
@@ -268,7 +268,7 @@ function RouteComponent() {
                             <TableRow>
                                 <TableCell colSpan={7} className="text-center py-10">
                                     <div className="flex flex-col items-center gap-2">
-                                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#8b5cf6] border-t-transparent" />
+                                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#18B852] border-t-transparent" />
                                         <p className="text-muted-foreground font-medium">Loading vendors...</p>
                                     </div>
                                 </TableCell>

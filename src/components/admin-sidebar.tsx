@@ -50,24 +50,9 @@ const data = {
       icon: IconReportAnalytics,
     },
     {
-      title: "Users/Students",
-      url: "/admin/users",
-      icon: IconUsers,
-    },
-    {
       title: "App CMS",
       url: "/admin/cms",
       icon: IconInfoCircle,
-    },
-    {
-      title: "Student Requests",
-      url: "/admin/requests",
-      icon: IconCircleCheck,
-    },
-    {
-      title: "PINS",
-      url: "/admin/pins",
-      icon: IconStar,
     },
   ],
 }
@@ -96,7 +81,7 @@ export function AdminSidebar({
               className="hover:bg-transparent"
             >
               <a href="/">
-                <span className="text-3xl font-black text-[#18521C] tracking-tighter">ReelX</span>
+                <span className="text-3xl font-black text-[#18521C] tracking-tighter">realX</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>

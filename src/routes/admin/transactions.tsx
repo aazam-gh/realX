@@ -193,7 +193,7 @@ function RouteComponent() {
               <TableRow key={tx.id} className="h-16 border-b border-gray-100 hover:bg-gray-50/50">
                 <TableCell>
                   <Checkbox
-                    className={tx.isSelected ? "bg-[#8b5cf6] border-[#8b5cf6] text-white" : ""}
+                    className={tx.isSelected ? "bg-[#18B852] border-[#18B852] text-white" : ""}
                     checked={tx.isSelected}
                   />
                 </TableCell>
@@ -219,7 +219,7 @@ function RouteComponent() {
         <Button variant="outline" size="sm" className="h-8 w-8 p-0 text-xs text-gray-500">
           1
         </Button>
-        <Button size="sm" className="h-8 w-8 p-0 text-xs bg-[#8b5cf6] hover:bg-[#7c3aed] text-white">
+        <Button size="sm" className="h-8 w-8 p-0 text-xs bg-[#18B852] hover:bg-[#18B852] text-white">
           2
         </Button>
         <Button variant="outline" size="sm" className="h-8 w-8 p-0 text-xs text-gray-500">

@@ -48,12 +48,7 @@ const data = {
       title: "Reviews",
       url: "#",
       icon: IconStar,
-    },
-    {
-      title: "Vendor PIN",
-      url: "/pin",
-      icon: IconShieldCheck,
-    },
+    }
   ],
   navSecondary: [
     {
@@ -93,7 +88,7 @@ export function AppSidebar({
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
               <a href="/">
-                <span className="text-2xl font-bold text-[#18521C] ml-1">ReelX</span>
+                <span className="text-2xl font-bold text-[#18521C] ml-1">realX</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>

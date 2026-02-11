@@ -8,7 +8,6 @@ import { ArrowLeft, Save } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { BrandingSettings } from '@/components/admin/vendors/BrandingSettings'
-import { GeneralSettings } from '@/components/admin/vendors/GeneralSettings'
 import { OffersSettings } from '@/components/admin/vendors/OffersSettings'
 import { toast } from 'sonner'
 
@@ -78,12 +77,12 @@ function VendorSettingsComponent() {
         }
     })
 
-    const [activeTab, setActiveTab] = useState('general')
+    const [activeTab, setActiveTab] = useState('branding')
 
     if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#8b5cf6] border-t-transparent" />
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#18B852] border-t-transparent" />
             </div>
         )
     }
@@ -114,15 +113,10 @@ function VendorSettingsComponent() {
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full max-w-md grid-cols-3 mb-8">
-                    <TabsTrigger value="general">General</TabsTrigger>
+                <TabsList className="grid w-full max-w-md grid-cols-2 mb-8">
                     <TabsTrigger value="branding">Branding</TabsTrigger>
                     <TabsTrigger value="offers">Offers</TabsTrigger>
                 </TabsList>
-
-                <TabsContent value="general">
-                    <GeneralSettings formData={formData} setFormData={setFormData} />
-                </TabsContent>
 
                 <TabsContent value="branding" className="space-y-6 pt-6">
                     {formData && (
@@ -131,7 +125,7 @@ function VendorSettingsComponent() {
                 </TabsContent>
 
                 <TabsContent value="offers">
-                    <OffersSettings vendorId={vendorId} />
+                    <OffersSettings vendorId={vendorId} vendorName={vendor?.name || ''} />
                 </TabsContent>
             </Tabs>
 
@@ -139,7 +133,7 @@ function VendorSettingsComponent() {
                 <div className="flex justify-end gap-4 pt-4 border-t">
                     <Button variant="outline" onClick={() => setFormData(vendor)}>Reset Changes</Button>
                     <Button
-                        className="bg-[#8b5cf6] hover:bg-[#7c3aed] text-white gap-2"
+                        className="bg-[#18B852] hover:bg-[#18B852] text-white gap-2"
                         onClick={handleSave}
                         disabled={updateMutation.isPending}
                     >
