@@ -8,12 +8,12 @@ import {
   FieldSeparator,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { siGithub } from "simple-icons"
+import { siGithub, siGoogle } from "simple-icons"
 import { useAuth } from "@/auth"
 import { useRouter } from "@tanstack/react-router"
 import * as React from "react"
 import { Link } from "@tanstack/react-router"
-import { GithubAuthProvider } from "firebase/auth"
+import { GithubAuthProvider, GoogleAuthProvider } from "firebase/auth"
 
 export function SignupForm({
   className,
@@ -72,6 +72,20 @@ export function SignupForm({
     }
   }
 
+  const handleGoogleSignup = async () => {
+    setError(null)
+    setIsLoading(true)
+    try {
+      await login(new GoogleAuthProvider())
+      router.invalidate()
+    } catch (err) {
+      console.error("Google signup error:", err)
+      setError(err instanceof Error ? err.message : "Failed to sign up with Google.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
     <form className={cn("flex flex-col gap-6", className)} {...props} onSubmit={handleEmailSignup}>
       <FieldGroup>
@@ -117,20 +131,36 @@ export function SignupForm({
         </Field>
         <FieldSeparator>Or continue with</FieldSeparator>
         <Field>
-          <Button variant="outline" type="button" onClick={handleGithubSignup} disabled={isLoading}>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              className="mr-2 h-5 w-5"
-              fill="currentColor"
-              aria-labelledby="githubSignupIconTitle"
-              role="img"
-            >
-              <title id="githubSignupIconTitle">GitHub Logo</title>
-              <path d={siGithub.path} />
-            </svg>
-            Sign up with GitHub
-          </Button>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <Button variant="outline" type="button" onClick={handleGoogleSignup} disabled={isLoading}>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                className="mr-2 h-5 w-5"
+                fill="currentColor"
+                aria-labelledby="googleSignupIconTitle"
+                role="img"
+              >
+                <title id="googleSignupIconTitle">Google Logo</title>
+                <path d={siGoogle.path} />
+              </svg>
+              Google
+            </Button>
+            <Button variant="outline" type="button" onClick={handleGithubSignup} disabled={isLoading}>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                className="mr-2 h-5 w-5"
+                fill="currentColor"
+                aria-labelledby="githubSignupIconTitle"
+                role="img"
+              >
+                <title id="githubSignupIconTitle">GitHub Logo</title>
+                <path d={siGithub.path} />
+              </svg>
+              GitHub
+            </Button>
+          </div>
           <FieldDescription className="px-6 text-center">
             Already have an account?{" "}
             <Link to="/login" className="underline underline-offset-4">
