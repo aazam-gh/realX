@@ -8,12 +8,12 @@ import {
   FieldSeparator,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { siGoogle } from "simple-icons"
+import { siGithub, siGoogle } from "simple-icons"
 import { useAuth } from "@/auth"
 import { useRouter } from "@tanstack/react-router"
 import * as React from "react"
 import { Link } from "@tanstack/react-router"
-import { GoogleAuthProvider } from "firebase/auth"
+import { GithubAuthProvider, GoogleAuthProvider } from "firebase/auth"
 
 export function LoginForm({
   className,
@@ -39,6 +39,20 @@ export function LoginForm({
     } catch (err) {
       console.error("Login error:", err)
       setError(err instanceof Error ? err.message : "Failed to sign in. Please check your credentials.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleGithubLogin = async () => {
+    setError(null)
+    setIsLoading(true)
+    try {
+      await login(new GithubAuthProvider())
+      router.invalidate()
+    } catch (err) {
+      console.error("GitHub login error:", err)
+      setError(err instanceof Error ? err.message : "Failed to sign in with GitHub.")
     } finally {
       setIsLoading(false)
     }
@@ -95,20 +109,36 @@ export function LoginForm({
         </Field>
         <FieldSeparator>Or continue with</FieldSeparator>
         <Field>
-          <Button variant="outline" type="button" onClick={handleGoogleLogin} disabled={isLoading}>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              className="mr-2 h-5 w-5"
-              fill="currentColor"
-              aria-labelledby="googleIconTitle"
-              role="img"
-            >
-              <title id="googleIconTitle">Google Logo</title>
-              <path d={siGoogle.path} />
-            </svg>
-            Continue with Google
-          </Button>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <Button variant="outline" type="button" onClick={handleGoogleLogin} disabled={isLoading}>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                className="mr-2 h-5 w-5"
+                fill="currentColor"
+                aria-labelledby="googleIconTitle"
+                role="img"
+              >
+                <title id="googleIconTitle">Google Logo</title>
+                <path d={siGoogle.path} />
+              </svg>
+              Google
+            </Button>
+            <Button variant="outline" type="button" onClick={handleGithubLogin} disabled={isLoading}>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                className="mr-2 h-5 w-5"
+                fill="currentColor"
+                aria-labelledby="githubIconTitle"
+                role="img"
+              >
+                <title id="githubIconTitle">GitHub Logo</title>
+                <path d={siGithub.path} />
+              </svg>
+              GitHub
+            </Button>
+          </div>
           <FieldDescription className="text-center">
             Don&apos;t have an account?{" "}
             <Link to="/signup" className="underline underline-offset-4">

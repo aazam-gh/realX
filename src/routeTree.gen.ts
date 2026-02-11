@@ -102,7 +102,7 @@ export interface FileRoutesByFullPath {
   '/contact-us': typeof vendorPanelVendorContactUsRoute
   '/dashboard': typeof vendorPanelVendorDashboardRoute
   '/pin': typeof vendorPanelVendorPinRoute
-  '/admin/vendors': typeof AdminVendorsIndexRoute
+  '/admin/vendors/': typeof AdminVendorsIndexRoute
   '/admin/vendors/$vendorId/settings': typeof AdminVendorsVendorIdSettingsRoute
 }
 export interface FileRoutesByTo {
@@ -147,7 +147,7 @@ export interface FileRouteTypes {
     | '/contact-us'
     | '/dashboard'
     | '/pin'
-    | '/admin/vendors'
+    | '/admin/vendors/'
     | '/admin/vendors/$vendorId/settings'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -249,7 +249,7 @@ declare module '@tanstack/react-router' {
     '/admin/vendors/': {
       id: '/admin/vendors/'
       path: '/vendors'
-      fullPath: '/admin/vendors'
+      fullPath: '/admin/vendors/'
       preLoaderRoute: typeof AdminVendorsIndexRouteImport
       parentRoute: typeof AdminRoute
     }
