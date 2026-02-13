@@ -241,6 +241,25 @@ export function BrandingSettings({ formData, setFormData, vendorId }: BrandingSe
                     </div>
                 </div>
 
+                {/* Vendor PIN */}
+                <div className="space-y-4">
+                    <Label className="text-base font-semibold text-slate-700">Vendor Security PIN (4 Digits)</Label>
+                    <div className="relative">
+                        <Input
+                            type="text"
+                            inputMode="numeric"
+                            placeholder="1234"
+                            maxLength={4}
+                            value={formData.pin || ""}
+                            onChange={(e) => {
+                                const val = e.target.value.replace(/\D/g, '').slice(0, 4);
+                                setFormData({ ...formData, pin: val });
+                            }}
+                            className="bg-slate-50 border-none ring-0 focus-visible:ring-1 focus-visible:ring-blue-400 h-14 rounded-2xl px-5 text-sm font-mono tracking-[0.5em]"
+                        />
+                    </div>
+                </div>
+
                 {/* Short Description */}
                 <div className="space-y-4">
                     <Label className="text-base font-semibold text-slate-700">Short Description (English)</Label>
@@ -340,7 +359,7 @@ export function BrandingSettings({ formData, setFormData, vendorId }: BrandingSe
                         />
                     </div>
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     )
 }

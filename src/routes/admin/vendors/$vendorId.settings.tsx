@@ -32,6 +32,7 @@ export interface Vendor {
     tagsAr?: string[]
     profilePicture?: string
     coverImage?: string
+    pin?: string
 }
 
 function VendorSettingsComponent() {
@@ -111,6 +112,8 @@ function VendorSettingsComponent() {
                     </h1>
                 </div>
             </div>
+
+
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full max-w-md grid-cols-2 mb-8">
