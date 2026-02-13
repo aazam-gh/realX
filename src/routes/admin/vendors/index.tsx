@@ -50,8 +50,7 @@ interface Vendor {
     name: string
     status: 'Active' | 'Inactive'
     contact: string
-    // mainOffer: string
-    offersCount: number
+    pin: string
     profilePicture?: string
 }
 
@@ -102,17 +101,20 @@ function RouteComponent() {
                 ? snapshot.docs
                 : snapshot.docs.slice((page - 1) * pageSize);
 
-            const vendors = pageDocs.map((doc) => {
+            const vendors = await Promise.all(pageDocs.map(async (doc) => {
                 const data = doc.data()
+                const vendorId = doc.id
+
+
                 return {
-                    id: doc.id,
+                    id: vendorId,
                     name: data.name || 'Unnamed Vendor',
                     status: data.status ? ('Active' as const) : ('Inactive' as const),
                     contact: data.phoneNumber?.toString() || data.contact || '',
-                    offersCount: data.offers || 0,
+                    pin: data.pin || '----',
                     profilePicture: data.profilePicture || '',
                 } as Vendor
-            })
+            }))
 
             // Cache the start of the NEXT page if it's not already cached
             if (pageDocs.length === pageSize) {
@@ -258,15 +260,14 @@ function RouteComponent() {
                             <TableHead className="text-black font-bold text-base">Brand Name</TableHead>
                             <TableHead className="text-black font-bold text-base">Status</TableHead>
                             <TableHead className="text-black font-bold text-base">Contact Info</TableHead>
-                            {/* <TableHead className="text-black font-bold text-base">Main Offer</TableHead> */}
-                            <TableHead className="text-black font-bold text-base text-center">Number of Offers</TableHead>
+                            <TableHead className="text-black font-bold text-base">Vendor Pin</TableHead>
                             <TableHead className="text-black font-bold text-base text-right pr-8">Actions:</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {loading ? (
                             <TableRow>
-                                <TableCell colSpan={7} className="text-center py-10">
+                                <TableCell colSpan={6} className="text-center py-10">
                                     <div className="flex flex-col items-center gap-2">
                                         <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#18B852] border-t-transparent" />
                                         <p className="text-muted-foreground font-medium">Loading vendors...</p>
@@ -275,7 +276,7 @@ function RouteComponent() {
                             </TableRow>
                         ) : vendorList.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
+                                <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
                                     No vendors found.
                                 </TableCell>
                             </TableRow>
@@ -303,8 +304,7 @@ function RouteComponent() {
                                         </span>
                                     </TableCell>
                                     <TableCell className="font-medium text-gray-900">{vendor.contact}</TableCell>
-                                    {/* <TableCell className="font-medium text-gray-900">{vendor.mainOffer}</TableCell> */}
-                                    <TableCell className="text-center font-medium text-gray-900">{vendor.offersCount}</TableCell>
+                                    <TableCell className="font-mono font-medium text-gray-900 tracking-widest">{vendor.pin}</TableCell>
                                     <TableCell className="text-right">
                                         <Link to="/admin/vendors/$vendorId/settings" params={{ vendorId: vendor.id }}>
                                             <Button variant="outline" size="sm" className="rounded-full h-8 px-4 gap-1 text-xs font-semibold">
