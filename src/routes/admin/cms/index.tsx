@@ -16,12 +16,7 @@ const CMS_ITEMS = [
         title: 'Categories & Sorting',
         icon: '📁',
         href: '/admin/cms/categories' as const,
-    },
-    {
-        title: 'Sliders & Sections',
-        icon: '🎠',
-        href: '/admin/cms/sliders' as const,
-    },
+    }
 ]
 
 function CMSIndex() {

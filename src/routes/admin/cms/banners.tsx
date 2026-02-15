@@ -1,5 +1,0 @@
-import { createFileRoute } from '@tanstack/react-router'
-
-export const Route = createFileRoute('/admin/cms/banners')({
-    component: () => <div>Banner Management</div>,
-})
