@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { db } from '@/firebase/config'
 import { doc, getDoc, updateDoc } from 'firebase/firestore'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Save } from 'lucide-react'
+import { ArrowLeft, Save, Loader2 } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { BrandingSettings } from '@/components/admin/vendors/BrandingSettings'
@@ -140,8 +140,17 @@ function VendorSettingsComponent() {
                         onClick={handleSave}
                         disabled={updateMutation.isPending}
                     >
-                        <Save className="h-4 w-4" />
-                        {updateMutation.isPending ? 'Saving...' : 'Save Settings'}
+                        {updateMutation.isPending ? (
+                            <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Saving...
+                            </>
+                        ) : (
+                            <>
+                                <Save className="h-4 w-4" />
+                                Save Settings
+                            </>
+                        )}
                     </Button>
                 </div>
             )}

@@ -17,8 +17,6 @@ interface BrandingSettingsProps {
 export function BrandingSettings({ formData, setFormData, vendorId }: BrandingSettingsProps) {
     const [keywordInputEn, setKeywordInputEn] = useState("")
     const [keywordInputAr, setKeywordInputAr] = useState("")
-    const [tagInputEn, setTagInputEn] = useState("")
-    const [tagInputAr, setTagInputAr] = useState("")
     const [uploadingProfile, setUploadingProfile] = useState(false)
     const [uploadingCover, setUploadingCover] = useState(false)
     const profileInputRef = useRef<HTMLInputElement>(null)
@@ -85,41 +83,6 @@ export function BrandingSettings({ formData, setFormData, vendorId }: BrandingSe
         })
     }
 
-    const handleAddTagEn = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter' && tagInputEn.trim()) {
-            e.preventDefault()
-            const tags = formData.tagsEn || []
-            if (!tags.includes(tagInputEn.trim())) {
-                setFormData({ ...formData, tagsEn: [...tags, tagInputEn.trim()] })
-            }
-            setTagInputEn("")
-        }
-    }
-
-    const handleRemoveTagEn = (tag: string) => {
-        setFormData({
-            ...formData,
-            tagsEn: (formData.tagsEn || []).filter((t: string) => t !== tag)
-        })
-    }
-
-    const handleAddTagAr = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter' && tagInputAr.trim()) {
-            e.preventDefault()
-            const tags = formData.tagsAr || []
-            if (!tags.includes(tagInputAr.trim())) {
-                setFormData({ ...formData, tagsAr: [...tags, tagInputAr.trim()] })
-            }
-            setTagInputAr("")
-        }
-    }
-
-    const handleRemoveTagAr = (tag: string) => {
-        setFormData({
-            ...formData,
-            tagsAr: (formData.tagsAr || []).filter((t: string) => t !== tag)
-        })
-    }
 
     return (
         <div className="space-y-8">
@@ -289,7 +252,16 @@ export function BrandingSettings({ formData, setFormData, vendorId }: BrandingSe
                         {(formData.keywordsEn || []).map((keyword: string) => (
                             <Badge key={keyword} variant="secondary" className="gap-2 bg-white hover:bg-white text-slate-600 py-1.5 px-3 rounded-xl border border-slate-100 shadow-sm text-xs font-medium">
                                 {keyword}
-                                <X className="w-3.5 h-3.5 cursor-pointer text-red-500 hover:text-red-600 transition-colors" onClick={() => handleRemoveKeywordEn(keyword)} />
+                                <span
+                                    className="cursor-pointer text-red-500 hover:text-red-600 transition-colors pointer-events-auto"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        handleRemoveKeywordEn(keyword);
+                                    }}
+                                >
+                                    <X className="w-3.5 h-3.5" />
+                                </span>
                             </Badge>
                         ))}
                         <input
@@ -308,7 +280,16 @@ export function BrandingSettings({ formData, setFormData, vendorId }: BrandingSe
                         {(formData.keywordsAr || []).map((keyword: string) => (
                             <Badge key={keyword} variant="secondary" className="gap-2 bg-white hover:bg-white text-slate-600 py-1.5 px-3 rounded-xl border border-slate-100 shadow-sm text-xs font-medium">
                                 {keyword}
-                                <X className="w-3.5 h-3.5 cursor-pointer text-red-500 hover:text-red-600 transition-colors" onClick={() => handleRemoveKeywordAr(keyword)} />
+                                <span
+                                    className="cursor-pointer text-red-500 hover:text-red-600 transition-colors pointer-events-auto"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        handleRemoveKeywordAr(keyword);
+                                    }}
+                                >
+                                    <X className="w-3.5 h-3.5" />
+                                </span>
                             </Badge>
                         ))}
                         <input
@@ -317,45 +298,6 @@ export function BrandingSettings({ formData, setFormData, vendorId }: BrandingSe
                             value={keywordInputAr}
                             onChange={(e) => setKeywordInputAr(e.target.value)}
                             onKeyDown={handleAddKeywordAr}
-                        />
-                    </div>
-                </div>
-
-                {/* Tags */}
-                <div className="space-y-4">
-                    <Label className="text-base font-semibold text-slate-700">Tags</Label>
-                    <div className="flex flex-wrap gap-2 p-3 bg-slate-50 rounded-2xl min-h-[56px] border border-transparent focus-within:ring-1 focus-within:ring-blue-400 transition-all">
-                        {(formData.tagsEn || []).map((tag: string) => (
-                            <Badge key={tag} variant="secondary" className="gap-2 bg-white hover:bg-white text-slate-600 py-1.5 px-3 rounded-xl border border-slate-100 shadow-sm text-xs font-medium">
-                                {tag}
-                                <X className="w-3.5 h-3.5 cursor-pointer text-red-500 hover:text-red-600 transition-colors" onClick={() => handleRemoveTagEn(tag)} />
-                            </Badge>
-                        ))}
-                        <input
-                            className="flex-1 bg-transparent border-none outline-none text-sm min-w-[120px] px-2 text-slate-600 placeholder:text-slate-400"
-                            placeholder="Add tag..."
-                            value={tagInputEn}
-                            onChange={(e) => setTagInputEn(e.target.value)}
-                            onKeyDown={handleAddTagEn}
-                        />
-                    </div>
-                </div>
-
-                <div className="space-y-4">
-                    <Label className="text-base font-semibold text-slate-700">Tags (Arabic)</Label>
-                    <div className="flex flex-wrap gap-2 p-3 bg-slate-50 rounded-2xl min-h-[56px] border border-transparent focus-within:ring-1 focus-within:ring-blue-400 transition-all" dir="rtl">
-                        {(formData.tagsAr || []).map((tag: string) => (
-                            <Badge key={tag} variant="secondary" className="gap-2 bg-white hover:bg-white text-slate-600 py-1.5 px-3 rounded-xl border border-slate-100 shadow-sm text-xs font-medium">
-                                {tag}
-                                <X className="w-3.5 h-3.5 cursor-pointer text-red-500 hover:text-red-600 transition-colors" onClick={() => handleRemoveTagAr(tag)} />
-                            </Badge>
-                        ))}
-                        <input
-                            className="flex-1 bg-transparent border-none outline-none text-sm min-w-[120px] px-2 text-slate-600 placeholder:text-slate-400"
-                            placeholder="اضافة تاغ..."
-                            value={tagInputAr}
-                            onChange={(e) => setTagInputAr(e.target.value)}
-                            onKeyDown={handleAddTagAr}
                         />
                     </div>
                 </div>

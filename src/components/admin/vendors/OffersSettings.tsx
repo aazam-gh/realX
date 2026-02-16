@@ -459,7 +459,16 @@ export function OffersSettings({ vendorId, vendorName }: OffersSettingsProps) {
                                 {(formData.categories || []).map(cat => (
                                     <Badge key={cat} variant="secondary" className="gap-1 pl-2 pr-1 py-1 bg-white border border-slate-200">
                                         {cat}
-                                        <X className="w-3 h-3 cursor-pointer hover:text-red-500" onClick={() => removeCategory(cat)} />
+                                        <span
+                                            className="ml-1 cursor-pointer hover:text-red-500 transition-colors pointer-events-auto"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                removeCategory(cat);
+                                            }}
+                                        >
+                                            <X className="w-3 h-3" />
+                                        </span>
                                     </Badge>
                                 ))}
                                 <input
@@ -513,8 +522,8 @@ export function OffersSettings({ vendorId, vendorName }: OffersSettingsProps) {
                         onClick={() => saveMutation.mutate(formData)}
                         disabled={saveMutation.isPending || uploadingBanner}
                         className={`rounded-full px-8 h-12 text-base font-bold text-white shadow-lg flex items-center gap-2 ${editingOffer
-                                ? 'bg-[#8B5CF6] hover:bg-[#8B5CF6]/90 shadow-purple-200'
-                                : 'bg-[#18B852] hover:bg-[#18B852]/90 shadow-green-200'
+                            ? 'bg-[#8B5CF6] hover:bg-[#8B5CF6]/90 shadow-purple-200'
+                            : 'bg-[#18B852] hover:bg-[#18B852]/90 shadow-green-200'
                             }`}
                     >
                         {saveMutation.isPending ? (

@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils'
 import { Link } from '@tanstack/react-router'
 import type { BannerItem } from '@/types/banners'
 
+
 export const Route = createFileRoute('/admin/cms/banners/')({
     component: BannersManagement,
 })

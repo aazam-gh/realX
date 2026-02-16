@@ -18,7 +18,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
-import { Search, Upload, Plus, ChevronRight } from 'lucide-react'
+import { Search, Upload, Plus, ChevronRight, Loader2 } from 'lucide-react'
 import { useState, useRef } from 'react'
 import {
     Dialog,
@@ -156,7 +156,7 @@ function RouteComponent() {
         }
     })
 
-    const loading = isQueryLoading || addVendorMutation.isPending
+    const loading = isQueryLoading
 
     const handleAddVendor = async () => {
         if (!form.name || !form.email || !form.password) return
@@ -201,6 +201,7 @@ function RouteComponent() {
                                         value={form.name}
                                         onChange={(e) => setForm({ ...form, name: e.target.value })}
                                         placeholder="Enter vendor name"
+                                        disabled={addVendorMutation.isPending}
                                     />
                                 </div>
                                 <div className="grid gap-2">
@@ -211,6 +212,7 @@ function RouteComponent() {
                                         value={form.email}
                                         onChange={(e) => setForm({ ...form, email: e.target.value })}
                                         placeholder="Enter email address"
+                                        disabled={addVendorMutation.isPending}
                                     />
                                 </div>
                                 <div className="grid gap-2">
@@ -221,6 +223,7 @@ function RouteComponent() {
                                         value={form.password}
                                         onChange={(e) => setForm({ ...form, password: e.target.value })}
                                         placeholder="Enter password"
+                                        disabled={addVendorMutation.isPending}
                                     />
                                 </div>
                             </div>
@@ -231,8 +234,16 @@ function RouteComponent() {
                                 <Button
                                     className="bg-[#18B852] hover:bg-[#18B852] text-white"
                                     onClick={handleAddVendor}
+                                    disabled={addVendorMutation.isPending}
                                 >
-                                    Add Vendor
+                                    {addVendorMutation.isPending ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            Adding Vendor...
+                                        </>
+                                    ) : (
+                                        'Add Vendor'
+                                    )}
                                 </Button>
                             </DialogFooter>
                         </DialogContent>
