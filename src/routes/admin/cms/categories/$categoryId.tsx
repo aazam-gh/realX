@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import {
     ArrowLeft,
@@ -13,7 +13,7 @@ import {
     getDoc,
     updateDoc
 } from 'firebase/firestore'
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -30,6 +30,7 @@ interface SubCategoryItemProps {
     onImageClick: (index: number) => void
     uploadingSubId: number | null
     isLast: boolean
+    isUpdating?: boolean
 }
 
 function SubCategoryItem({
@@ -40,8 +41,20 @@ function SubCategoryItem({
     onMove,
     onImageClick,
     uploadingSubId,
-    isLast
+    isLast,
+    isUpdating
 }: SubCategoryItemProps) {
+    const [nameEnglish, setNameEnglish] = useState(sub.nameEnglish)
+    const [nameArabic, setNameArabic] = useState(sub.nameArabic)
+
+    // Sync with props if they change from outside (e.g. after a save or move)
+    useEffect(() => {
+        setNameEnglish(sub.nameEnglish)
+        setNameArabic(sub.nameArabic)
+    }, [sub.nameEnglish, sub.nameArabic])
+
+    const hasChanges = nameEnglish !== sub.nameEnglish || nameArabic !== sub.nameArabic
+
     return (
         <div className="flex flex-col gap-4 p-6 bg-[#F8F9F9] rounded-[2.5rem] border border-gray-100 shadow-sm group hover:border-purple-200 transition-all duration-300">
             <div className="flex gap-4 items-start">
@@ -67,17 +80,17 @@ function SubCategoryItem({
                     <div className="space-y-1">
                         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">English Name</label>
                         <Input
-                            value={sub.nameEnglish}
-                            onChange={(e) => onUpdate(index, { nameEnglish: e.target.value })}
+                            value={nameEnglish}
+                            onChange={(e) => setNameEnglish(e.target.value)}
                             className="h-9 rounded-xl bg-white border-gray-100 text-sm font-bold px-3 shadow-none focus:ring-1 focus:ring-purple-200"
                         />
                     </div>
                     <div className="space-y-1">
                         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1 text-right block">Arabic Name</label>
                         <Input
-                            value={sub.nameArabic}
+                            value={nameArabic}
                             dir="rtl"
-                            onChange={(e) => onUpdate(index, { nameArabic: e.target.value })}
+                            onChange={(e) => setNameArabic(e.target.value)}
                             className="h-9 rounded-xl bg-white border-gray-100 text-sm font-bold px-3 shadow-none focus:ring-1 focus:ring-purple-200 text-right"
                         />
                     </div>
@@ -92,6 +105,17 @@ function SubCategoryItem({
                 >
                     <Trash2 className="w-4 h-4" /> Delete
                 </Button>
+
+                {hasChanges && (
+                    <Button
+                        className="flex-1 h-10 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold gap-2 transition-all shadow-md"
+                        onClick={() => onUpdate(index, { nameEnglish, nameArabic })}
+                        disabled={isUpdating}
+                    >
+                        {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Update Sub'}
+                    </Button>
+                )}
+
                 <div className="flex gap-1">
                     <Button
                         variant="outline"
@@ -125,6 +149,7 @@ function ManageCategory() {
     const queryClient = useQueryClient()
     const [uploadingCover, setUploadingCover] = useState(false)
     const [uploadingSubId, setUploadingSubId] = useState<number | null>(null)
+    const [localCategory, setLocalCategory] = useState<Category | null>(null)
 
     const coverInputRef = useRef<HTMLInputElement>(null)
     const subInputRef = useRef<HTMLInputElement>(null)
@@ -142,7 +167,13 @@ function ManageCategory() {
         staleTime: 1000 * 60 * 5,
     })
 
-    const category = categoryQuery.data
+    useEffect(() => {
+        if (categoryQuery.data && !localCategory) {
+            setLocalCategory(categoryQuery.data)
+        }
+    }, [categoryQuery.data, localCategory])
+
+    const category = localCategory // Use local state for rendering
 
     const updateCategoryMutation = useMutation({
         mutationFn: async (updates: Partial<Category>) => {
@@ -152,6 +183,8 @@ function ManageCategory() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['category', categoryId] })
             queryClient.invalidateQueries({ queryKey: ['categories'] })
+            setLocalCategory(null)
+            toast.success('Changes saved successfully')
         },
         onError: (error) => {
             console.error('Error updating category:', error)
@@ -159,8 +192,14 @@ function ManageCategory() {
         }
     })
 
-    const handleUpdateCategory = (updates: Partial<Category>) => {
+    const handleSaveChanges = () => {
+        if (!localCategory) return
+        const { id, ...updates } = localCategory
         updateCategoryMutation.mutate(updates)
+    }
+
+    const handleUpdateCategory = (updates: Partial<Category>) => {
+        setLocalCategory(prev => prev ? { ...prev, ...updates } : null)
     }
 
     const handleCoverChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -173,21 +212,13 @@ function ManageCategory() {
             const snapshot = await uploadBytes(storageRef, file)
             const downloadURL = await getDownloadURL(snapshot.ref)
 
-            if (category.imageUrl) {
-                try {
-                    const oldRef = ref(storage, category.imageUrl)
-                    await deleteObject(oldRef)
-                } catch (err) {
-                    console.warn('Could not delete old cover image', err)
-                }
-            }
-
-            await updateCategoryMutation.mutateAsync({ imageUrl: downloadURL })
-            toast.success('Cover image updated')
+            handleUpdateCategory({ imageUrl: downloadURL })
+            toast.success('Cover image uploaded internally. Click Save to persist.')
         } catch (error) {
             console.error('Error uploading cover:', error)
             toast.error('Upload failed')
         } finally {
+            setUploadingCover(true) // Trigger re-render to clear
             setUploadingCover(false)
             if (coverInputRef.current) coverInputRef.current.value = ''
         }
@@ -202,38 +233,23 @@ function ManageCategory() {
         }
         const updatedSubs = [...(category.subcategories || []), newSub]
         await updateCategoryMutation.mutateAsync({ subcategories: updatedSubs })
-        toast.success('Sub-category added')
+        toast.success('Sub-category added and saved')
     }
 
     const handleDeleteSubCategory = async (index: number) => {
         if (!category || !confirm('Delete this sub-category?')) return
-
-        const subToDelete = category.subcategories[index]
         const updatedSubs = category.subcategories.filter((_, i) => i !== index)
-
-        try {
-            await updateCategoryMutation.mutateAsync({ subcategories: updatedSubs })
-
-            if (subToDelete.imageUrl) {
-                try {
-                    const subRef = ref(storage, subToDelete.imageUrl)
-                    await deleteObject(subRef)
-                } catch (err) {
-                    console.warn('Could not delete sub-category image', err)
-                }
-            }
-            toast.success('Sub-category deleted')
-        } catch (error) {
-            toast.error('Failed to delete')
-        }
+        await updateCategoryMutation.mutateAsync({ subcategories: updatedSubs })
+        toast.success('Sub-category deleted and saved')
     }
 
-    const handleUpdateSubCategory = (index: number, updates: Partial<SubCategory>) => {
+    const handleUpdateSubCategory = async (index: number, updates: Partial<SubCategory>) => {
         if (!category) return
         const updatedSubs = category.subcategories.map((sub, i) =>
             i === index ? { ...sub, ...updates } : sub
         )
-        handleUpdateCategory({ subcategories: updatedSubs })
+        // For sub-categories, we save immediately on "Update Sub" click
+        await updateCategoryMutation.mutateAsync({ subcategories: updatedSubs })
     }
 
     const moveSubCategory = async (index: number, direction: 'up' | 'down') => {
@@ -247,7 +263,7 @@ function ManageCategory() {
         newSubs[targetIndex] = temp
 
         await updateCategoryMutation.mutateAsync({ subcategories: newSubs })
-        toast.success('Sub-category reordered')
+        toast.success('Order saved')
     }
 
     const handleSubImageChange = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
@@ -260,21 +276,12 @@ function ManageCategory() {
             const snapshot = await uploadBytes(storageRef, file)
             const downloadURL = await getDownloadURL(snapshot.ref)
 
-            const oldUrl = category.subcategories[index].imageUrl
-            if (oldUrl) {
-                try {
-                    const oldRef = ref(storage, oldUrl)
-                    await deleteObject(oldRef)
-                } catch (err) {
-                    console.warn('Could not delete old sub image', err)
-                }
-            }
-
             const updatedSubs = category.subcategories.map((sub, i) =>
                 i === index ? { ...sub, imageUrl: downloadURL } : sub
             )
+            // Image uploads are also saved immediately to avoid state mismatch
             await updateCategoryMutation.mutateAsync({ subcategories: updatedSubs })
-            toast.success('Sub-category image updated')
+            toast.success('Sub-category image updated and saved')
         } catch (error) {
             console.error('Error uploading sub image:', error)
             toast.error('Upload failed')
@@ -323,6 +330,17 @@ function ManageCategory() {
                         </h1>
                     </div>
                 </div>
+                <Button
+                    onClick={handleSaveChanges}
+                    disabled={updateCategoryMutation.isPending || !localCategory}
+                    className="bg-green-600 hover:bg-green-700 text-white rounded-2xl px-8 h-12 font-bold shadow-lg transition-all flex items-center gap-2"
+                >
+                    {updateCategoryMutation.isPending ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                        'Save Category Titles'
+                    )}
+                </Button>
             </div>
 
             {/* Cover Section */}
@@ -400,6 +418,7 @@ function ManageCategory() {
                             }}
                             uploadingSubId={uploadingSubId}
                             isLast={i === (category.subcategories?.length || 0) - 1}
+                            isUpdating={updateCategoryMutation.isPending}
                         />
                     ))}
 
