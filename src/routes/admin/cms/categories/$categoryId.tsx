@@ -167,6 +167,11 @@ function ManageCategory() {
         staleTime: 1000 * 60 * 5,
     })
 
+    // Reset local state when category changes
+    useEffect(() => {
+        setLocalCategory(null)
+    }, [categoryId])
+
     useEffect(() => {
         if (categoryQuery.data && !localCategory) {
             setLocalCategory(categoryQuery.data)
@@ -180,10 +185,11 @@ function ManageCategory() {
             const docRef = doc(db, 'categories', categoryId)
             await updateDoc(docRef, updates)
         },
-        onSuccess: () => {
+        onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['category', categoryId] })
             queryClient.invalidateQueries({ queryKey: ['categories'] })
-            setLocalCategory(null)
+            // Update local state with the changes we just made to avoid race conditions
+            setLocalCategory(prev => prev ? { ...prev, ...variables } : null)
             toast.success('Changes saved successfully')
         },
         onError: (error) => {
@@ -232,13 +238,17 @@ function ManageCategory() {
             imageUrl: ''
         }
         const updatedSubs = [...(category.subcategories || []), newSub]
+        // Optimistically update local state
+        setLocalCategory(prev => prev ? { ...prev, subcategories: updatedSubs } : null)
         await updateCategoryMutation.mutateAsync({ subcategories: updatedSubs })
         toast.success('Sub-category added and saved')
     }
 
     const handleDeleteSubCategory = async (index: number) => {
         if (!category || !confirm('Delete this sub-category?')) return
-        const updatedSubs = category.subcategories.filter((_, i) => i !== index)
+        const updatedSubs = (category.subcategories || []).filter((_, i) => i !== index)
+        // Optimistically update local state
+        setLocalCategory(prev => prev ? { ...prev, subcategories: updatedSubs } : null)
         await updateCategoryMutation.mutateAsync({ subcategories: updatedSubs })
         toast.success('Sub-category deleted and saved')
     }
@@ -262,6 +272,8 @@ function ManageCategory() {
         newSubs[index] = newSubs[targetIndex]
         newSubs[targetIndex] = temp
 
+        // Optimistically update local state
+        setLocalCategory(prev => prev ? { ...prev, subcategories: newSubs } : null)
         await updateCategoryMutation.mutateAsync({ subcategories: newSubs })
         toast.success('Order saved')
     }
