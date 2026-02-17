@@ -18,6 +18,7 @@ import { Route as authUnauthorizedRouteImport } from './routes/(auth)/unauthoriz
 import { Route as authSignupRouteImport } from './routes/(auth)/signup'
 import { Route as authLoginRouteImport } from './routes/(auth)/login'
 import { Route as AdminVendorsIndexRouteImport } from './routes/admin/vendors/index'
+import { Route as AdminStudentsIndexRouteImport } from './routes/admin/students/index'
 import { Route as AdminCmsIndexRouteImport } from './routes/admin/cms/index'
 import { Route as vendorPanelVendorPinRouteImport } from './routes/(vendor-panel)/_vendor.pin'
 import { Route as vendorPanelVendorDashboardRouteImport } from './routes/(vendor-panel)/_vendor.dashboard'
@@ -25,6 +26,7 @@ import { Route as vendorPanelVendorContactUsRouteImport } from './routes/(vendor
 import { Route as AdminCmsCategoriesIndexRouteImport } from './routes/admin/cms/categories/index'
 import { Route as AdminCmsBannersIndexRouteImport } from './routes/admin/cms/banners/index'
 import { Route as AdminVendorsVendorIdSettingsRouteImport } from './routes/admin/vendors/$vendorId.settings'
+import { Route as AdminStudentsStudentIdSettingsRouteImport } from './routes/admin/students/$studentId.settings'
 import { Route as AdminCmsCategoriesCategoryIdRouteImport } from './routes/admin/cms/categories/$categoryId'
 import { Route as AdminCmsBannersAddRouteImport } from './routes/admin/cms/banners/add'
 
@@ -72,6 +74,11 @@ const AdminVendorsIndexRoute = AdminVendorsIndexRouteImport.update({
   path: '/vendors/',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminStudentsIndexRoute = AdminStudentsIndexRouteImport.update({
+  id: '/students/',
+  path: '/students/',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminCmsIndexRoute = AdminCmsIndexRouteImport.update({
   id: '/cms/',
   path: '/cms/',
@@ -110,6 +117,12 @@ const AdminVendorsVendorIdSettingsRoute =
     path: '/vendors/$vendorId/settings',
     getParentRoute: () => AdminRoute,
   } as any)
+const AdminStudentsStudentIdSettingsRoute =
+  AdminStudentsStudentIdSettingsRouteImport.update({
+    id: '/students/$studentId/settings',
+    path: '/students/$studentId/settings',
+    getParentRoute: () => AdminRoute,
+  } as any)
 const AdminCmsCategoriesCategoryIdRoute =
   AdminCmsCategoriesCategoryIdRouteImport.update({
     id: '/cms/categories/$categoryId',
@@ -134,9 +147,11 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof vendorPanelVendorDashboardRoute
   '/pin': typeof vendorPanelVendorPinRoute
   '/admin/cms/': typeof AdminCmsIndexRoute
+  '/admin/students/': typeof AdminStudentsIndexRoute
   '/admin/vendors/': typeof AdminVendorsIndexRoute
   '/admin/cms/banners/add': typeof AdminCmsBannersAddRoute
   '/admin/cms/categories/$categoryId': typeof AdminCmsCategoriesCategoryIdRoute
+  '/admin/students/$studentId/settings': typeof AdminStudentsStudentIdSettingsRoute
   '/admin/vendors/$vendorId/settings': typeof AdminVendorsVendorIdSettingsRoute
   '/admin/cms/banners/': typeof AdminCmsBannersIndexRoute
   '/admin/cms/categories/': typeof AdminCmsCategoriesIndexRoute
@@ -152,9 +167,11 @@ export interface FileRoutesByTo {
   '/dashboard': typeof vendorPanelVendorDashboardRoute
   '/pin': typeof vendorPanelVendorPinRoute
   '/admin/cms': typeof AdminCmsIndexRoute
+  '/admin/students': typeof AdminStudentsIndexRoute
   '/admin/vendors': typeof AdminVendorsIndexRoute
   '/admin/cms/banners/add': typeof AdminCmsBannersAddRoute
   '/admin/cms/categories/$categoryId': typeof AdminCmsCategoriesCategoryIdRoute
+  '/admin/students/$studentId/settings': typeof AdminStudentsStudentIdSettingsRoute
   '/admin/vendors/$vendorId/settings': typeof AdminVendorsVendorIdSettingsRoute
   '/admin/cms/banners': typeof AdminCmsBannersIndexRoute
   '/admin/cms/categories': typeof AdminCmsCategoriesIndexRoute
@@ -173,9 +190,11 @@ export interface FileRoutesById {
   '/(vendor-panel)/_vendor/dashboard': typeof vendorPanelVendorDashboardRoute
   '/(vendor-panel)/_vendor/pin': typeof vendorPanelVendorPinRoute
   '/admin/cms/': typeof AdminCmsIndexRoute
+  '/admin/students/': typeof AdminStudentsIndexRoute
   '/admin/vendors/': typeof AdminVendorsIndexRoute
   '/admin/cms/banners/add': typeof AdminCmsBannersAddRoute
   '/admin/cms/categories/$categoryId': typeof AdminCmsCategoriesCategoryIdRoute
+  '/admin/students/$studentId/settings': typeof AdminStudentsStudentIdSettingsRoute
   '/admin/vendors/$vendorId/settings': typeof AdminVendorsVendorIdSettingsRoute
   '/admin/cms/banners/': typeof AdminCmsBannersIndexRoute
   '/admin/cms/categories/': typeof AdminCmsCategoriesIndexRoute
@@ -194,9 +213,11 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/pin'
     | '/admin/cms/'
+    | '/admin/students/'
     | '/admin/vendors/'
     | '/admin/cms/banners/add'
     | '/admin/cms/categories/$categoryId'
+    | '/admin/students/$studentId/settings'
     | '/admin/vendors/$vendorId/settings'
     | '/admin/cms/banners/'
     | '/admin/cms/categories/'
@@ -212,9 +233,11 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/pin'
     | '/admin/cms'
+    | '/admin/students'
     | '/admin/vendors'
     | '/admin/cms/banners/add'
     | '/admin/cms/categories/$categoryId'
+    | '/admin/students/$studentId/settings'
     | '/admin/vendors/$vendorId/settings'
     | '/admin/cms/banners'
     | '/admin/cms/categories'
@@ -232,9 +255,11 @@ export interface FileRouteTypes {
     | '/(vendor-panel)/_vendor/dashboard'
     | '/(vendor-panel)/_vendor/pin'
     | '/admin/cms/'
+    | '/admin/students/'
     | '/admin/vendors/'
     | '/admin/cms/banners/add'
     | '/admin/cms/categories/$categoryId'
+    | '/admin/students/$studentId/settings'
     | '/admin/vendors/$vendorId/settings'
     | '/admin/cms/banners/'
     | '/admin/cms/categories/'
@@ -314,6 +339,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminVendorsIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/students/': {
+      id: '/admin/students/'
+      path: '/students'
+      fullPath: '/admin/students/'
+      preLoaderRoute: typeof AdminStudentsIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/cms/': {
       id: '/admin/cms/'
       path: '/cms'
@@ -363,6 +395,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminVendorsVendorIdSettingsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/students/$studentId/settings': {
+      id: '/admin/students/$studentId/settings'
+      path: '/students/$studentId/settings'
+      fullPath: '/admin/students/$studentId/settings'
+      preLoaderRoute: typeof AdminStudentsStudentIdSettingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/cms/categories/$categoryId': {
       id: '/admin/cms/categories/$categoryId'
       path: '/cms/categories/$categoryId'
@@ -384,9 +423,11 @@ interface AdminRouteChildren {
   AdminTransactionsRoute: typeof AdminTransactionsRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminCmsIndexRoute: typeof AdminCmsIndexRoute
+  AdminStudentsIndexRoute: typeof AdminStudentsIndexRoute
   AdminVendorsIndexRoute: typeof AdminVendorsIndexRoute
   AdminCmsBannersAddRoute: typeof AdminCmsBannersAddRoute
   AdminCmsCategoriesCategoryIdRoute: typeof AdminCmsCategoriesCategoryIdRoute
+  AdminStudentsStudentIdSettingsRoute: typeof AdminStudentsStudentIdSettingsRoute
   AdminVendorsVendorIdSettingsRoute: typeof AdminVendorsVendorIdSettingsRoute
   AdminCmsBannersIndexRoute: typeof AdminCmsBannersIndexRoute
   AdminCmsCategoriesIndexRoute: typeof AdminCmsCategoriesIndexRoute
@@ -396,9 +437,11 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminTransactionsRoute: AdminTransactionsRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminCmsIndexRoute: AdminCmsIndexRoute,
+  AdminStudentsIndexRoute: AdminStudentsIndexRoute,
   AdminVendorsIndexRoute: AdminVendorsIndexRoute,
   AdminCmsBannersAddRoute: AdminCmsBannersAddRoute,
   AdminCmsCategoriesCategoryIdRoute: AdminCmsCategoriesCategoryIdRoute,
+  AdminStudentsStudentIdSettingsRoute: AdminStudentsStudentIdSettingsRoute,
   AdminVendorsVendorIdSettingsRoute: AdminVendorsVendorIdSettingsRoute,
   AdminCmsBannersIndexRoute: AdminCmsBannersIndexRoute,
   AdminCmsCategoriesIndexRoute: AdminCmsCategoriesIndexRoute,

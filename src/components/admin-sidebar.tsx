@@ -1,12 +1,9 @@
 import * as React from "react"
 import {
-  IconCircleCheck,
   IconHome,
   IconInfoCircle,
   IconReceipt,
-  IconReportAnalytics,
   IconShield,
-  IconStar,
   IconUsers,
 } from "@tabler/icons-react"
 
@@ -45,9 +42,9 @@ const data = {
       icon: IconShield,
     },
     {
-      title: "Analytics",
-      url: "/admin/analytics",
-      icon: IconReportAnalytics,
+      title: "Students",
+      url: "/admin/students",
+      icon: IconUsers,
     },
     {
       title: "App CMS",

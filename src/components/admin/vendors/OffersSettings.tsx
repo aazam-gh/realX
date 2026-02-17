@@ -27,6 +27,7 @@ interface Offer {
     categories: string[]
     isTrending: boolean
     isTopRated: boolean
+    mainCategory?: string
     status: 'active' | 'inactive'
     startAt?: Timestamp
     endAt?: Timestamp
@@ -53,6 +54,7 @@ export function OffersSettings({ vendorId, vendorName }: OffersSettingsProps) {
         discountValue: 0,
         isTrending: false,
         isTopRated: false,
+        mainCategory: '',
         status: 'active',
         totalRedemptions: 0
     })
@@ -70,6 +72,7 @@ export function OffersSettings({ vendorId, vendorName }: OffersSettingsProps) {
                 discountValue: 0,
                 isTrending: false,
                 isTopRated: false,
+                mainCategory: '',
                 status: 'active',
                 totalRedemptions: 0
             })
@@ -381,6 +384,18 @@ export function OffersSettings({ vendorId, vendorName }: OffersSettingsProps) {
                                     className="bg-slate-50 min-h-[100px] text-right"
                                 />
                             </div>
+                        </div>
+
+                        {/* Main Category */}
+                        <div className="space-y-2">
+                            <Label htmlFor="mainCategory">Main Category</Label>
+                            <Input
+                                id="mainCategory"
+                                value={formData.mainCategory || ''}
+                                onChange={e => setFormData(prev => ({ ...prev, mainCategory: e.target.value }))}
+                                placeholder="Ex: Electronics"
+                                className="bg-slate-50 h-12"
+                            />
                         </div>
                     </div>
 

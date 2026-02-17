@@ -1,11 +1,10 @@
 import * as React from "react"
 import {
-  IconChartBar,
+
   IconHistory,
   IconLayoutDashboard,
   IconMail,
   IconSettings,
-  IconShieldCheck,
   IconStar,
 } from "@tabler/icons-react"
 
@@ -38,11 +37,6 @@ const data = {
       title: "Transaction History",
       url: "#",
       icon: IconHistory,
-    },
-    {
-      title: "Analytics",
-      url: "#",
-      icon: IconChartBar,
     },
     {
       title: "Reviews",
