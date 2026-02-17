@@ -11,5 +11,4 @@ export interface Category {
     imageUrl: string;
     subcategories: SubCategory[];
     order: number;
-    isActive: boolean;
 }

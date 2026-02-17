@@ -85,7 +85,6 @@ function CategoriesOverview() {
                 nameArabic: 'فئة جديدة',
                 imageUrl: downloadURL,
                 order: categories.length + 1,
-                isActive: true,
                 subcategories: []
             }
 
