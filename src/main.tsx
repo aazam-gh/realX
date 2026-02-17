@@ -8,6 +8,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 import './styles.css'
 
+const queryClient = new QueryClient()
+
 // Set up a Router instance
 const router = createRouter({
   routeTree,
@@ -15,6 +17,7 @@ const router = createRouter({
   scrollRestoration: true,
   context: {
     auth: undefined!, // This will be set after we wrap the app in AuthContextProvider
+    queryClient: queryClient,
   },
 })
 
@@ -37,10 +40,8 @@ function InnerApp() {
     )
   }
 
-  return <RouterProvider router={router} context={{ auth }} />
+  return <RouterProvider router={router} context={{ auth, queryClient }} />
 }
-
-const queryClient = new QueryClient()
 
 function App() {
   return (

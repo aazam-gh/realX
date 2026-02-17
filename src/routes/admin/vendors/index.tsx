@@ -19,7 +19,7 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { Search, Upload, Plus, ChevronRight, Loader2 } from 'lucide-react'
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import {
     Dialog,
     DialogContent,
@@ -43,6 +43,13 @@ const vendorsSearchSchema = z.object({
 export const Route = createFileRoute('/admin/vendors/')({
     component: RouteComponent,
     validateSearch: (search) => vendorsSearchSchema.parse(search),
+    loaderDeps: ({ search: { page, pageSize } }) => ({ page, pageSize }),
+    loader: async ({ context: { queryClient }, deps: { page, pageSize } }) => {
+        await queryClient.ensureQueryData({
+            queryKey: ['vendors', page, pageSize],
+            queryFn: () => fetchVendors(page, pageSize),
+        })
+    },
 })
 
 interface Vendor {
@@ -54,80 +61,80 @@ interface Vendor {
     profilePicture?: string
 }
 
+const cursors: Record<number, string> = {}
 
+async function fetchVendors(page: number, pageSize: number) {
+    console.log(`Loading page ${page}...`)
+    const collRef = collection(db, 'vendors')
+
+    const countSnapshot = await getCountFromServer(collRef)
+    const totalCount = countSnapshot.data().count
+
+    // Check if we have a cursor for THIS page
+    const currentCursor = cursors[page]
+
+    let q;
+    if (currentCursor) {
+        // Efficiently fetch using stored cursor
+        q = query(
+            collRef,
+            orderBy('name'),
+            startAt(currentCursor),
+            limit(pageSize)
+        )
+    } else {
+        // Initial load or jump - fetch up to this page
+        q = query(
+            collRef,
+            orderBy('name'),
+            limit(page * pageSize)
+        )
+    }
+
+    const snapshot = await getDocs(q)
+
+    // If we used a cursor, we have the exact documents.
+    // If not, we fetched from the start, so slice.
+    const pageDocs = currentCursor
+        ? snapshot.docs
+        : snapshot.docs.slice((page - 1) * pageSize);
+
+    const vendors = await Promise.all(pageDocs.map(async (doc) => {
+        const data = doc.data()
+        const vendorId = doc.id
+
+        return {
+            id: vendorId,
+            name: data.name || 'Unnamed Vendor',
+            status: data.status ? ('Active' as const) : ('Inactive' as const),
+            contact: data.phoneNumber?.toString() || data.contact || '',
+            pin: data.pin || '----',
+            profilePicture: data.profilePicture || '',
+        } as Vendor
+    }))
+
+    // Cache the start of the NEXT page if it's not already cached
+    if (pageDocs.length === pageSize) {
+        const nextDocIndex = currentCursor ? pageSize : page * pageSize;
+        const nextDoc = snapshot.docs[nextDocIndex];
+        if (nextDoc) {
+            const nextDocData = nextDoc.data();
+            cursors[page + 1] = nextDocData.name;
+        }
+    }
+
+    return { vendors, totalCount }
+}
 
 function RouteComponent() {
     const queryClient = useQueryClient()
     const { page, pageSize } = useSearch({ from: '/admin/vendors/' })
-    const cursors = useRef<Record<number, string>>({})
     const [open, setOpen] = useState(false)
     const [form, setForm] = useState({ name: '', email: '', password: '' })
 
     const { data, isLoading: isQueryLoading } = useQuery({
         queryKey: ['vendors', page, pageSize],
-        queryFn: async () => {
-            console.log(`Loading page ${page}...`)
-            const collRef = collection(db, 'vendors')
-
-            const countSnapshot = await getCountFromServer(collRef)
-            const totalCount = countSnapshot.data().count
-
-            // Check if we have a cursor for THIS page
-            const currentCursor = cursors.current[page]
-
-            let q;
-            if (currentCursor) {
-                // Efficiently fetch using stored cursor
-                q = query(
-                    collRef,
-                    orderBy('name'),
-                    startAt(currentCursor),
-                    limit(pageSize)
-                )
-            } else {
-                // Initial load or jump - fetch up to this page
-                q = query(
-                    collRef,
-                    orderBy('name'),
-                    limit(page * pageSize)
-                )
-            }
-
-            const snapshot = await getDocs(q)
-
-            // If we used a cursor, we have the exact documents.
-            // If not, we fetched from the start, so slice.
-            const pageDocs = currentCursor
-                ? snapshot.docs
-                : snapshot.docs.slice((page - 1) * pageSize);
-
-            const vendors = await Promise.all(pageDocs.map(async (doc) => {
-                const data = doc.data()
-                const vendorId = doc.id
-
-
-                return {
-                    id: vendorId,
-                    name: data.name || 'Unnamed Vendor',
-                    status: data.status ? ('Active' as const) : ('Inactive' as const),
-                    contact: data.phoneNumber?.toString() || data.contact || '',
-                    pin: data.pin || '----',
-                    profilePicture: data.profilePicture || '',
-                } as Vendor
-            }))
-
-            // Cache the start of the NEXT page if it's not already cached
-            if (pageDocs.length === pageSize) {
-                const nextDocIndex = currentCursor ? pageSize : page * pageSize;
-                const nextDoc = snapshot.docs[nextDocIndex];
-                if (nextDoc) {
-                    const nextDocData = nextDoc.data();
-                    cursors.current[page + 1] = nextDocData.name;
-                }
-            }
-
-            return { vendors, totalCount }
-        },
+        queryFn: () => fetchVendors(page, pageSize),
         staleTime: 1000 * 60 * 5,
     })
 
