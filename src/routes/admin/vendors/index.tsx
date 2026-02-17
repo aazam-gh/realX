@@ -30,7 +30,7 @@ import {
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { db, functions } from '@/firebase/config'
-import { collection, getDocs, query, limit, orderBy, getCountFromServer, startAt } from 'firebase/firestore'
+import { collection, getDocs, query, limit, orderBy, getCountFromServer } from 'firebase/firestore'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { httpsCallable } from 'firebase/functions'
 
@@ -61,7 +61,6 @@ interface Vendor {
     profilePicture?: string
 }
 
-const cursors: Record<number, string> = {}
 
 async function fetchVendors(page: number, pageSize: number) {
     console.log(`Loading page ${page}...`)
@@ -70,34 +69,21 @@ async function fetchVendors(page: number, pageSize: number) {
     const countSnapshot = await getCountFromServer(collRef)
     const totalCount = countSnapshot.data().count
 
-    // Check if we have a cursor for THIS page
-    const currentCursor = cursors[page]
-
-    let q;
-    if (currentCursor) {
-        // Efficiently fetch using stored cursor
-        q = query(
-            collRef,
-            orderBy('name'),
-            startAt(currentCursor),
-            limit(pageSize)
-        )
-    } else {
-        // Initial load or jump - fetch up to this page
-        q = query(
-            collRef,
-            orderBy('name'),
-            limit(page * pageSize)
-        )
-    }
+    // Robust pagination: Fetch up to the current page's end
+    // This allows jumping to any page and works after refresh
+    // Note: optimization with cursors requires persisting state across navigations 
+    // which leads to technical complexity. For admin panels, this is usually acceptable.
+    const q = query(
+        collRef,
+        orderBy('name'),
+        limit(page * pageSize)
+    )
 
     const snapshot = await getDocs(q)
 
-    // If we used a cursor, we have the exact documents.
-    // If not, we fetched from the start, so slice.
-    const pageDocs = currentCursor
-        ? snapshot.docs
-        : snapshot.docs.slice((page - 1) * pageSize);
+    // Slice to get just the current page
+    // We fetch 1..N pages and take the last chunk
+    const pageDocs = snapshot.docs.slice((page - 1) * pageSize, page * pageSize);
 
     const vendors = await Promise.all(pageDocs.map(async (doc) => {
         const data = doc.data()
@@ -112,16 +98,6 @@ async function fetchVendors(page: number, pageSize: number) {
             profilePicture: data.profilePicture || '',
         } as Vendor
     }))
-
-    // Cache the start of the NEXT page if it's not already cached
-    if (pageDocs.length === pageSize) {
-        const nextDocIndex = currentCursor ? pageSize : page * pageSize;
-        const nextDoc = snapshot.docs[nextDocIndex];
-        if (nextDoc) {
-            const nextDocData = nextDoc.data();
-            cursors[page + 1] = nextDocData.name;
-        }
-    }
 
     return { vendors, totalCount }
 }

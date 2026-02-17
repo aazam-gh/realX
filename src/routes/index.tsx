@@ -6,26 +6,26 @@ export const Route = createFileRoute('/')({
   component: HomeComponent,
 })
 
-import { getAuth } from "firebase/auth";
-
-const auth = getAuth();
-const user = auth.currentUser;
-
- const buttonClick = async () => {  
-if (user) {
-  const idTokenResult = await user.getIdTokenResult();
-  
-  if (!!idTokenResult.claims.admin) {
-    // Show admin dashboard or specific UI
-    console.log("User is an admin");
-  } else {
-    console.log("User is a regular user");
-  }
-} 
-}
-
+import { useAuth } from '@/auth'
 
 function HomeComponent() {
+  const { user } = useAuth()
+
+  const buttonClick = async () => {
+    if (user) {
+      const idTokenResult = await user.getIdTokenResult();
+
+      if (!!idTokenResult.claims.admin) {
+        // Show admin dashboard or specific UI
+        console.log("User is an admin");
+      } else {
+        console.log("User is a regular user");
+      }
+    } else {
+      console.log("No user logged in")
+    }
+  }
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-background to-muted/20 text-foreground overflow-hidden relative">
       <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:60px_60px]" />
@@ -57,7 +57,7 @@ function HomeComponent() {
         </div>
         <Button onClick={buttonClick}>
           Button
-          </Button>
+        </Button>
       </div>
     </div>
   )

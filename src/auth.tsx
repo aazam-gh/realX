@@ -10,7 +10,7 @@ import {
   createUserWithEmailAndPassword,
   updateProfile,
 } from 'firebase/auth'
-import { flushSync } from 'react-dom'
+
 import { auth } from './firebase/config'
 
 export type AuthContextType = {
@@ -41,27 +41,23 @@ export function AuthContextProvider({
   React.useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user) {
-        flushSync(() => {
-          setUser(null)
-          setIsAdmin(false)
-          setIsInitialLoading(false)
-        })
+        setUser(null)
+        setIsAdmin(false)
+        setIsInitialLoading(false)
         return
       }
 
       // Fetch ID token & custom claims
       const tokenResult = await user.getIdTokenResult()
 
-      flushSync(() => {
-        setUser(user)
-        setIsAdmin(tokenResult.claims.admin === true)
-        setIsInitialLoading(false)
-      })
+      setUser(user)
+      setIsAdmin(tokenResult.claims.admin === true)
+      setIsInitialLoading(false)
     })
     return () => unsubscribe()
   }, [])
 
-  
+
   const logout = React.useCallback(async () => {
     console.log('Logging out...')
     await signOut(auth)
@@ -71,18 +67,14 @@ export function AuthContextProvider({
 
   const login = React.useCallback(async (provider: AuthProvider) => {
     const result = await signInWithPopup(auth, provider)
-    flushSync(() => {
-      setUser(result.user)
-      setIsInitialLoading(false)
-    })
+    setUser(result.user)
+    setIsInitialLoading(false)
   }, [])
 
   const loginWithEmail = React.useCallback(async (email: string, password: string) => {
     const result = await signInWithEmailAndPassword(auth, email, password)
-    flushSync(() => {
-      setUser(result.user)
-      setIsInitialLoading(false)
-    })
+    setUser(result.user)
+    setIsInitialLoading(false)
   }, [])
 
   const signupWithEmail = React.useCallback(async (email: string, password: string, displayName?: string) => {
@@ -90,13 +82,11 @@ export function AuthContextProvider({
     if (displayName) {
       await updateProfile(result.user, { displayName })
     }
-    flushSync(() => {
-      setUser(result.user)
-      setIsInitialLoading(false)
-    })
+    setUser(result.user)
+    setIsInitialLoading(false)
   }, [])
 
-    const contextValue = React.useMemo(
+  const contextValue = React.useMemo(
     () => ({
       isAuthenticated,
       isInitialLoading,

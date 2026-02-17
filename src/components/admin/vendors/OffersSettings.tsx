@@ -1,9 +1,9 @@
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { SquarePen, Plus, Loader2, ArrowLeft, Check, Trash2, Upload, X } from 'lucide-react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { db, storage } from '@/firebase/config'
-import { collection, query, where, getDocs, doc, updateDoc, addDoc, deleteDoc, serverTimestamp, Timestamp } from 'firebase/firestore'
+import { collection, doc, updateDoc, addDoc, deleteDoc, serverTimestamp, Timestamp } from 'firebase/firestore'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { toast } from 'sonner'
 import { useState, useRef, useEffect } from 'react'
@@ -13,29 +13,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
-
-interface Offer {
-    id: string
-    vendorId: string
-    titleEn: string
-    titleAr?: string
-    descriptionEn?: string
-    descriptionAr?: string
-    bannerImage?: string
-    discountType: 'percentage' | 'amount'
-    discountValue: number
-    categories: string[]
-    isTrending: boolean
-    isTopRated: boolean
-    mainCategory?: string
-    status: 'active' | 'inactive'
-    startAt?: Timestamp
-    endAt?: Timestamp
-    totalRedemptions: number
-    viewsCount?: number
-    createdAt?: Timestamp
-    updatedAt?: Timestamp
-}
+import { offersQueryOptions, type Offer } from '@/queries'
 
 interface OffersSettingsProps {
     vendorId: string | undefined
@@ -88,23 +66,7 @@ export function OffersSettings({ vendorId, vendorName }: OffersSettingsProps) {
         }
     }, [editingOffer])
 
-    const { data: offers, isLoading, error } = useQuery({
-        queryKey: ['offers', vendorId],
-        queryFn: async () => {
-            if (!vendorId) return []
-            const q = query(
-                collection(db, 'offers'),
-                where('vendorId', '==', vendorId)
-            )
-            const snapshot = await getDocs(q)
-            return snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            })) as Offer[]
-        },
-        enabled: !!vendorId,
-        staleTime: 1000 * 60 * 5, // Cache for 5 minutes
-    })
+    const { data: offers } = useSuspenseQuery(offersQueryOptions(vendorId!))
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
@@ -223,30 +185,6 @@ export function OffersSettings({ vendorId, vendorName }: OffersSettingsProps) {
         }
         const date = new Date(dateString)
         setFormData(prev => ({ ...prev, [field]: Timestamp.fromDate(date) }))
-    }
-
-    if (isLoading) {
-        return (
-            <div className="flex items-center justify-center py-20 w-full text-slate-400">
-                <Loader2 className="h-8 w-8 animate-spin text-[#18B852] mb-2" />
-                <span>Loading offers...</span>
-            </div>
-        )
-    }
-
-    if (error) {
-        return (
-            <div className="flex flex-col items-center justify-center py-20 w-full text-red-500">
-                <p>Error loading offers: {error instanceof Error ? error.message : 'Unknown error'}</p>
-                <Button
-                    variant="outline"
-                    onClick={() => queryClient.invalidateQueries({ queryKey: ['offers', vendorId] })}
-                    className="mt-4"
-                >
-                    Retry
-                </Button>
-            </div>
-        )
     }
 
     if (isCreating || editingOffer) {
