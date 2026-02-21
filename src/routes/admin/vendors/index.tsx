@@ -46,7 +46,7 @@ export const Route = createFileRoute('/admin/vendors/')({
     loaderDeps: ({ search: { page, pageSize } }) => ({ page, pageSize }),
     loader: async ({ context: { queryClient }, deps: { page, pageSize } }) => {
         await queryClient.ensureQueryData({
-            queryKey: ['vendors', page, pageSize],
+            queryKey: ['vendors-list', page, pageSize],
             queryFn: () => fetchVendors(page, pageSize),
         })
     },
@@ -59,6 +59,7 @@ interface Vendor {
     contact: string
     pin: string
     profilePicture?: string
+    xcard: boolean
 }
 
 
@@ -96,6 +97,7 @@ async function fetchVendors(page: number, pageSize: number) {
             contact: data.phoneNumber?.toString() || data.contact || '',
             pin: data.pin || '----',
             profilePicture: data.profilePicture || '',
+            xcard: !!data.xcard,
         } as Vendor
     }))
 
@@ -109,7 +111,7 @@ function RouteComponent() {
     const [form, setForm] = useState({ name: '', email: '', password: '' })
 
     const { data, isLoading: isQueryLoading } = useQuery({
-        queryKey: ['vendors', page, pageSize],
+        queryKey: ['vendors-list', page, pageSize],
         queryFn: () => fetchVendors(page, pageSize),
         staleTime: 1000 * 60 * 5,
     })
@@ -129,7 +131,7 @@ function RouteComponent() {
             return result.data
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['vendors'] })
+            queryClient.invalidateQueries({ queryKey: ['vendors-list'] })
             setForm({ name: '', email: '', password: '' })
             setOpen(false)
         },
@@ -255,13 +257,14 @@ function RouteComponent() {
                             <TableHead className="text-black font-bold text-base">Status</TableHead>
                             <TableHead className="text-black font-bold text-base">Contact Info</TableHead>
                             <TableHead className="text-black font-bold text-base">Vendor Pin</TableHead>
+                            <TableHead className="text-black font-bold text-base">XCard</TableHead>
                             <TableHead className="text-black font-bold text-base text-right pr-8">Actions:</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {loading ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="text-center py-10">
+                                <TableCell colSpan={7} className="text-center py-10">
                                     <div className="flex flex-col items-center gap-2">
                                         <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#18B852] border-t-transparent" />
                                         <p className="text-muted-foreground font-medium">Loading vendors...</p>
@@ -270,7 +273,7 @@ function RouteComponent() {
                             </TableRow>
                         ) : vendorList.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
+                                <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
                                     No vendors found.
                                 </TableCell>
                             </TableRow>
@@ -299,6 +302,11 @@ function RouteComponent() {
                                     </TableCell>
                                     <TableCell className="font-medium text-gray-900">{vendor.contact}</TableCell>
                                     <TableCell className="font-mono font-medium text-gray-900 tracking-widest">{vendor.pin}</TableCell>
+                                    <TableCell className="font-medium text-gray-900">
+                                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${vendor.xcard ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                            {vendor.xcard ? 'TRUE' : 'FALSE'}
+                                        </span>
+                                    </TableCell>
                                     <TableCell className="text-right">
                                         <Link to="/admin/vendors/$vendorId/settings" params={{ vendorId: vendor.id }}>
                                             <Button variant="outline" size="sm" className="rounded-full h-8 px-4 gap-1 text-xs font-semibold">
