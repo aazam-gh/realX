@@ -111,7 +111,7 @@ export function SignupForm({
           <FieldDescription>Please confirm your password.</FieldDescription>
         </Field>
         <Field>
-          <Button type="submit" disabled={isLoading}>
+          <Button type="submit" disabled={isLoading} className="w-full bg-brand-green hover:bg-brand-green/90 text-white">
             {isLoading ? "Creating account..." : "Create Account"}
           </Button>
         </Field>

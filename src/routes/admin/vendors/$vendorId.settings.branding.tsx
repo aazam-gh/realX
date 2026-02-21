@@ -43,6 +43,8 @@ export interface Vendor {
     profilePicture?: string
     coverImage?: string
     pin?: string
+    xcard?: boolean
+    loyalty?: number[]
 }
 
 function BrandingSettingsComponent() {

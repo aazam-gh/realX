@@ -27,13 +27,13 @@ function HomeComponent() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-background to-muted/20 text-foreground overflow-hidden relative">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground overflow-hidden relative">
       <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:60px_60px]" />
       <div className="absolute h-full w-full bg-background [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)] pointer-events-none" />
 
       <div className="relative z-10 max-w-5xl mx-auto px-6 text-center space-y-8 animate-fade-in">
         <div className="space-y-4">
-          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 drop-shadow-sm">
+          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-primary drop-shadow-sm">
             Authenticated Routes
           </h1>
           <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
@@ -50,14 +50,16 @@ function HomeComponent() {
           </Link>
           <Link
             to="/dashboard"
-            className="px-8 py-3.5 rounded-full border border-input bg-background/50 backdrop-blur-sm hover:bg-accent hover:text-accent-foreground font-semibold transition-all hover:scale-105 active:scale-95 text-lg"
+            className="px-8 py-3.5 rounded-full border border-input bg-card/50 backdrop-blur-sm hover:bg-accent hover:text-accent-foreground font-semibold transition-all hover:scale-105 active:scale-95 text-lg"
           >
             Go to Dashboard
           </Link>
         </div>
-        <Button onClick={buttonClick}>
-          Button
-        </Button>
+        <div className="pt-4">
+          <Button onClick={buttonClick} variant="outline">
+            Check Admin Status
+          </Button>
+        </div>
       </div>
     </div>
   )

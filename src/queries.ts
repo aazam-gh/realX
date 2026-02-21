@@ -9,6 +9,8 @@ export interface Vendor {
     contact: string
     pin: string
     profilePicture?: string
+    xcard?: boolean
+    loyalty?: number[]
 }
 
 export interface Offer {

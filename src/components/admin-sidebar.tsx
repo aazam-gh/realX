@@ -78,7 +78,7 @@ export function AdminSidebar({
               className="hover:bg-transparent"
             >
               <a href="/">
-                <span className="text-3xl font-black text-[#18521C] tracking-tighter">realX</span>
+                <span className="text-3xl font-black text-primary tracking-tighter">realX</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>

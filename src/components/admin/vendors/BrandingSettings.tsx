@@ -3,7 +3,8 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Upload, X, Phone, Loader2 } from "lucide-react"
+import { Upload, X, Phone, Loader2, CreditCard } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
 import { useState, useRef } from "react"
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
 import { storage } from "@/firebase/config"
@@ -170,24 +171,27 @@ export function BrandingSettings({ formData, setFormData, vendorId }: BrandingSe
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
-                {/* Brand Name */}
+                {/* Brand Name English */}
                 <div className="space-y-4">
-                    <Label className="text-base font-semibold text-slate-700">Brand Name (English & Arabic)</Label>
-                    <div className="grid grid-cols-2 gap-4">
-                        <Input
-                            placeholder="Tim Hortons"
-                            value={formData.name || ""}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            className="bg-slate-50 border-none ring-0 focus-visible:ring-1 focus-visible:ring-blue-400 h-14 rounded-2xl px-5 text-sm"
-                        />
-                        <Input
-                            placeholder="تيم هورتنز"
-                            value={formData.nameAr || ""}
-                            onChange={(e) => setFormData({ ...formData, nameAr: e.target.value })}
-                            dir="rtl"
-                            className="bg-slate-50 border-none ring-0 focus-visible:ring-1 focus-visible:ring-blue-400 h-14 rounded-2xl px-5 text-sm"
-                        />
-                    </div>
+                    <Label className="text-base font-semibold text-slate-700">Brand Name (English)</Label>
+                    <Input
+                        placeholder="Tim Hortons"
+                        value={formData.name || ""}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        className="bg-slate-50 border-none ring-0 focus-visible:ring-1 focus-visible:ring-blue-400 h-14 rounded-2xl px-5 text-sm"
+                    />
+                </div>
+
+                {/* Brand Name Arabic */}
+                <div className="space-y-4 text-right">
+                    <Label className="text-base font-semibold text-slate-700">Brand Name (Arabic)</Label>
+                    <Input
+                        placeholder="تيم هورتنز"
+                        value={formData.nameAr || ""}
+                        onChange={(e) => setFormData({ ...formData, nameAr: e.target.value })}
+                        dir="rtl"
+                        className="bg-slate-50 border-none ring-0 focus-visible:ring-1 focus-visible:ring-blue-400 h-14 rounded-2xl px-5 text-sm"
+                    />
                 </div>
 
                 {/* Phone Number */}
@@ -302,6 +306,55 @@ export function BrandingSettings({ formData, setFormData, vendorId }: BrandingSe
                     </div>
                 </div>
             </div >
+
+            {/* XCard & Loyalty */}
+            <div className="space-y-6 pt-8 border-t border-slate-100">
+                <div className="flex items-center space-x-3 bg-slate-50/50 p-4 rounded-2xl border border-slate-100/50">
+                    <Checkbox
+                        id="xcard"
+                        checked={formData.xcard || false}
+                        onCheckedChange={(checked) => setFormData({ ...formData, xcard: !!checked })}
+                        className="h-5 w-5 rounded-md border-slate-300 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                    />
+                    <div className="flex items-center gap-2">
+                        <CreditCard className="w-5 h-5 text-slate-400" />
+                        <Label htmlFor="xcard" className="text-base font-semibold text-slate-700 cursor-pointer">
+                            Enable XCard Loyalty Program
+                        </Label>
+                    </div>
+                </div>
+
+                {formData.xcard && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in slide-in-from-top-4 duration-300">
+                        {[0, 1, 2].map((i) => (
+                            <div key={i} className="space-y-3">
+                                <Label className="text-sm font-medium text-slate-600 ml-1">
+                                    Loyalty Tier {i + 1} Amount
+                                </Label>
+                                <div className="relative">
+                                    <Input
+                                        type="number"
+                                        placeholder={`Tier ${i + 1} Amount`}
+                                        value={formData.loyalty?.[i] ?? ""}
+                                        onChange={(e) => {
+                                            const val = parseInt(e.target.value);
+                                            const newLoyalty = [...(formData.loyalty || [])];
+                                            // Fill with zeros if array is too small
+                                            while (newLoyalty.length < 3) newLoyalty.push(0);
+                                            newLoyalty[i] = isNaN(val) ? 0 : val;
+                                            setFormData({ ...formData, loyalty: newLoyalty });
+                                        }}
+                                        className="bg-slate-50 border-none ring-0 focus-visible:ring-1 focus-visible:ring-blue-400 h-14 rounded-2xl px-5 text-sm"
+                                    />
+                                    <div className="absolute right-5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
+                                        QAR
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
         </div >
     )
 }

@@ -49,6 +49,7 @@ interface Student {
     name: string
     contact: string
     isVerified: boolean
+    creatorCode: string
     profilePicture?: string
 }
 
@@ -100,6 +101,7 @@ function RouteComponent() {
                     name: data.name || 'Unnamed Student',
                     contact: data.email || data.phoneNumber || 'No contact',
                     isVerified: !!data.isVerified,
+                    creatorCode: data.creatorCode || '----',
                     profilePicture: data.profilePicture || '',
                 } as Student
             }))
@@ -156,7 +158,7 @@ function RouteComponent() {
 
     return (
         <div className="p-8 space-y-6 w-full max-w-[1600px] mx-auto">
-            <h1 className="text-3xl font-bold tracking-tight">Student Overview</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground font-heading">Student Overview</h1>
 
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="relative w-full sm:max-w-md">
@@ -172,7 +174,7 @@ function RouteComponent() {
                     </Button>
                     <Dialog open={open} onOpenChange={setOpen}>
                         <DialogTrigger asChild>
-                            <Button className="bg-[#18B852] hover:bg-[#18B852] text-white gap-2 h-10">
+                            <Button className="bg-brand-green hover:bg-brand-green/90 text-white gap-2 h-10">
                                 <Plus className="h-4 w-4" /> Add New Student
                             </Button>
                         </DialogTrigger>
@@ -219,7 +221,7 @@ function RouteComponent() {
                                     Cancel
                                 </Button>
                                 <Button
-                                    className="bg-[#18B852] hover:bg-[#18B852] text-white"
+                                    className="bg-brand-green hover:bg-brand-green/90 text-white"
                                     onClick={handleAddStudent}
                                     disabled={addStudentMutation.isPending}
                                 >
@@ -248,38 +250,39 @@ function RouteComponent() {
                 </div>
             </div>
 
-            <div className="rounded-md bg-white">
+            <div className="rounded-md bg-card border border-border">
                 <Table>
                     <TableHeader>
-                        <TableRow className="hover:bg-transparent border-none">
+                        <TableRow className="hover:bg-transparent border-b border-border">
                             <TableHead className="w-12">
                                 <Checkbox />
                             </TableHead>
-                            <TableHead className="text-black font-bold text-base">Student Name</TableHead>
-                            <TableHead className="text-black font-bold text-base">Contact Info</TableHead>
-                            <TableHead className="text-black font-bold text-base">Verified status</TableHead>
-                            <TableHead className="text-black font-bold text-base text-right pr-8">Actions:</TableHead>
+                            <TableHead className="text-foreground font-bold text-base">Student Name</TableHead>
+                            <TableHead className="text-foreground font-bold text-base">Contact Info</TableHead>
+                            <TableHead className="text-foreground font-bold text-base">Verified status</TableHead>
+                            <TableHead className="text-foreground font-bold text-base">Creator Code</TableHead>
+                            <TableHead className="text-foreground font-bold text-base text-right pr-8">Actions:</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {loading ? (
                             <TableRow>
-                                <TableCell colSpan={5} className="text-center py-10">
+                                <TableCell colSpan={6} className="text-center py-10">
                                     <div className="flex flex-col items-center gap-2">
-                                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#18B852] border-t-transparent" />
+                                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-green border-t-transparent" />
                                         <p className="text-muted-foreground font-medium">Loading students...</p>
                                     </div>
                                 </TableCell>
                             </TableRow>
                         ) : studentList.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
+                                <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
                                     No students found.
                                 </TableCell>
                             </TableRow>
                         ) : (
                             studentList.map((student: Student) => (
-                                <TableRow key={student.id} className="h-16 border-b border-gray-100 hover:bg-gray-50/50">
+                                <TableRow key={student.id} className="h-16 border-b border-border hover:bg-muted/50">
                                     <TableCell>
                                         <Checkbox />
                                     </TableCell>
@@ -288,14 +291,14 @@ function RouteComponent() {
                                             {student.profilePicture ? (
                                                 <img src={student.profilePicture} alt={student.name} className="h-10 w-10 rounded-lg object-cover shrink-0" />
                                             ) : (
-                                                <div className="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
-                                                    <span className="text-gray-400 text-xs font-bold">{student.name.charAt(0)}</span>
+                                                <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                                                    <span className="text-muted-foreground text-xs font-bold">{student.name.charAt(0)}</span>
                                                 </div>
                                             )}
-                                            <span className="font-medium text-base">{student.name}</span>
+                                            <span className="font-medium text-base text-foreground">{student.name}</span>
                                         </div>
                                     </TableCell>
-                                    <TableCell className="font-medium text-gray-900">{student.contact}</TableCell>
+                                    <TableCell className="font-medium text-foreground">{student.contact}</TableCell>
                                     <TableCell>
                                         <div className="flex items-center gap-2">
                                             {student.isVerified ? (
@@ -311,6 +314,7 @@ function RouteComponent() {
                                             )}
                                         </div>
                                     </TableCell>
+                                    <TableCell className="font-mono font-medium text-foreground tracking-widest">{student.creatorCode}</TableCell>
                                     <TableCell className="text-right">
                                         <Link to="/admin/students/$studentId/settings" params={{ studentId: student.id }}>
                                             <Button variant="outline" size="sm" className="rounded-full h-8 px-4 gap-1 text-xs font-semibold">

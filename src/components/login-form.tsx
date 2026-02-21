@@ -89,7 +89,7 @@ export function LoginForm({
           <Input id="password" name="password" type="password" required disabled={isLoading} />
         </Field>
         <Field>
-          <Button type="submit" disabled={isLoading}>
+          <Button type="submit" disabled={isLoading} className="w-full bg-brand-green hover:bg-brand-green/90 text-white">
             {isLoading ? "Signing in..." : "Login"}
           </Button>
         </Field>

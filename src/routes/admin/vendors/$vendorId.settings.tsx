@@ -22,6 +22,8 @@ export interface Vendor {
     profilePicture?: string
     coverImage?: string
     pin?: string
+    xcard?: boolean
+    loyalty?: number[]
 }
 
 export const Route = createFileRoute('/admin/vendors/$vendorId/settings')({
