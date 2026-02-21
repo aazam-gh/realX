@@ -3,8 +3,6 @@ import * as React from 'react'
 import {
   onAuthStateChanged,
   type User,
-  type AuthProvider,
-  signInWithPopup,
   signOut,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -17,7 +15,6 @@ export type AuthContextType = {
   isAuthenticated: boolean
   isInitialLoading: boolean
   isAdmin: boolean
-  login: (provider: AuthProvider) => Promise<void>
   loginWithEmail: (email: string, password: string) => Promise<void>
   signupWithEmail: (email: string, password: string, displayName?: string) => Promise<void>
   logout: () => Promise<void>
@@ -65,11 +62,6 @@ export function AuthContextProvider({
     setIsInitialLoading(false)
   }, [])
 
-  const login = React.useCallback(async (provider: AuthProvider) => {
-    const result = await signInWithPopup(auth, provider)
-    setUser(result.user)
-    setIsInitialLoading(false)
-  }, [])
 
   const loginWithEmail = React.useCallback(async (email: string, password: string) => {
     const result = await signInWithEmailAndPassword(auth, email, password)
@@ -92,7 +84,6 @@ export function AuthContextProvider({
       isInitialLoading,
       isAdmin,
       user,
-      login,
       loginWithEmail,
       signupWithEmail,
       logout,
@@ -102,7 +93,6 @@ export function AuthContextProvider({
       isInitialLoading,
       isAdmin,
       user,
-      login,
       loginWithEmail,
       signupWithEmail,
       logout,

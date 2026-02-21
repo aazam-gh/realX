@@ -5,22 +5,21 @@ import {
   FieldDescription,
   FieldGroup,
   FieldLabel,
-  FieldSeparator,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { siGoogle } from "simple-icons"
 import { useAuth } from "@/auth"
-import { useRouter } from "@tanstack/react-router"
+import { useNavigate, useRouter, useSearch } from "@tanstack/react-router"
 import * as React from "react"
 import { Link } from "@tanstack/react-router"
-import { GoogleAuthProvider } from "firebase/auth"
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"form">) {
   const router = useRouter()
-  const { loginWithEmail, login } = useAuth()
+  const navigate = useNavigate()
+  const search = useSearch({ from: '/(auth)/login' })
+  const { loginWithEmail } = useAuth()
   const [error, setError] = React.useState<string | null>(null)
   const [isLoading, setIsLoading] = React.useState(false)
 
@@ -35,7 +34,8 @@ export function LoginForm({
 
     try {
       await loginWithEmail(email, password)
-      router.invalidate()
+      await router.invalidate()
+      await navigate({ to: search.redirect || '/dashboard' })
     } catch (err) {
       console.error("Login error:", err)
       setError(err instanceof Error ? err.message : "Failed to sign in. Please check your credentials.")
@@ -44,19 +44,6 @@ export function LoginForm({
     }
   }
 
-  const handleGoogleLogin = async () => {
-    setError(null)
-    setIsLoading(true)
-    try {
-      await login(new GoogleAuthProvider())
-      router.invalidate()
-    } catch (err) {
-      console.error("Google login error:", err)
-      setError(err instanceof Error ? err.message : "Failed to sign in with Google.")
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   return (
     <form className={cn("flex flex-col gap-6", className)} {...props} onSubmit={handleEmailLogin}>
@@ -74,7 +61,7 @@ export function LoginForm({
         )}
         <Field>
           <FieldLabel htmlFor="email">Email</FieldLabel>
-          <Input id="email" name="email" type="email" placeholder="m@example.com" required disabled={isLoading} />
+          <Input id="email" name="email" type="email" placeholder="m@example.com" required disabled={isLoading} autoComplete="username" />
         </Field>
         <Field>
           <div className="flex items-center">
@@ -86,36 +73,19 @@ export function LoginForm({
               Forgot your password?
             </a>
           </div>
-          <Input id="password" name="password" type="password" required disabled={isLoading} />
+          <Input id="password" name="password" type="password" required disabled={isLoading} autoComplete="current-password" />
         </Field>
         <Field>
           <Button type="submit" disabled={isLoading} className="w-full bg-brand-green hover:bg-brand-green/90 text-white">
             {isLoading ? "Signing in..." : "Login"}
           </Button>
         </Field>
-        <FieldSeparator>Or continue with</FieldSeparator>
-        <Field>
-          <Button variant="outline" type="button" onClick={handleGoogleLogin} disabled={isLoading}>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              className="mr-2 h-5 w-5"
-              fill="currentColor"
-              aria-labelledby="googleIconTitle"
-              role="img"
-            >
-              <title id="googleIconTitle">Google Logo</title>
-              <path d={siGoogle.path} />
-            </svg>
-            Continue with Google
-          </Button>
-          <FieldDescription className="text-center">
-            Don&apos;t have an account?{" "}
-            <Link to="/signup" className="underline underline-offset-4">
-              Sign up
-            </Link>
-          </FieldDescription>
-        </Field>
+        <FieldDescription className="text-center pt-4">
+          Don&apos;t have an account?{" "}
+          <Link to="/signup" className="underline underline-offset-4">
+            Sign up
+          </Link>
+        </FieldDescription>
       </FieldGroup>
     </form>
   )

@@ -5,22 +5,20 @@ import {
   FieldDescription,
   FieldGroup,
   FieldLabel,
-  FieldSeparator,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { siGoogle } from "simple-icons"
 import { useAuth } from "@/auth"
-import { useRouter } from "@tanstack/react-router"
+import { useNavigate, useRouter } from "@tanstack/react-router"
 import * as React from "react"
 import { Link } from "@tanstack/react-router"
-import { GoogleAuthProvider } from "firebase/auth"
 
 export function SignupForm({
   className,
   ...props
 }: React.ComponentProps<"form">) {
   const router = useRouter()
-  const { signupWithEmail, login } = useAuth()
+  const navigate = useNavigate()
+  const { signupWithEmail } = useAuth()
   const [error, setError] = React.useState<string | null>(null)
   const [isLoading, setIsLoading] = React.useState(false)
 
@@ -30,10 +28,10 @@ export function SignupForm({
     setIsLoading(true)
 
     const formData = new FormData(e.currentTarget)
-    const name = formData.get("name") as string
-    const email = formData.get("email") as string
-    const password = formData.get("password") as string
-    const confirmPassword = formData.get("confirm-password") as string
+    const name = formData.get("signup-name") as string
+    const email = formData.get("signup-email") as string
+    const password = formData.get("signup-password") as string
+    const confirmPassword = formData.get("signup-confirm-password") as string
 
     if (password !== confirmPassword) {
       setError("Passwords do not match.")
@@ -49,7 +47,8 @@ export function SignupForm({
 
     try {
       await signupWithEmail(email, password, name)
-      router.invalidate()
+      await router.invalidate()
+      await navigate({ to: '/dashboard' })
     } catch (err) {
       console.error("Signup error:", err)
       setError(err instanceof Error ? err.message : "Failed to create account. Please try again.")
@@ -58,19 +57,6 @@ export function SignupForm({
     }
   }
 
-  const handleGoogleSignup = async () => {
-    setError(null)
-    setIsLoading(true)
-    try {
-      await login(new GoogleAuthProvider())
-      router.invalidate()
-    } catch (err) {
-      console.error("Google signup error:", err)
-      setError(err instanceof Error ? err.message : "Failed to sign up with Google.")
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   return (
     <form className={cn("flex flex-col gap-6", className)} {...props} onSubmit={handleEmailSignup}>
@@ -87,27 +73,27 @@ export function SignupForm({
           </div>
         )}
         <Field>
-          <FieldLabel htmlFor="name">Full Name</FieldLabel>
-          <Input id="name" name="name" type="text" placeholder="John Doe" required disabled={isLoading} />
+          <FieldLabel htmlFor="signup-name">Full Name</FieldLabel>
+          <Input id="signup-name" name="signup-name" type="text" placeholder="John Doe" required disabled={isLoading} autoComplete="name" />
         </Field>
         <Field>
-          <FieldLabel htmlFor="email">Email</FieldLabel>
-          <Input id="email" name="email" type="email" placeholder="m@example.com" required disabled={isLoading} />
+          <FieldLabel htmlFor="signup-email">Email</FieldLabel>
+          <Input id="signup-email" name="signup-email" type="email" placeholder="m@example.com" required disabled={isLoading} autoComplete="username" />
           <FieldDescription>
             We&apos;ll use this to contact you. We will not share your email
             with anyone else.
           </FieldDescription>
         </Field>
         <Field>
-          <FieldLabel htmlFor="password">Password</FieldLabel>
-          <Input id="password" name="password" type="password" required disabled={isLoading} />
+          <FieldLabel htmlFor="signup-password">Password</FieldLabel>
+          <Input id="signup-password" name="signup-password" type="password" required disabled={isLoading} autoComplete="new-password" />
           <FieldDescription>
             Must be at least 8 characters long.
           </FieldDescription>
         </Field>
         <Field>
-          <FieldLabel htmlFor="confirm-password">Confirm Password</FieldLabel>
-          <Input id="confirm-password" name="confirm-password" type="password" required disabled={isLoading} />
+          <FieldLabel htmlFor="signup-confirm-password">Confirm Password</FieldLabel>
+          <Input id="signup-confirm-password" name="signup-confirm-password" type="password" required disabled={isLoading} autoComplete="new-password" />
           <FieldDescription>Please confirm your password.</FieldDescription>
         </Field>
         <Field>
@@ -115,29 +101,12 @@ export function SignupForm({
             {isLoading ? "Creating account..." : "Create Account"}
           </Button>
         </Field>
-        <FieldSeparator>Or continue with</FieldSeparator>
-        <Field>
-          <Button variant="outline" type="button" onClick={handleGoogleSignup} disabled={isLoading}>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              className="mr-2 h-5 w-5"
-              fill="currentColor"
-              aria-labelledby="googleSignupIconTitle"
-              role="img"
-            >
-              <title id="googleSignupIconTitle">Google Logo</title>
-              <path d={siGoogle.path} />
-            </svg>
-            Sign up with Google
-          </Button>
-          <FieldDescription className="px-6 text-center">
-            Already have an account?{" "}
-            <Link to="/login" className="underline underline-offset-4">
-              Sign in
-            </Link>
-          </FieldDescription>
-        </Field>
+        <FieldDescription className="px-6 text-center pt-4">
+          Already have an account?{" "}
+          <Link to="/login" className="underline underline-offset-4">
+            Sign in
+          </Link>
+        </FieldDescription>
       </FieldGroup>
     </form>
   )
