@@ -37,12 +37,12 @@ const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any).lazy(() => import('./routes/admin.lazy').then((d) => d.Route))
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any).lazy(() => import('./routes/index.lazy').then((d) => d.Route))
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -52,7 +52,9 @@ const AdminTransactionsRoute = AdminTransactionsRouteImport.update({
   id: '/transactions',
   path: '/transactions',
   getParentRoute: () => AdminRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/admin/transactions.lazy').then((d) => d.Route),
+)
 const vendorPanelVendorRoute = vendorPanelVendorRouteImport.update({
   id: '/(vendor-panel)/_vendor',
   getParentRoute: () => rootRouteImport,
@@ -62,26 +64,34 @@ const authUnauthorizedRoute = authUnauthorizedRouteImport.update({
   path: '/unauthorized',
   getParentRoute: () => rootRouteImport,
 } as any)
-const authSignupRoute = authSignupRouteImport.update({
-  id: '/(auth)/signup',
-  path: '/signup',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const authLoginRoute = authLoginRouteImport.update({
-  id: '/(auth)/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
+const authSignupRoute = authSignupRouteImport
+  .update({
+    id: '/(auth)/signup',
+    path: '/signup',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+  .lazy(() => import('./routes/(auth)/signup.lazy').then((d) => d.Route))
+const authLoginRoute = authLoginRouteImport
+  .update({
+    id: '/(auth)/login',
+    path: '/login',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+  .lazy(() => import('./routes/(auth)/login.lazy').then((d) => d.Route))
 const AdminVendorsIndexRoute = AdminVendorsIndexRouteImport.update({
   id: '/vendors/',
   path: '/vendors/',
   getParentRoute: () => AdminRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/admin/vendors/index.lazy').then((d) => d.Route),
+)
 const AdminStudentsIndexRoute = AdminStudentsIndexRouteImport.update({
   id: '/students/',
   path: '/students/',
   getParentRoute: () => AdminRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/admin/students/index.lazy').then((d) => d.Route),
+)
 const AdminCmsIndexRoute = AdminCmsIndexRouteImport.update({
   id: '/cms/',
   path: '/cms/',
@@ -113,7 +123,9 @@ const AdminCmsBannersIndexRoute = AdminCmsBannersIndexRouteImport.update({
   id: '/cms/banners/',
   path: '/cms/banners/',
   getParentRoute: () => AdminRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/admin/cms/banners/index.lazy').then((d) => d.Route),
+)
 const AdminVendorsVendorIdSettingsRoute =
   AdminVendorsVendorIdSettingsRouteImport.update({
     id: '/vendors/$vendorId/settings',
