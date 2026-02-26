@@ -64,3 +64,29 @@ export const createVendorUser = onCall(
     };
   }
 );
+
+// Set admin claim for a user (can only be called by existing admin, or use Firebase Console for first admin)
+export const setAdminClaim = onCall(
+  {region: "me-central1"},
+  async (request) => {
+    const {auth, data} = request;
+    const {uid} = data;
+
+    // For initial setup, you may temporarily comment out this check
+    // to set the first admin, then uncomment it again
+    if (!auth?.token.admin) {
+      throw new HttpsError("permission-denied", "Only admins can set admin claims");
+    }
+
+    if (!uid) {
+      throw new HttpsError("invalid-argument", "uid is required");
+    }
+
+    const authAdmin = getAuth();
+    await authAdmin.setCustomUserClaims(uid, {admin: true});
+
+    logger.info("Admin claim set for user", {uid});
+
+    return {success: true, uid};
+  }
+);

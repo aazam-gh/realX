@@ -11,6 +11,8 @@ import { useAuth } from "@/auth"
 import { useNavigate, useRouter, useSearch } from "@tanstack/react-router"
 import * as React from "react"
 import { Link } from "@tanstack/react-router"
+import { auth } from "@/firebase/config" // <-- add this
+import { GithubAuthProvider, signInWithPopup } from "firebase/auth" // <-- add this
 
 export function LoginForm({
   className,
@@ -44,6 +46,19 @@ export function LoginForm({
     }
   }
 
+  // --- NEW: GitHub login handler ---
+  const githubProvider = new GithubAuthProvider()
+  const handleGithubLogin = async () => {
+    try {
+      const result = await signInWithPopup(auth, githubProvider)
+      console.log("GitHub user:", result.user)
+      await router.invalidate()
+      await navigate({ to: '/dashboard' })
+    } catch (err) {
+      console.error("GitHub login error:", err)
+      setError(err instanceof Error ? err.message : "GitHub login failed.")
+    }
+  }
 
   return (
     <form className={cn("flex flex-col gap-6", className)} {...props} onSubmit={handleEmailLogin}>
@@ -80,6 +95,14 @@ export function LoginForm({
             {isLoading ? "Signing in..." : "Login"}
           </Button>
         </Field>
+
+        {/* --- NEW: GitHub login button --- */}
+        <Field>
+          <Button type="button" onClick={handleGithubLogin} className="w-full bg-gray-800 hover:bg-gray-900 text-white">
+            Login with GitHub
+          </Button>
+        </Field>
+
         <FieldDescription className="text-center pt-4">
           Don&apos;t have an account?{" "}
           <Link to="/signup" className="underline underline-offset-4">

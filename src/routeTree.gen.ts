@@ -179,15 +179,15 @@ export interface FileRoutesByFullPath {
   '/contact-us': typeof vendorPanelVendorContactUsRoute
   '/dashboard': typeof vendorPanelVendorDashboardRoute
   '/pin': typeof vendorPanelVendorPinRoute
-  '/admin/cms/': typeof AdminCmsIndexRoute
-  '/admin/students/': typeof AdminStudentsIndexRoute
-  '/admin/vendors/': typeof AdminVendorsIndexRoute
+  '/admin/cms': typeof AdminCmsIndexRoute
+  '/admin/students': typeof AdminStudentsIndexRoute
+  '/admin/vendors': typeof AdminVendorsIndexRoute
   '/admin/cms/banners/add': typeof AdminCmsBannersAddRoute
   '/admin/cms/categories/$categoryId': typeof AdminCmsCategoriesCategoryIdRoute
   '/admin/students/$studentId/settings': typeof AdminStudentsStudentIdSettingsRoute
   '/admin/vendors/$vendorId/settings': typeof AdminVendorsVendorIdSettingsRouteWithChildren
-  '/admin/cms/banners/': typeof AdminCmsBannersIndexRoute
-  '/admin/cms/categories/': typeof AdminCmsCategoriesIndexRoute
+  '/admin/cms/banners': typeof AdminCmsBannersIndexRoute
+  '/admin/cms/categories': typeof AdminCmsCategoriesIndexRoute
   '/admin/vendors/$vendorId/settings/branding': typeof AdminVendorsVendorIdSettingsBrandingRoute
   '/admin/vendors/$vendorId/settings/offers': typeof AdminVendorsVendorIdSettingsOffersRoute
   '/admin/vendors/$vendorId/settings/': typeof AdminVendorsVendorIdSettingsIndexRoute
@@ -253,15 +253,15 @@ export interface FileRouteTypes {
     | '/contact-us'
     | '/dashboard'
     | '/pin'
-    | '/admin/cms/'
-    | '/admin/students/'
-    | '/admin/vendors/'
+    | '/admin/cms'
+    | '/admin/students'
+    | '/admin/vendors'
     | '/admin/cms/banners/add'
     | '/admin/cms/categories/$categoryId'
     | '/admin/students/$studentId/settings'
     | '/admin/vendors/$vendorId/settings'
-    | '/admin/cms/banners/'
-    | '/admin/cms/categories/'
+    | '/admin/cms/banners'
+    | '/admin/cms/categories'
     | '/admin/vendors/$vendorId/settings/branding'
     | '/admin/vendors/$vendorId/settings/offers'
     | '/admin/vendors/$vendorId/settings/'
@@ -384,21 +384,21 @@ declare module '@tanstack/react-router' {
     '/admin/vendors/': {
       id: '/admin/vendors/'
       path: '/vendors'
-      fullPath: '/admin/vendors/'
+      fullPath: '/admin/vendors'
       preLoaderRoute: typeof AdminVendorsIndexRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/students/': {
       id: '/admin/students/'
       path: '/students'
-      fullPath: '/admin/students/'
+      fullPath: '/admin/students'
       preLoaderRoute: typeof AdminStudentsIndexRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/cms/': {
       id: '/admin/cms/'
       path: '/cms'
-      fullPath: '/admin/cms/'
+      fullPath: '/admin/cms'
       preLoaderRoute: typeof AdminCmsIndexRouteImport
       parentRoute: typeof AdminRoute
     }
@@ -426,14 +426,14 @@ declare module '@tanstack/react-router' {
     '/admin/cms/categories/': {
       id: '/admin/cms/categories/'
       path: '/cms/categories'
-      fullPath: '/admin/cms/categories/'
+      fullPath: '/admin/cms/categories'
       preLoaderRoute: typeof AdminCmsCategoriesIndexRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/cms/banners/': {
       id: '/admin/cms/banners/'
       path: '/cms/banners'
-      fullPath: '/admin/cms/banners/'
+      fullPath: '/admin/cms/banners'
       preLoaderRoute: typeof AdminCmsBannersIndexRouteImport
       parentRoute: typeof AdminRoute
     }
