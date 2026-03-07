@@ -34,6 +34,7 @@
     "@tanstack/router-plugin": "^1.146.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
     "firebase": "^11.4.0",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.562.0",
