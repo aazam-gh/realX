@@ -180,7 +180,10 @@ export interface FileRoutesByFullPath {
   '/pin': typeof vendorPanelVendorPinRoute
   '/admin/cms': typeof AdminCmsIndexRoute
   '/admin/students': typeof AdminStudentsIndexRoute
+<<<<<<< HEAD
+=======
   '/admin/transactions': typeof AdminTransactionsIndexRoute
+>>>>>>> upstream/main
   '/admin/vendors': typeof AdminVendorsIndexRoute
   '/admin/cms/banners/add': typeof AdminCmsBannersAddRoute
   '/admin/cms/categories/$categoryId': typeof AdminCmsCategoriesCategoryIdRoute
@@ -254,7 +257,10 @@ export interface FileRouteTypes {
     | '/pin'
     | '/admin/cms'
     | '/admin/students'
+<<<<<<< HEAD
+=======
     | '/admin/transactions'
+>>>>>>> upstream/main
     | '/admin/vendors'
     | '/admin/cms/banners/add'
     | '/admin/cms/categories/$categoryId'
