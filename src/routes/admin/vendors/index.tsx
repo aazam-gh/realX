@@ -45,9 +45,15 @@ export async function fetchVendors(page: number, pageSize: number) {
     const snapshot = await getDocs(q)
     const pageDocs = snapshot.docs.slice((page - 1) * pageSize, page * pageSize);
 
-    const vendors = await Promise.all(pageDocs.map(async (doc) => {
-        const data = doc.data()
-        const vendorId = doc.id
+    const vendors = await Promise.all(pageDocs.map(async (docSnap) => {
+        const data = docSnap.data()
+        const vendorId = docSnap.id
+
+        if (typeof data.xcard === 'undefined') {
+            const { updateDoc } = await import('firebase/firestore')
+            await updateDoc(docSnap.ref, { xcard: false })
+            data.xcard = false
+        }
 
         return {
             id: vendorId,

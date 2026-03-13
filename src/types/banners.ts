@@ -1,6 +1,5 @@
 export interface BannerImage {
     mobile: string
-    desktop: string
 }
 
 export interface BannerItem {

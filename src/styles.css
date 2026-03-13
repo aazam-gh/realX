@@ -49,8 +49,8 @@
   --animate-fade-in: fade-in 0.7s ease-out forwards;
   --animate-fade-up: fade-in 0.7s ease-out forwards;
 
-  --font-sans: "Metropolis", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  --font-heading: "Integral CF", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  --font-sans: "CleanPercent", "Metropolis", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-heading: "CleanPercent", "Integral CF", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
 }
 
 /* Font Faces */
@@ -60,6 +60,13 @@
   font-weight: bold;
   font-style: normal;
   font-display: swap;
+}
+
+/* Fix for demo font watermark on % character */
+@font-face {
+  font-family: 'CleanPercent';
+  src: url('./assets/fonts/metropolis.semi-bold.otf') format('opentype');
+  unicode-range: U+0025;
 }
 
 @font-face {
@@ -196,7 +203,7 @@
 
 @layer base {
   html {
-    font-family: "Metropolis", ui-sans-serif, system-ui, sans-serif;
+    font-family: "CleanPercent", "Metropolis", ui-sans-serif, system-ui, sans-serif;
   }
 
   body {
@@ -211,7 +218,7 @@
   h4,
   h5,
   h6 {
-    font-family: "Integral CF", ui-sans-serif, system-ui, sans-serif;
+    font-family: "CleanPercent", "Integral CF", ui-sans-serif, system-ui, sans-serif;
     letter-spacing: -0.025em;
   }
 }

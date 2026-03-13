@@ -28,9 +28,11 @@ import {
     DialogFooter,
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
-import { functions } from '@/firebase/config'
+import { db, functions } from '@/firebase/config'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { httpsCallable } from 'firebase/functions'
+import { doc, setDoc, updateDoc } from 'firebase/firestore'
+import { Switch } from '@/components/ui/switch'
 import { fetchVendors, type Vendor } from './index'
 
 export const Route = createLazyFileRoute('/admin/vendors/')({
@@ -61,6 +63,10 @@ function RouteComponent() {
                 email: formData.email,
                 password: formData.password,
             })
+            const dataResult = result.data as { uid: string }
+            if (dataResult?.uid) {
+                await setDoc(doc(db, 'vendors', dataResult.uid), { xcard: false }, { merge: true })
+            }
             return result.data
         },
         onSuccess: () => {
@@ -71,6 +77,16 @@ function RouteComponent() {
         onError: (error) => {
             console.error('Error adding vendor: ', error)
             alert('Failed to add vendor: ' + (error instanceof Error ? error.message : 'Unknown error'))
+        }
+    })
+
+    const toggleXCardMutation = useMutation({
+        mutationFn: async ({ vendorId, xcard }: { vendorId: string, xcard: boolean }) => {
+            const docRef = doc(db, 'vendors', vendorId)
+            await updateDoc(docRef, { xcard })
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['vendors-list'] })
         }
     })
 
@@ -236,9 +252,11 @@ function RouteComponent() {
                                     <TableCell className="font-medium text-gray-900">{vendor.contact}</TableCell>
                                     <TableCell className="font-mono font-medium text-gray-900 tracking-widest">{vendor.pin}</TableCell>
                                     <TableCell className="font-medium text-gray-900">
-                                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${vendor.xcard ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                            {vendor.xcard ? 'TRUE' : 'FALSE'}
-                                        </span>
+                                        <Switch
+                                            checked={vendor.xcard}
+                                            onCheckedChange={(checked) => toggleXCardMutation.mutate({ vendorId: vendor.id, xcard: checked })}
+                                            disabled={toggleXCardMutation.isPending}
+                                        />
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <Link to="/admin/vendors/$vendorId/settings" params={{ vendorId: vendor.id }}>
@@ -258,8 +276,8 @@ function RouteComponent() {
             {(hasPrevPage || hasNextPage) && (
                 <div className="flex items-center justify-center gap-4 pt-4">
                     <Link
-                        from="/admin/vendors/"
-                        search={(prev: any) => ({
+                        from="/admin/vendors"
+                        search={(prev) => ({
                             ...prev,
                             page: Math.max(1, page - 1),
                         })}
@@ -281,8 +299,8 @@ function RouteComponent() {
                     </div>
 
                     <Link
-                        from="/admin/vendors/"
-                        search={(prev: any) => ({
+                        from="/admin/vendors"
+                        search={(prev) => ({
                             ...prev,
                             page: page + 1,
                         })}

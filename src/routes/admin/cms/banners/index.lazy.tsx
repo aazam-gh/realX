@@ -34,7 +34,6 @@ function BannersManagement() {
     const [pendingDeletions, setPendingDeletions] = useState<string[]>([])
 
     const fileInputRef = useRef<HTMLInputElement>(null)
-    const desktopFileInputRef = useRef<HTMLInputElement>(null)
 
     useEffect(() => {
         fetchData()
@@ -96,7 +95,7 @@ function BannersManagement() {
 
 
 
-    const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>, bannerId: string, type: 'mobile' | 'desktop') => {
+    const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>, bannerId: string, type: 'mobile') => {
         const file = e.target.files?.[0]
         if (!file) return
 
@@ -142,7 +141,6 @@ function BannersManagement() {
             if (bannerToDelete) {
                 const urls: string[] = []
                 if (bannerToDelete.images.mobile) urls.push(bannerToDelete.images.mobile)
-                if (bannerToDelete.images.desktop) urls.push(bannerToDelete.images.desktop)
 
                 // Update Firestore
                 const cmsRef = doc(db, 'cms', 'banner')
@@ -175,13 +173,9 @@ function BannersManagement() {
         setBanners(banners.map(b => b.bannerId === bannerId ? { ...b, ...updates } : b))
     }
 
-    const triggerUpload = (bannerId: string, type: 'mobile' | 'desktop') => {
+    const triggerUpload = (bannerId: string) => {
         setActiveBannerId(bannerId)
-        if (type === 'mobile') {
-            fileInputRef.current?.click()
-        } else {
-            desktopFileInputRef.current?.click()
-        }
+        fileInputRef.current?.click()
     }
 
     if (loading) {
@@ -246,13 +240,6 @@ function BannersManagement() {
                         accept="image/*"
                         onChange={(e) => activeBannerId && onFileChange(e, activeBannerId, 'mobile')}
                     />
-                    <input
-                        type="file"
-                        ref={desktopFileInputRef}
-                        className="hidden"
-                        accept="image/*"
-                        onChange={(e) => activeBannerId && onFileChange(e, activeBannerId, 'desktop')}
-                    />
                 </div>
 
                 <div className="grid grid-cols-1 gap-8">
@@ -261,9 +248,9 @@ function BannersManagement() {
                             <div className="flex flex-col lg:flex-row gap-8">
                                 <div className="flex flex-col md:flex-row gap-6">
                                     <div className="flex-1 space-y-2">
-                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-2">Mobile Banner</p>
+                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-2">Banner Image</p>
                                         <div
-                                            onClick={() => triggerUpload(banner.bannerId, 'mobile')}
+                                            onClick={() => triggerUpload(banner.bannerId)}
                                             className="relative w-full aspect-[21/9] rounded-3xl overflow-hidden bg-white border-2 border-dashed border-gray-200 cursor-pointer hover:border-purple-400 transition-all flex flex-col items-center justify-center group/img"
                                         >
                                             {banner.images.mobile ? (
@@ -280,32 +267,7 @@ function BannersManagement() {
                                                 </div>
                                             )}
                                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
-                                                <span className="text-white text-xs font-bold px-3 py-1 bg-black/50 rounded-full">Change Mobile</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex-1 space-y-2">
-                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-2">Desktop Banner</p>
-                                        <div
-                                            onClick={() => triggerUpload(banner.bannerId, 'desktop')}
-                                            className="relative w-full aspect-[21/9] rounded-3xl overflow-hidden bg-white border-2 border-dashed border-gray-200 cursor-pointer hover:border-purple-400 transition-all flex flex-col items-center justify-center group/img"
-                                        >
-                                            {banner.images.desktop ? (
-                                                <img src={banner.images.desktop} className="w-full h-full object-cover" loading="lazy" />
-                                            ) : (
-                                                <div className="flex flex-col items-center gap-2 opacity-30">
-                                                    <ImageIcon className="w-8 h-8" />
-                                                    <span className="text-[10px] font-bold">Recommended: 1920x820</span>
-                                                </div>
-                                            )}
-                                            {uploading === 'desktop' && activeBannerId === banner.bannerId && (
-                                                <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
-                                                    <Loader2 className="w-6 h-6 animate-spin text-purple-600" />
-                                                </div>
-                                            )}
-                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
-                                                <span className="text-white text-xs font-bold px-3 py-1 bg-black/50 rounded-full">Change Desktop</span>
+                                                <span className="text-white text-xs font-bold px-3 py-1 bg-black/50 rounded-full">Change Image</span>
                                             </div>
                                         </div>
                                     </div>

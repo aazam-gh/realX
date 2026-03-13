@@ -24,23 +24,20 @@ export const Route = createFileRoute('/admin/cms/banners/add')({
 function AddBannerPage() {
     const navigate = useNavigate()
     const [loading, setLoading] = useState(false)
-    const [uploading, setUploading] = useState<'mobile' | 'desktop' | null>(null)
+    const [uploading, setUploading] = useState<'mobile' | null>(null)
 
     const [banner, setBanner] = useState<BannerItem>({
         bannerId: `promo_${Math.random().toString(36).substr(2, 9)}`,
         offerId: '',
         images: {
-            mobile: '',
-            desktop: ''
+            mobile: ''
         },
         altText: '',
         isActive: true
     })
 
     const fileInputRef = useRef<HTMLInputElement>(null)
-    const desktopFileInputRef = useRef<HTMLInputElement>(null)
-
-    const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>, type: 'mobile' | 'desktop') => {
+    const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>, type: 'mobile') => {
         const file = e.target.files?.[0]
         if (!file) return
 
@@ -67,8 +64,8 @@ function AddBannerPage() {
     }
 
     const handleSave = async () => {
-        if (!banner.images.mobile && !banner.images.desktop) {
-            toast.error('Please upload at least one image')
+        if (!banner.images.mobile) {
+            toast.error('Please upload an image')
             return
         }
 
@@ -139,11 +136,11 @@ function AddBannerPage() {
             </div>
 
             <div className="bg-[#F8F9F9] rounded-[2.5rem] p-10 space-y-10 border border-gray-100 shadow-sm">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    {/* Mobile Banner Upload */}
+                <div className="max-w-xl mx-auto">
+                    {/* Banner Upload */}
                     <div className="space-y-4">
                         <div className="flex items-center justify-between px-2">
-                            <p className="text-sm font-bold text-gray-900 uppercase tracking-wider">Mobile Banner</p>
+                            <p className="text-sm font-bold text-gray-900 uppercase tracking-wider">Banner Image</p>
                             <span className="text-[10px] text-gray-400 font-bold">Recommended: 1080x460</span>
                         </div>
                         <div
@@ -162,7 +159,7 @@ function AddBannerPage() {
                                     <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
                                         <ImageIcon className="w-6 h-6" />
                                     </div>
-                                    <span className="text-xs font-bold">Select Mobile Banner</span>
+                                    <span className="text-xs font-bold">Select Banner Image</span>
                                 </div>
                             )}
                             {uploading === 'mobile' && (
@@ -177,46 +174,6 @@ function AddBannerPage() {
                             className="hidden"
                             accept="image/*"
                             onChange={(e) => onFileChange(e, 'mobile')}
-                        />
-                    </div>
-
-                    {/* Desktop Banner Upload */}
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between px-2">
-                            <p className="text-sm font-bold text-gray-900 uppercase tracking-wider">Desktop Banner</p>
-                            <span className="text-[10px] text-gray-400 font-bold">Recommended: 1920x820</span>
-                        </div>
-                        <div
-                            onClick={() => desktopFileInputRef.current?.click()}
-                            className="relative aspect-[21/9] rounded-[2rem] overflow-hidden bg-white border-2 border-dashed border-gray-200 cursor-pointer hover:border-purple-400 transition-all flex flex-col items-center justify-center group"
-                        >
-                            {banner.images.desktop ? (
-                                <>
-                                    <img src={banner.images.desktop} className="w-full h-full object-cover" />
-                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                        <span className="text-white text-xs font-bold px-4 py-2 bg-black/50 rounded-full">Change Image</span>
-                                    </div>
-                                </>
-                            ) : (
-                                <div className="flex flex-col items-center gap-3 opacity-30">
-                                    <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
-                                        <ImageIcon className="w-6 h-6" />
-                                    </div>
-                                    <span className="text-xs font-bold">Select Desktop Banner</span>
-                                </div>
-                            )}
-                            {uploading === 'desktop' && (
-                                <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
-                                    <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
-                                </div>
-                            )}
-                        </div>
-                        <input
-                            type="file"
-                            ref={desktopFileInputRef}
-                            className="hidden"
-                            accept="image/*"
-                            onChange={(e) => onFileChange(e, 'desktop')}
                         />
                     </div>
                 </div>
