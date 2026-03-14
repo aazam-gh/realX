@@ -32,7 +32,6 @@ export function OffersSettings({ vendorId, vendorName, vendorProfilePicture }: O
         discountType: 'percentage',
         discountValue: 0,
         isTrending: false,
-        isTopRated: false,
         mainCategory: '',
         status: 'active',
         totalRedemptions: 0
@@ -50,7 +49,6 @@ export function OffersSettings({ vendorId, vendorName, vendorProfilePicture }: O
                 discountType: 'percentage',
                 discountValue: 0,
                 isTrending: false,
-                isTopRated: false,
                 mainCategory: '',
                 status: 'active',
                 totalRedemptions: 0
@@ -401,14 +399,6 @@ export function OffersSettings({ vendorId, vendorName, vendorProfilePicture }: O
                                     />
                                     <Label htmlFor="trending" className="cursor-pointer">Trending</Label>
                                 </div>
-                                <div className="flex items-center space-x-2">
-                                    <Checkbox
-                                        id="toprated"
-                                        checked={formData.isTopRated}
-                                        onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isTopRated: checked as boolean }))}
-                                    />
-                                    <Label htmlFor="toprated" className="cursor-pointer">Top Rated</Label>
-                                </div>
                             </div>
                         </div>
 
@@ -539,7 +529,6 @@ export function OffersSettings({ vendorId, vendorName, vendorProfilePicture }: O
                             <div className="mt-auto pt-2 flex justify-between items-center">
                                 <div className="flex gap-2">
                                     {offer.isTrending && <Badge variant="secondary" className="bg-orange-100 text-orange-600 border-none">Trending</Badge>}
-                                    {offer.isTopRated && <Badge variant="secondary" className="bg-yellow-100 text-yellow-600 border-none">Top Rated</Badge>}
                                 </div>
                             </div>
 

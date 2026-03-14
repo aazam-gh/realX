@@ -28,7 +28,6 @@ export interface Offer {
     discountValue: number
     categories: string[]
     isTrending: boolean
-    isTopRated: boolean
     mainCategory?: string
     status: 'active' | 'inactive'
     startAt?: Timestamp
