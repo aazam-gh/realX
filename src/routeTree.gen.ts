@@ -24,10 +24,12 @@ import { Route as vendorPanelVendorPinRouteImport } from './routes/(vendor-panel
 import { Route as vendorPanelVendorDashboardRouteImport } from './routes/(vendor-panel)/_vendor.dashboard'
 import { Route as vendorPanelVendorContactUsRouteImport } from './routes/(vendor-panel)/_vendor.contact-us'
 import { Route as AdminCmsCategoriesIndexRouteImport } from './routes/admin/cms/categories/index'
+import { Route as AdminCmsBrandsIndexRouteImport } from './routes/admin/cms/brands/index'
 import { Route as AdminCmsBannersIndexRouteImport } from './routes/admin/cms/banners/index'
 import { Route as AdminVendorsVendorIdSettingsRouteImport } from './routes/admin/vendors/$vendorId.settings'
 import { Route as AdminStudentsStudentIdSettingsRouteImport } from './routes/admin/students/$studentId.settings'
 import { Route as AdminCmsCategoriesCategoryIdRouteImport } from './routes/admin/cms/categories/$categoryId'
+import { Route as AdminCmsBrandsAddRouteImport } from './routes/admin/cms/brands/add'
 import { Route as AdminCmsBannersAddRouteImport } from './routes/admin/cms/banners/add'
 import { Route as AdminVendorsVendorIdSettingsIndexRouteImport } from './routes/admin/vendors/$vendorId.settings.index'
 import { Route as AdminVendorsVendorIdSettingsOffersRouteImport } from './routes/admin/vendors/$vendorId.settings.offers'
@@ -119,6 +121,13 @@ const AdminCmsCategoriesIndexRoute = AdminCmsCategoriesIndexRouteImport.update({
   path: '/cms/categories/',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminCmsBrandsIndexRoute = AdminCmsBrandsIndexRouteImport.update({
+  id: '/cms/brands/',
+  path: '/cms/brands/',
+  getParentRoute: () => AdminRoute,
+} as any).lazy(() =>
+  import('./routes/admin/cms/brands/index.lazy').then((d) => d.Route),
+)
 const AdminCmsBannersIndexRoute = AdminCmsBannersIndexRouteImport.update({
   id: '/cms/banners/',
   path: '/cms/banners/',
@@ -144,6 +153,11 @@ const AdminCmsCategoriesCategoryIdRoute =
     path: '/cms/categories/$categoryId',
     getParentRoute: () => AdminRoute,
   } as any)
+const AdminCmsBrandsAddRoute = AdminCmsBrandsAddRouteImport.update({
+  id: '/cms/brands/add',
+  path: '/cms/brands/add',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminCmsBannersAddRoute = AdminCmsBannersAddRouteImport.update({
   id: '/cms/banners/add',
   path: '/cms/banners/add',
@@ -183,10 +197,12 @@ export interface FileRoutesByFullPath {
   '/admin/transactions': typeof AdminTransactionsIndexRoute
   '/admin/vendors': typeof AdminVendorsIndexRoute
   '/admin/cms/banners/add': typeof AdminCmsBannersAddRoute
+  '/admin/cms/brands/add': typeof AdminCmsBrandsAddRoute
   '/admin/cms/categories/$categoryId': typeof AdminCmsCategoriesCategoryIdRoute
   '/admin/students/$studentId/settings': typeof AdminStudentsStudentIdSettingsRoute
   '/admin/vendors/$vendorId/settings': typeof AdminVendorsVendorIdSettingsRouteWithChildren
   '/admin/cms/banners': typeof AdminCmsBannersIndexRoute
+  '/admin/cms/brands': typeof AdminCmsBrandsIndexRoute
   '/admin/cms/categories': typeof AdminCmsCategoriesIndexRoute
   '/admin/vendors/$vendorId/settings/branding': typeof AdminVendorsVendorIdSettingsBrandingRoute
   '/admin/vendors/$vendorId/settings/offers': typeof AdminVendorsVendorIdSettingsOffersRoute
@@ -206,9 +222,11 @@ export interface FileRoutesByTo {
   '/admin/transactions': typeof AdminTransactionsIndexRoute
   '/admin/vendors': typeof AdminVendorsIndexRoute
   '/admin/cms/banners/add': typeof AdminCmsBannersAddRoute
+  '/admin/cms/brands/add': typeof AdminCmsBrandsAddRoute
   '/admin/cms/categories/$categoryId': typeof AdminCmsCategoriesCategoryIdRoute
   '/admin/students/$studentId/settings': typeof AdminStudentsStudentIdSettingsRoute
   '/admin/cms/banners': typeof AdminCmsBannersIndexRoute
+  '/admin/cms/brands': typeof AdminCmsBrandsIndexRoute
   '/admin/cms/categories': typeof AdminCmsCategoriesIndexRoute
   '/admin/vendors/$vendorId/settings/branding': typeof AdminVendorsVendorIdSettingsBrandingRoute
   '/admin/vendors/$vendorId/settings/offers': typeof AdminVendorsVendorIdSettingsOffersRoute
@@ -231,10 +249,12 @@ export interface FileRoutesById {
   '/admin/transactions/': typeof AdminTransactionsIndexRoute
   '/admin/vendors/': typeof AdminVendorsIndexRoute
   '/admin/cms/banners/add': typeof AdminCmsBannersAddRoute
+  '/admin/cms/brands/add': typeof AdminCmsBrandsAddRoute
   '/admin/cms/categories/$categoryId': typeof AdminCmsCategoriesCategoryIdRoute
   '/admin/students/$studentId/settings': typeof AdminStudentsStudentIdSettingsRoute
   '/admin/vendors/$vendorId/settings': typeof AdminVendorsVendorIdSettingsRouteWithChildren
   '/admin/cms/banners/': typeof AdminCmsBannersIndexRoute
+  '/admin/cms/brands/': typeof AdminCmsBrandsIndexRoute
   '/admin/cms/categories/': typeof AdminCmsCategoriesIndexRoute
   '/admin/vendors/$vendorId/settings/branding': typeof AdminVendorsVendorIdSettingsBrandingRoute
   '/admin/vendors/$vendorId/settings/offers': typeof AdminVendorsVendorIdSettingsOffersRoute
@@ -257,10 +277,12 @@ export interface FileRouteTypes {
     | '/admin/transactions'
     | '/admin/vendors'
     | '/admin/cms/banners/add'
+    | '/admin/cms/brands/add'
     | '/admin/cms/categories/$categoryId'
     | '/admin/students/$studentId/settings'
     | '/admin/vendors/$vendorId/settings'
     | '/admin/cms/banners'
+    | '/admin/cms/brands'
     | '/admin/cms/categories'
     | '/admin/vendors/$vendorId/settings/branding'
     | '/admin/vendors/$vendorId/settings/offers'
@@ -280,9 +302,11 @@ export interface FileRouteTypes {
     | '/admin/transactions'
     | '/admin/vendors'
     | '/admin/cms/banners/add'
+    | '/admin/cms/brands/add'
     | '/admin/cms/categories/$categoryId'
     | '/admin/students/$studentId/settings'
     | '/admin/cms/banners'
+    | '/admin/cms/brands'
     | '/admin/cms/categories'
     | '/admin/vendors/$vendorId/settings/branding'
     | '/admin/vendors/$vendorId/settings/offers'
@@ -304,10 +328,12 @@ export interface FileRouteTypes {
     | '/admin/transactions/'
     | '/admin/vendors/'
     | '/admin/cms/banners/add'
+    | '/admin/cms/brands/add'
     | '/admin/cms/categories/$categoryId'
     | '/admin/students/$studentId/settings'
     | '/admin/vendors/$vendorId/settings'
     | '/admin/cms/banners/'
+    | '/admin/cms/brands/'
     | '/admin/cms/categories/'
     | '/admin/vendors/$vendorId/settings/branding'
     | '/admin/vendors/$vendorId/settings/offers'
@@ -430,6 +456,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCmsCategoriesIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/cms/brands/': {
+      id: '/admin/cms/brands/'
+      path: '/cms/brands'
+      fullPath: '/admin/cms/brands'
+      preLoaderRoute: typeof AdminCmsBrandsIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/cms/banners/': {
       id: '/admin/cms/banners/'
       path: '/cms/banners'
@@ -456,6 +489,13 @@ declare module '@tanstack/react-router' {
       path: '/cms/categories/$categoryId'
       fullPath: '/admin/cms/categories/$categoryId'
       preLoaderRoute: typeof AdminCmsCategoriesCategoryIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/cms/brands/add': {
+      id: '/admin/cms/brands/add'
+      path: '/cms/brands/add'
+      fullPath: '/admin/cms/brands/add'
+      preLoaderRoute: typeof AdminCmsBrandsAddRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/cms/banners/add': {
@@ -517,10 +557,12 @@ interface AdminRouteChildren {
   AdminTransactionsIndexRoute: typeof AdminTransactionsIndexRoute
   AdminVendorsIndexRoute: typeof AdminVendorsIndexRoute
   AdminCmsBannersAddRoute: typeof AdminCmsBannersAddRoute
+  AdminCmsBrandsAddRoute: typeof AdminCmsBrandsAddRoute
   AdminCmsCategoriesCategoryIdRoute: typeof AdminCmsCategoriesCategoryIdRoute
   AdminStudentsStudentIdSettingsRoute: typeof AdminStudentsStudentIdSettingsRoute
   AdminVendorsVendorIdSettingsRoute: typeof AdminVendorsVendorIdSettingsRouteWithChildren
   AdminCmsBannersIndexRoute: typeof AdminCmsBannersIndexRoute
+  AdminCmsBrandsIndexRoute: typeof AdminCmsBrandsIndexRoute
   AdminCmsCategoriesIndexRoute: typeof AdminCmsCategoriesIndexRoute
 }
 
@@ -531,11 +573,13 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminTransactionsIndexRoute: AdminTransactionsIndexRoute,
   AdminVendorsIndexRoute: AdminVendorsIndexRoute,
   AdminCmsBannersAddRoute: AdminCmsBannersAddRoute,
+  AdminCmsBrandsAddRoute: AdminCmsBrandsAddRoute,
   AdminCmsCategoriesCategoryIdRoute: AdminCmsCategoriesCategoryIdRoute,
   AdminStudentsStudentIdSettingsRoute: AdminStudentsStudentIdSettingsRoute,
   AdminVendorsVendorIdSettingsRoute:
     AdminVendorsVendorIdSettingsRouteWithChildren,
   AdminCmsBannersIndexRoute: AdminCmsBannersIndexRoute,
+  AdminCmsBrandsIndexRoute: AdminCmsBrandsIndexRoute,
   AdminCmsCategoriesIndexRoute: AdminCmsCategoriesIndexRoute,
 }
 

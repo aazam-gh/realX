@@ -16,6 +16,11 @@ const CMS_ITEMS = [
         title: 'Categories & Sorting',
         icon: '📁',
         href: '/admin/cms/categories' as const,
+    },
+    {
+        title: 'Top Brands',
+        icon: '🏷️',
+        href: '/admin/cms/brands' as const,
     }
 ]
 
