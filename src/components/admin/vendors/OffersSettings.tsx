@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card'
 import { SquarePen, Plus, Loader2, ArrowLeft, Check, Trash2, Upload, X } from 'lucide-react'
 import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { db, storage } from '@/firebase/config'
-import { collection, doc, updateDoc, addDoc, deleteDoc, serverTimestamp, Timestamp } from 'firebase/firestore'
+import { collection, doc, updateDoc, addDoc, deleteDoc, serverTimestamp } from 'firebase/firestore'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { toast } from 'sonner'
 import { useState, useRef, useEffect } from 'react'
@@ -14,6 +14,47 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { offersQueryOptions, type Offer } from '@/queries'
+
+export function generateSearchTokens({
+    titleEn,
+    titleAr,
+    vendorName,
+    mainCategory,
+    categories,
+}: {
+    titleEn?: string;
+    titleAr?: string;
+    vendorName?: string;
+    mainCategory?: string;
+    categories?: string[];
+}): string[] {
+    const tokens = new Set<string>();
+
+    const tokenize = (text?: string) => {
+        if (!text) return;
+        const words = text.toLowerCase().split(/[\s\-_,.]+/);
+
+        words.forEach(word => {
+            if (!word) return;
+            tokens.add(word);
+
+            if (word.includes("'")) {
+                tokens.add(word.replace(/'/g, ""));
+                tokens.add(word.split("'")[0]);
+            }
+        });
+    };
+
+    tokenize(titleEn);
+    tokenize(titleAr);
+    tokenize(vendorName);
+    tokenize(mainCategory);
+    if (categories) {
+        categories.forEach(tokenize);
+    }
+
+    return Array.from(tokens);
+}
 
 interface OffersSettingsProps {
     vendorId: string | undefined
@@ -92,11 +133,20 @@ export function OffersSettings({ vendorId, vendorName, vendorProfilePicture }: O
 
     const saveMutation = useMutation({
         mutationFn: async (data: Partial<Offer>) => {
+            const searchTokens = generateSearchTokens({
+                titleEn: data.titleEn,
+                titleAr: data.titleAr,
+                vendorName: vendorName || '',
+                mainCategory: data.mainCategory,
+                categories: data.categories
+            });
+
             if (editingOffer) {
                 // Update
                 const docRef = doc(db, 'offers', editingOffer.id)
                 await updateDoc(docRef, {
                     ...data,
+                    searchTokens,
                     vendorRef: doc(db, 'vendors', vendorId || editingOffer.vendorId),
                     vendorName: vendorName || '',
                     vendorProfilePicture: vendorProfilePicture || '',
@@ -107,6 +157,7 @@ export function OffersSettings({ vendorId, vendorName, vendorProfilePicture }: O
                 if (!vendorId) throw new Error("Vendor ID is missing")
                 await addDoc(collection(db, 'offers'), {
                     ...data,
+                    searchTokens,
                     vendorId,
                     vendorRef: doc(db, 'vendors', vendorId),
                     vendorName: vendorName || '',
@@ -173,24 +224,6 @@ export function OffersSettings({ vendorId, vendorName, vendorProfilePicture }: O
         }
     })
 
-    // Helper functions for date inputs
-    const formatDateForInput = (timestamp?: Timestamp) => {
-        if (!timestamp) return ""
-        try {
-            return timestamp.toDate().toISOString().slice(0, 16)
-        } catch (e) {
-            return ""
-        }
-    }
-
-    const handleDateChange = (dateString: string, field: 'startAt' | 'endAt') => {
-        if (!dateString) {
-            setFormData(prev => ({ ...prev, [field]: null }))
-            return
-        }
-        const date = new Date(dateString)
-        setFormData(prev => ({ ...prev, [field]: Timestamp.fromDate(date) }))
-    }
 
     if (isCreating || editingOffer) {
         return (
@@ -431,27 +464,6 @@ export function OffersSettings({ vendorId, vendorName, vendorProfilePicture }: O
                             </div>
                         </div>
 
-                        {/* Validity Dates */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label>Start Date</Label>
-                                <Input
-                                    type="datetime-local"
-                                    value={formatDateForInput(formData.startAt)}
-                                    onChange={e => handleDateChange(e.target.value, 'startAt')}
-                                    className="bg-slate-50 h-11"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>End Date</Label>
-                                <Input
-                                    type="datetime-local"
-                                    value={formatDateForInput(formData.endAt)}
-                                    onChange={e => handleDateChange(e.target.value, 'endAt')}
-                                    className="bg-slate-50 h-11"
-                                />
-                            </div>
-                        </div>
                     </div>
                 </div>
 

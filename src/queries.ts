@@ -27,11 +27,10 @@ export interface Offer {
     discountType: 'percentage' | 'amount'
     discountValue: number
     categories: string[]
+    searchTokens?: string[]
     isTrending: boolean
     mainCategory?: string
     status: 'active' | 'inactive'
-    startAt?: Timestamp
-    endAt?: Timestamp
     totalRedemptions: number
     viewsCount?: number
     createdAt?: Timestamp
