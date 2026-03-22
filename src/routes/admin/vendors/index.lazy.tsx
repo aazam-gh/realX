@@ -17,7 +17,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
-import { Search, Upload, Plus, ChevronRight, Loader2 } from 'lucide-react'
+import { Search, Upload, Plus, ChevronRight, Loader2, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import {
     Dialog,
@@ -26,6 +26,7 @@ import {
     DialogTitle,
     DialogTrigger,
     DialogFooter,
+    DialogDescription,
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { db, functions } from '@/firebase/config'
@@ -44,6 +45,8 @@ function RouteComponent() {
     const { page, pageSize } = useSearch({ from: '/admin/vendors/' })
     const [open, setOpen] = useState(false)
     const [form, setForm] = useState({ name: '', email: '', password: '' })
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+    const [vendorToDelete, setVendorToDelete] = useState<Vendor | null>(null)
 
     const { data, isLoading: isQueryLoading } = useQuery({
         queryKey: ['vendors-list', page, pageSize],
@@ -90,11 +93,38 @@ function RouteComponent() {
         }
     })
 
+    const deleteVendorMutation = useMutation({
+        mutationFn: async (vendorId: string) => {
+            const deleteVendorUser = httpsCallable(functions, 'deleteVendorUser')
+            await deleteVendorUser({ uid: vendorId })
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['vendors-list'] })
+            setDeleteConfirmOpen(false)
+            setVendorToDelete(null)
+        },
+        onError: (error) => {
+            console.error('Error deleting vendor: ', error)
+            alert('Failed to delete vendor: ' + (error instanceof Error ? error.message : 'Unknown error'))
+        }
+    })
+
     const loading = isQueryLoading
 
     const handleAddVendor = async () => {
         if (!form.name || !form.email || !form.password) return
         addVendorMutation.mutate(form)
+    }
+
+    const handleDeleteVendor = (vendor: Vendor) => {
+        setVendorToDelete(vendor)
+        setDeleteConfirmOpen(true)
+    }
+
+    const confirmDelete = () => {
+        if (vendorToDelete) {
+            deleteVendorMutation.mutate(vendorToDelete.id)
+        }
     }
 
     // Simplified Pagination logic
@@ -104,6 +134,37 @@ function RouteComponent() {
     return (
         <div className="p-8 space-y-6 w-full max-w-[1600px] mx-auto">
             <h1 className="text-3xl font-bold tracking-tight">Vendor Overview</h1>
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Delete Vendor</DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to delete <strong>{vendorToDelete?.name}</strong>? This action will remove the user's access and delete their data. This cannot be undone.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2 sm:gap-0">
+                        <Button variant="outline" onClick={() => setDeleteConfirmOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={confirmDelete}
+                            disabled={deleteVendorMutation.isPending}
+                        >
+                            {deleteVendorMutation.isPending ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Deleting...
+                                </>
+                            ) : (
+                                'Delete Vendor'
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="relative w-full sm:max-w-md">
@@ -253,11 +314,21 @@ function RouteComponent() {
                                         />
                                     </TableCell>
                                     <TableCell className="text-right">
-                                        <Link to="/admin/vendors/$vendorId/settings" params={{ vendorId: vendor.id }}>
-                                            <Button variant="outline" size="sm" className="rounded-full h-8 px-4 gap-1 text-xs font-semibold">
-                                                Manage <ChevronRight className="h-3 w-3" />
+                                        <div className="flex items-center justify-end gap-2">
+                                            <Link to="/admin/vendors/$vendorId/settings" params={{ vendorId: vendor.id }}>
+                                                <Button variant="outline" size="sm" className="rounded-full h-8 px-4 gap-1 text-xs font-semibold">
+                                                    Manage <ChevronRight className="h-3 w-3" />
+                                                </Button>
+                                            </Link>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 text-muted-foreground hover:text-destructive transition-colors"
+                                                onClick={() => handleDeleteVendor(vendor)}
+                                            >
+                                                <Trash2 className="h-4 w-4" />
                                             </Button>
-                                        </Link>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             ))

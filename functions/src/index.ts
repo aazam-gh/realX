@@ -4,7 +4,7 @@ import * as logger from "firebase-functions/logger";
 
 import {initializeApp} from "firebase-admin/app";
 import {getAuth} from "firebase-admin/auth";
-import {getFirestore, FieldValue} from "firebase-admin/firestore";
+import {getFirestore} from "firebase-admin/firestore";
 
 // Init Admin SDK
 initializeApp();
@@ -51,7 +51,7 @@ export const createVendorUser = onCall(
     await db.collection("vendors").doc(user.uid).set({
       name,
       email,
-      createdAt: FieldValue.serverTimestamp(),
+      createdAt: new Date(),
     });
 
     logger.info("Vendor created", {
@@ -60,6 +60,55 @@ export const createVendorUser = onCall(
 
     return {
       uid: user.uid,
+      success: true,
+    };
+  }
+);
+
+export const deleteVendorUser = onCall(
+  {region: "me-central1"},
+  async (request) => {
+    const {auth, data} = request;
+
+    // 1️⃣ Auth required
+    if (!auth) {
+      throw new HttpsError("unauthenticated", "User not authenticated");
+    }
+
+    // 2️⃣ Super admin only
+    if (!auth.token.admin) {
+      throw new HttpsError("permission-denied", "Admin access required");
+    }
+
+    const {uid} = data;
+
+    // 3️⃣ Validate input
+    if (!uid) {
+      throw new HttpsError(
+        "invalid-argument",
+        "vendor uid is required"
+      );
+    }
+
+    const authAdmin = getAuth();
+    const db = getFirestore();
+
+    // 4️⃣ Delete Auth user
+    try {
+      await authAdmin.deleteUser(uid);
+    } catch (error) {
+      logger.error("Error deleting Auth user", {uid, error});
+      // Continue to delete Firestore document even if Auth user is already gone
+    }
+
+    // 5️⃣ Delete vendor Firestore document
+    await db.collection("vendors").doc(uid).delete();
+
+    logger.info("Vendor deleted", {
+      vendorId: uid,
+    });
+
+    return {
       success: true,
     };
   }
