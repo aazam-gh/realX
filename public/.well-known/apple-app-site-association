@@ -1,0 +1,10 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appID": "2396PCT42P.com.reelx.app",
+        "paths": ["/finishSignIn*"]
+      }
+    ]
+  }
+}
