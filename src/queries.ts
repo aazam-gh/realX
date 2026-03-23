@@ -45,7 +45,12 @@ export const vendorQueryOptions = (vendorId: string) => queryOptions({
         if (!snapshot.exists()) {
             throw new Error('Vendor not found')
         }
-        return { id: snapshot.id, ...snapshot.data() } as Vendor
+        const data = snapshot.data();
+        return { 
+            id: snapshot.id, 
+            ...data,
+            profilePicture: data.profilePicture || data.logo || data.logoUrl || ''
+        } as Vendor
     },
 })
 
