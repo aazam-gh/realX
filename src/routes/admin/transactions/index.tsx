@@ -26,6 +26,20 @@ export interface Transaction {
     vendorName: string
     totalAmount: string
     type: string
+    cashbackAmount?: number
+    creatorCashbackAmount?: number
+    creatorCode?: string | null
+    creatorCodeOwnerId?: string | null
+    discountAmount?: number
+    discountType?: string
+    discountValue?: number
+    finalAmount?: number
+    offerId?: string
+    pin?: string
+    userId?: string
+    vendorId?: string
+    redemptionCardAmount?: number
+    remainingAmount?: number
 }
 
 export async function fetchTransactions(page: number, pageSize: number) {
@@ -48,9 +62,6 @@ export async function fetchTransactions(page: number, pageSize: number) {
         const data = docSnap.data()
         const id = docSnap.id
 
-        // Attempting to gracefully handle potential different field names 
-        // fallback to some text if missing
-        
         let formattedDate = ''
         if (data.createdAt) {
             if (typeof data.createdAt === 'string') {
@@ -58,16 +69,11 @@ export async function fetchTransactions(page: number, pageSize: number) {
             } else if (data.createdAt.toDate) {
                 formattedDate = data.createdAt.toDate().toLocaleString()
             }
-        } else if (data.date) {
-            if (typeof data.date === 'string') {
-                formattedDate = new Date(data.date).toLocaleString()
-            } else if (data.date.toDate) {
-                formattedDate = data.date.toDate().toLocaleString()
-            }
         }
 
         return {
             id,
+            ...data,
             date: formattedDate || 'Unknown Date',
             transactionId: data.pin || id,
             vendorName: data.vendorName || 'Unknown Vendor',
