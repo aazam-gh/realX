@@ -1,7 +1,7 @@
 import { initializeApp } from 'firebase/app'
 import { getAuth, connectAuthEmulator } from 'firebase/auth'
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore'
-import { getStorage, connectStorageEmulator } from "firebase/storage";
+import { getStorage, connectStorageEmulator } from 'firebase/storage';
 import { getFunctions, connectFunctionsEmulator } from 'firebase/functions'
 
 const firebaseConfig = {
@@ -21,6 +21,7 @@ export const storage = getStorage(app);
 
 // Connect to emulators in development
 if (import.meta.env.DEV) {
+  console.log('Connecting to Firebase Emulators...')
   connectAuthEmulator(auth, 'http://localhost:9099')
   connectFirestoreEmulator(db, 'localhost', 8080)
   connectFunctionsEmulator(functions, 'localhost', 5001)

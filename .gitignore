@@ -7,19 +7,32 @@ dist-ssr
 .env.*
 !.env.example
 
+# TanStack Router
+.tanstack
+.tanstack/
+
 # Firebase
 .firebase/
-*-debug.log
+.firebase
+*-debug.log*
 .firebaserc
 firebase.json
-realappx-firebase-adminsdk-*.json
 firebaseConfig.ts
+emulator-data
+
+# IDEs & Tools
+.vscode
+.idea
+.sfdx
+.sfdx/
+
+# Scripts & Secrets (KEEP OUT OF GIT)
+realappx-firebase-adminsdk-*.json
+seed-firestore.js
+seed-vendor-techstore.js
+clear-firestore.js
+setAdmin.cjs
 
 # Project specific
 package-lock.json
 src/routeTree.gen.ts
-seed-firestore.js
-clear-firestore.js
-setAdmin.cjs
-.tanstack/
-.sfdx/
