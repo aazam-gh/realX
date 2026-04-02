@@ -38,9 +38,21 @@ export function generateSearchTokens({
             if (!word) return;
             tokens.add(word);
 
+            // English specific
             if (word.includes("'")) {
                 tokens.add(word.replace(/'/g, ""));
                 tokens.add(word.split("'")[0]);
+            }
+
+            // Arabic specific normalization
+            const normalizedAr = word
+                .replace(/[\u064B-\u0652]/g, '') // Remove diacritics
+                .replace(/[أإآ]/g, 'ا') // Normalize Alef
+                .replace(/ة/g, 'ه') // Normalize Teh Marbuta
+                .replace(/ى/g, 'ي'); // Normalize Alef Maksura
+
+            if (normalizedAr !== word) {
+                tokens.add(normalizedAr);
             }
         });
     };
