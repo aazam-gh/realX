@@ -164,8 +164,8 @@ function RouteComponent() {
     const loading = isQueryLoading
 
     const handleAddStudent = async () => {
-        if (!form.firstName || !form.lastName || !form.email || !form.password || !form.gender || !form.dob || !form.role) {
-            alert('Please fill in all fields')
+        if (!form.email) {
+            alert('Please enter an email address')
             return
         }
         addStudentMutation.mutate(form)
@@ -200,29 +200,7 @@ function RouteComponent() {
                             <DialogHeader>
                                 <DialogTitle>Add New Student</DialogTitle>
                             </DialogHeader>
-                            <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto px-1">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="firstName">First Name</Label>
-                                        <Input
-                                            id="firstName"
-                                            value={form.firstName}
-                                            onChange={(e) => setForm({ ...form, firstName: e.target.value })}
-                                            placeholder="John"
-                                            disabled={addStudentMutation.isPending}
-                                        />
-                                    </div>
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="lastName">Last Name</Label>
-                                        <Input
-                                            id="lastName"
-                                            value={form.lastName}
-                                            onChange={(e) => setForm({ ...form, lastName: e.target.value })}
-                                            placeholder="Doe"
-                                            disabled={addStudentMutation.isPending}
-                                        />
-                                    </div>
-                                </div>
+                            <div className="grid gap-4 py-4 px-1">
                                 <div className="grid gap-2">
                                     <Label htmlFor="email">Email Address</Label>
                                     <Input
@@ -230,65 +208,12 @@ function RouteComponent() {
                                         type="email"
                                         value={form.email}
                                         onChange={(e) => setForm({ ...form, email: e.target.value })}
-                                        placeholder="john.doe@example.com"
+                                        placeholder="student.email@example.com"
                                         disabled={addStudentMutation.isPending}
                                     />
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="password">Password</Label>
-                                    <Input
-                                        id="password"
-                                        type="password"
-                                        value={form.password}
-                                        onChange={(e) => setForm({ ...form, password: e.target.value })}
-                                        placeholder="••••••••"
-                                        disabled={addStudentMutation.isPending}
-                                    />
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="gender">Gender</Label>
-                                        <Select 
-                                            value={form.gender} 
-                                            onValueChange={(value) => setForm({ ...form, gender: value })}
-                                            disabled={addStudentMutation.isPending}
-                                        >
-                                            <SelectTrigger id="gender">
-                                                <SelectValue placeholder="Select gender" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="Male">Male</SelectItem>
-                                                <SelectItem value="Female">Female</SelectItem>
-                                                <SelectItem value="Other">Other</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="role">Role</Label>
-                                        <Select 
-                                            value={form.role} 
-                                            onValueChange={(value) => setForm({ ...form, role: value })}
-                                            disabled={addStudentMutation.isPending}
-                                        >
-                                            <SelectTrigger id="role">
-                                                <SelectValue placeholder="Select role" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="creator">Creator</SelectItem>
-                                                <SelectItem value="student">Student</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="dob">Date of Birth</Label>
-                                    <Input
-                                        id="dob"
-                                        type="date"
-                                        value={form.dob}
-                                        onChange={(e) => setForm({ ...form, dob: e.target.value })}
-                                        disabled={addStudentMutation.isPending}
-                                    />
+                                    <p className="text-xs text-muted-foreground">
+                                        The student will be created with default details and will need to set their password via recovery.
+                                    </p>
                                 </div>
                             </div>
                             <DialogFooter>
@@ -391,7 +316,7 @@ function RouteComponent() {
                                     </TableCell>
                                     <TableCell className="font-mono font-medium text-foreground tracking-widest">{student.creatorCode}</TableCell>
                                     <TableCell className="text-right">
-                                        <Link to="/admin/students/$studentId/settings" params={{ studentId: student.id }}>
+                                        <Link to="/admin/students/$studentId/settings" params={{ studentId: student.id }} search={{ page: 1, pageSize: 10 }}>
                                             <Button variant="outline" size="sm" className="rounded-full h-8 px-4 gap-1 text-xs font-semibold">
                                                 Manage <ChevronRight className="h-3 w-3" />
                                             </Button>

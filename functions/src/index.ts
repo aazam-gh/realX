@@ -132,12 +132,18 @@ export const createStudentUser = onCall(
     const {firstName, lastName, email, password, gender, dob, role} = data;
 
     // 3️⃣ Validate input
-    if (!firstName || !lastName || !email || !password || !gender || !dob || !role) {
+    if (!email) {
       throw new HttpsError(
         "invalid-argument",
-        "firstName, lastName, email, password, gender, dob, and role are required"
+        "email is required"
       );
     }
+
+    const finalFirstName = firstName || "Student";
+    const finalLastName = lastName || "";
+    const finalRole = role || "student";
+    const finalGender = gender || "Unspecified";
+    const finalDob = dob || new Date().toISOString().split("T")[0];
 
     const authAdmin = getAuth();
     const db = getFirestore();
@@ -153,33 +159,41 @@ export const createStudentUser = onCall(
     };
 
     let creatorCode = "";
-    if (role === "creator") {
+    if (finalRole === "creator") {
       creatorCode = generateCreatorCode();
     }
 
     // 5️⃣ Create Auth user
-    const user = await authAdmin.createUser({
+    const userConfig: any = {
       email,
-      password,
-      displayName: `${firstName} ${lastName}`,
+      displayName: `${finalFirstName} ${finalLastName}`.trim(),
       emailVerified: true,
-    });
+    };
+    
+    if (password) {
+      userConfig.password = password;
+    } else {
+      // Generate a random password for users created via admin panel with just email
+      userConfig.password = Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-10);
+    }
+
+    const user = await authAdmin.createUser(userConfig);
 
     // 6️⃣ Create student Firestore document
     const studentData: any = {
-      firstName,
-      lastName,
+      firstName: finalFirstName,
+      lastName: finalLastName,
       email,
-      gender,
-      dob,
+      gender: finalGender,
+      dob: finalDob,
       uid: user.uid,
-      role,
+      role: finalRole,
       cashback: 0,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
-    if (role === "creator") {
+    if (finalRole === "creator") {
       studentData.creatorCode = creatorCode;
       studentData.savings = 0;
     }
