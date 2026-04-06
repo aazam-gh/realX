@@ -2,6 +2,15 @@ import { queryOptions } from '@tanstack/react-query'
 import { db } from '@/firebase/config'
 import { doc, getDoc, query, collection, where, getDocs, Timestamp, DocumentReference, orderBy, getAggregateFromServer, sum, count } from 'firebase/firestore'
 
+export interface EmbeddedOffer {
+    titleEn: string
+    titleAr?: string
+    descriptionEn?: string
+    descriptionAr?: string
+    discountType: 'percentage' | 'amount'
+    discountValue: number
+}
+
 export interface Vendor {
     id: string
     name: string
@@ -11,30 +20,11 @@ export interface Vendor {
     profilePicture?: string
     xcard?: boolean
     loyalty?: number[]
-}
-
-export interface Offer {
-    id: string
-    vendorId: string
-    vendorRef?: DocumentReference
-    vendorName?: string
-    vendorProfilePicture?: string
-    titleEn: string
-    titleAr?: string
-    descriptionEn?: string
-    descriptionAr?: string
-    bannerImage?: string
-    discountType: 'percentage' | 'amount'
-    discountValue: number
-    categories: string[]
-    searchTokens?: string[]
-    isTrending: boolean
     mainCategory?: string
-    status: 'active' | 'inactive'
-    totalRedemptions: number
-    viewsCount?: number
-    createdAt?: Timestamp
-    updatedAt?: Timestamp
+    subcategory?: string[]
+    isTrending?: boolean
+    searchTokens?: string[]
+    offers?: EmbeddedOffer[]
 }
 
 export interface Transaction {
@@ -90,17 +80,6 @@ export const vendorQueryOptions = (vendorId: string) => queryOptions({
     staleTime: 1000 * 60 * 15,
 })
 
-export const offersQueryOptions = (vendorId: string) => queryOptions({
-    queryKey: ['offers', vendorId],
-    queryFn: async () => {
-        if (!vendorId) return []
-        const q = query(collection(db, 'offers'), where('vendorId', '==', vendorId))
-        const snapshot = await getDocs(q)
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Offer[]
-    },
-    staleTime: 1000 * 60 * 15,
-})
-
 export const vendorTransactionsQueryOptions = (vendorId: string) => queryOptions({
     queryKey: ['vendor-transactions', vendorId],
     queryFn: async () => {
@@ -140,14 +119,14 @@ export const vendorStatsQueryOptions = (vendorId: string) => queryOptions({
         const totalQ = query(collection(db, 'transactions'), where('vendorId', '==', vendorId))
         const totalAgg = await getAggregateFromServer(totalQ, { count: count() })
 
-        const offersQ = query(collection(db, 'offers'), where('vendorId', '==', vendorId))
-        const offersAgg = await getAggregateFromServer(offersQ, { count: count() })
+        const vendorSnap = await getDoc(doc(db, 'vendors', vendorId))
+        const offerCount = vendorSnap.exists() ? (vendorSnap.data()?.offers?.length || 0) : 0
 
         return {
             totalRedemptions: totalAgg.data().count,
             totalRevenue: completedAgg.data().totalRevenue,
             totalDiscount: completedAgg.data().totalDiscount,
-            activeOffers: offersAgg.data().count,
+            activeOffers: offerCount,
             pendingTransactions: pendingAgg.data().count,
             redemptionsTrend: 5.2,
             revenueTrend: 8.4

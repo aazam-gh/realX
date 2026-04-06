@@ -276,10 +276,10 @@ function BannersManagement() {
                                 <div className="flex-1 space-y-6">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="space-y-1.5">
-                                            <label className="text-xs font-bold text-gray-500 ml-1">Offer ID / Link Key</label>
+                                            <label className="text-xs font-bold text-gray-500 ml-1">Vendor ID / Link Key</label>
                                             <input
-                                                value={banner.offerId}
-                                                onChange={(e) => handleUpdateBanner(banner.bannerId, { offerId: e.target.value })}
+                                                value={banner.vendorId}
+                                                onChange={(e) => handleUpdateBanner(banner.bannerId, { vendorId: e.target.value })}
                                                 placeholder="winter_sale_2026"
                                                 className="w-full h-12 px-4 rounded-2xl bg-white border border-gray-100 font-bold text-sm text-gray-900 outline-none focus:border-purple-400 transition-all shadow-sm"
                                             />

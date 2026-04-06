@@ -28,7 +28,7 @@ function AddBannerPage() {
 
     const [banner, setBanner] = useState<BannerItem>({
         bannerId: `promo_${Math.random().toString(36).substr(2, 9)}`,
-        offerId: '',
+        vendorId: '',
         images: {
             mobile: ''
         },
@@ -180,10 +180,10 @@ function AddBannerPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
                     <div className="space-y-2">
-                        <label className="text-sm font-bold text-gray-700 ml-1">Offer ID / Link Key</label>
+                        <label className="text-sm font-bold text-gray-700 ml-1">Vendor ID / Link Key</label>
                         <input
-                            value={banner.offerId}
-                            onChange={(e) => setBanner(prev => ({ ...prev, offerId: e.target.value }))}
+                            value={banner.vendorId}
+                            onChange={(e) => setBanner(prev => ({ ...prev, vendorId: e.target.value }))}
                             placeholder="e.g. winter_sale_2026"
                             className="w-full h-14 px-6 rounded-[1.25rem] bg-white border border-gray-100 font-bold text-gray-900 outline-none focus:border-purple-400 transition-all shadow-sm focus:ring-4 focus:ring-purple-50"
                         />

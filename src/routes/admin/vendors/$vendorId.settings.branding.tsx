@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { BrandingSettings } from '@/components/admin/vendors/BrandingSettings'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { db } from '@/firebase/config'
-import { doc, getDoc, writeBatch, collection, query, where, getDocs } from 'firebase/firestore'
+import { doc, getDoc, updateDoc } from 'firebase/firestore'
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -25,7 +25,7 @@ export const Route = createFileRoute('/admin/vendors/$vendorId/settings/branding
     },
 })
 
-export interface Vendor {
+interface Vendor {
     id: string
     name?: string
     nameAr?: string
@@ -42,6 +42,10 @@ export interface Vendor {
     pin?: string
     xcard?: boolean
     loyalty?: number[]
+    mainCategory?: string
+    subcategory?: string[]
+    isTrending?: boolean
+    offers?: any[]
 }
 
 function BrandingSettingsComponent() {
@@ -70,31 +74,11 @@ function BrandingSettingsComponent() {
     const updateMutation = useMutation({
         mutationFn: async (updatedData: Partial<Vendor>) => {
             const { id, ...dataToUpdate } = updatedData
-            const batch = writeBatch(db)
-            
-            // 1. Update the vendor document
             const vendorRef = doc(db, 'vendors', vendorId)
-            batch.update(vendorRef, dataToUpdate)
-            
-            // 2. If xcard status changed, update all associated offers
-            if (updatedData.xcard !== undefined && updatedData.xcard !== vendor?.xcard) {
-                const offersQuery = query(
-                    collection(db, 'offers'),
-                    where('vendorId', '==', vendorId)
-                )
-                const offersSnapshot = await getDocs(offersQuery)
-                
-                offersSnapshot.forEach((offerDoc) => {
-                    batch.update(offerDoc.ref, { xcard: updatedData.xcard })
-                })
-            }
-            
-            // 3. Commit the batch
-            await batch.commit()
+            await updateDoc(vendorRef, dataToUpdate)
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['vendor', vendorId] })
-            queryClient.invalidateQueries({ queryKey: ['offers', vendorId] })
             toast.success('Settings updated successfully!', {
                 description: 'The vendor information has been synchronized with the database.',
                 duration: 3000,

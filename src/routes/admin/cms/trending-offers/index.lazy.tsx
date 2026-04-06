@@ -20,7 +20,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
-import type { Offer } from '@/queries'
+import type { Vendor } from '@/queries'
 import type { TrendingOffersConfig } from '@/types/trending-offers'
 
 export const Route = createLazyFileRoute('/admin/cms/trending-offers/')({
@@ -29,8 +29,8 @@ export const Route = createLazyFileRoute('/admin/cms/trending-offers/')({
 
 function TrendingOffersManagement() {
     const navigate = useNavigate()
-    const [allTrendingOffers, setAllTrendingOffers] = useState<Offer[]>([])
-    const [orderedOfferIds, setOrderedOfferIds] = useState<string[]>([])
+    const [trendingVendors, setTrendingVendors] = useState<Vendor[]>([])
+    const [orderedVendorIds, setOrderedVendorIds] = useState<string[]>([])
     const [lastUpdated, setLastUpdated] = useState<string>('')
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
@@ -46,37 +46,37 @@ function TrendingOffersManagement() {
             const cmsRef = doc(db, 'cms', 'trending-offers')
             const cmsSnap = await getDoc(cmsRef)
             let currentIds: string[] = []
-            
+
             if (cmsSnap.exists()) {
                 const data = cmsSnap.data() as TrendingOffersConfig
-                currentIds = data.offerIds || []
+                currentIds = data.vendorIds || []
                 setLastUpdated(data.lastUpdated || '')
             }
 
-            // 2. Fetch all offers marked as trending
-            const offersRef = collection(db, 'offers')
-            const q = query(offersRef, where('isTrending', '==', true))
+            // 2. Fetch all vendors marked as trending
+            const vendorsRef = collection(db, 'vendors')
+            const q = query(vendorsRef, where('isTrending', '==', true))
             const querySnapshot = await getDocs(q)
-            const trendingOffers: Offer[] = []
-            querySnapshot.forEach((doc) => {
-                trendingOffers.push({ id: doc.id, ...doc.data() } as Offer)
+            const vendors: Vendor[] = []
+            querySnapshot.forEach((docSnap) => {
+                vendors.push({ id: docSnap.id, ...docSnap.data() } as Vendor)
             })
 
-            setAllTrendingOffers(trendingOffers)
+            setTrendingVendors(vendors)
 
             // 3. Filter currentIds to only include those that are still trending
-            const validIds = currentIds.filter(id => trendingOffers.some(o => o.id === id))
-            
-            // Add any new trending offers that aren't in the ordered list yet
-            const missingIds = trendingOffers
-                .filter(o => !validIds.includes(o.id))
-                .map(o => o.id)
-            
-            setOrderedOfferIds([...validIds, ...missingIds])
+            const validIds = currentIds.filter(id => vendors.some(v => v.id === id))
+
+            // Add any new trending vendors that aren't in the ordered list yet
+            const missingIds = vendors
+                .filter(v => !validIds.includes(v.id))
+                .map(v => v.id)
+
+            setOrderedVendorIds([...validIds, ...missingIds])
 
         } catch (error) {
             console.error('Error fetching data:', error)
-            toast.error('Failed to load trending offers')
+            toast.error('Failed to load trending vendors')
         } finally {
             setLoading(false)
         }
@@ -87,15 +87,15 @@ function TrendingOffersManagement() {
         try {
             const cmsRef = doc(db, 'cms', 'trending-offers')
             const now = new Date().toISOString()
-            
+
             await setDoc(cmsRef, {
-                offerIds: ids,
+                vendorIds: ids,
                 lastUpdated: now
             })
 
             setLastUpdated(now)
-            setOrderedOfferIds(ids)
-            toast.success('Trending offers order saved')
+            setOrderedVendorIds(ids)
+            toast.success('Trending vendors order saved')
         } catch (error) {
             console.error('Error saving order:', error)
             toast.error('Failed to save changes')
@@ -105,21 +105,21 @@ function TrendingOffersManagement() {
     }
 
     const moveItem = (index: number, direction: 'up' | 'down') => {
-        const newIds = [...orderedOfferIds]
+        const newIds = [...orderedVendorIds]
         const targetIndex = direction === 'up' ? index - 1 : index + 1
-        
+
         if (targetIndex < 0 || targetIndex >= newIds.length) return
-        
+
         const temp = newIds[index]
         newIds[index] = newIds[targetIndex]
         newIds[targetIndex] = temp
-        setOrderedOfferIds(newIds)
+        setOrderedVendorIds(newIds)
     }
 
-    // Get ordered list of offer objects (limit to top 5 if needed, but showing all for management)
-    const orderedOffers = orderedOfferIds
-        .map(id => allTrendingOffers.find(o => o.id === id))
-        .filter((o): o is Offer => !!o)
+    // Get ordered list of vendor objects
+    const orderedVendors = orderedVendorIds
+        .map(id => trendingVendors.find(v => v.id === id))
+        .filter((v): v is Vendor => !!v)
 
     if (loading) {
         return (
@@ -143,7 +143,7 @@ function TrendingOffersManagement() {
                     </Button>
                     <div className="flex items-center gap-2">
                         <Flame className="h-7 w-7 text-orange-500 fill-orange-500" />
-                        <h1 className="text-3xl font-bold tracking-tight">Trending Offers</h1>
+                        <h1 className="text-3xl font-bold tracking-tight">Trending Vendors</h1>
                     </div>
                 </div>
 
@@ -155,7 +155,7 @@ function TrendingOffersManagement() {
                         </p>
                     </div>
                     <Button
-                        onClick={() => saveOrdering(orderedOfferIds)}
+                        onClick={() => saveOrdering(orderedVendorIds)}
                         disabled={saving}
                         className="bg-purple-600 hover:bg-purple-700 text-white rounded-full px-8 h-11 font-bold shadow-lg shadow-purple-200 transition-all"
                     >
@@ -167,16 +167,16 @@ function TrendingOffersManagement() {
 
             <div className="space-y-6">
                 <div className="flex flex-col gap-2 border-b pb-4">
-                    <h2 className="text-xl font-bold text-gray-900">Arrange Trending Pool</h2>
+                    <h2 className="text-xl font-bold text-gray-900">Arrange Trending Vendors</h2>
                     <p className="text-sm text-gray-500">
-                        Offers marked as "Trending" appear here. The top 5 will be displayed on the customer app.
+                        Vendors marked as "Trending" appear here. The top 5 will be displayed on the customer app.
                     </p>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4">
-                    {orderedOffers.map((offer, index) => (
-                        <div 
-                            key={offer.id} 
+                    {orderedVendors.map((vendor, index) => (
+                        <div
+                            key={vendor.id}
                             className={cn(
                                 "flex items-center gap-6 bg-[#F8F9F9] rounded-3xl p-4 border border-gray-100 shadow-sm transition-all",
                                 index < 5 ? "ring-2 ring-purple-100 border-purple-200" : "opacity-70"
@@ -187,8 +187,8 @@ function TrendingOffersManagement() {
                             </div>
 
                             <div className="w-20 h-20 rounded-2xl overflow-hidden bg-white border border-gray-200 flex-shrink-0">
-                                {offer.bannerImage ? (
-                                    <img src={offer.bannerImage} className="w-full h-full object-cover" />
+                                {vendor.profilePicture ? (
+                                    <img src={vendor.profilePicture} className="w-full h-full object-cover" />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center bg-gray-50 uppercase text-[10px] font-bold text-gray-400 text-center p-2">
                                         No Image
@@ -197,9 +197,9 @@ function TrendingOffersManagement() {
                             </div>
 
                             <div className="flex-1 min-w-0">
-                                <h3 className="font-bold text-gray-900 truncate">{offer.titleEn}</h3>
+                                <h3 className="font-bold text-gray-900 truncate">{vendor.name}</h3>
                                 <p className="text-xs text-gray-500 mt-0.5 truncate uppercase tracking-wider font-medium">
-                                    Vendor: {offer.vendorName || 'Unknown Vendor'}
+                                    {vendor.mainCategory || 'Uncategorized'} {vendor.offers?.length ? `· ${vendor.offers.length} offer${vendor.offers.length > 1 ? 's' : ''}` : ''}
                                 </p>
                                 {index < 5 && (
                                     <div className="mt-2">
@@ -224,7 +224,7 @@ function TrendingOffersManagement() {
                                     variant="outline"
                                     size="icon"
                                     onClick={() => moveItem(index, 'down')}
-                                    disabled={index === orderedOffers.length - 1}
+                                    disabled={index === orderedVendors.length - 1}
                                     className="rounded-xl h-10 w-10 border-gray-200 bg-white text-gray-600 hover:text-purple-600 hover:bg-purple-50"
                                 >
                                     <MoveDown className="h-4 w-4" />
@@ -233,14 +233,14 @@ function TrendingOffersManagement() {
                         </div>
                     ))}
 
-                    {orderedOffers.length === 0 && (
+                    {orderedVendors.length === 0 && (
                         <div className="py-20 bg-gray-50 rounded-[2.5rem] border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-400 gap-3">
                             <div className="bg-white p-4 rounded-full shadow-sm">
                                 <Flame className="w-8 h-8 opacity-30 text-orange-500" />
                             </div>
-                            <p className="font-bold text-lg text-gray-500">No trending offers found</p>
+                            <p className="font-bold text-lg text-gray-500">No trending vendors found</p>
                             <p className="text-sm text-center max-w-xs">
-                                Mark offers as "Trending" in the vendor settings to see them here.
+                                Mark vendors as "Trending" in their settings to see them here.
                             </p>
                         </div>
                     )}

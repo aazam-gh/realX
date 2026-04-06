@@ -26,6 +26,10 @@ export interface Vendor {
     pin: string
     profilePicture?: string
     xcard: boolean
+    mainCategory?: string
+    subcategory?: string[]
+    isTrending?: boolean
+    offers?: any[]
 }
 
 export async function fetchVendors(page: number, pageSize: number) {
@@ -61,6 +65,10 @@ export async function fetchVendors(page: number, pageSize: number) {
             pin: data.pin || '----',
             profilePicture: data.profilePicture || '',
             xcard: !!data.xcard,
+            mainCategory: data.mainCategory,
+            subcategory: data.subcategory,
+            isTrending: data.isTrending,
+            offers: data.offers || [],
         } as Vendor
     }))
 

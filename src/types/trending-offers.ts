@@ -1,4 +1,4 @@
 export interface TrendingOffersConfig {
     lastUpdated: string
-    offerIds: string[]
+    vendorIds: string[]
 }

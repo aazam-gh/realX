@@ -32,7 +32,7 @@ import { Label } from '@/components/ui/label'
 import { db, functions } from '@/firebase/config'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { httpsCallable } from 'firebase/functions'
-import { doc, setDoc, writeBatch, collection, query, where, getDocs } from 'firebase/firestore'
+import { doc, setDoc, updateDoc } from 'firebase/firestore'
 import { Switch } from '@/components/ui/switch'
 import { fetchVendors, type Vendor } from './index'
 
@@ -85,29 +85,11 @@ function RouteComponent() {
 
     const toggleXCardMutation = useMutation({
         mutationFn: async ({ vendorId, xcard }: { vendorId: string, xcard: boolean }) => {
-            const batch = writeBatch(db)
-            
-            // 1. Update the vendor document
             const vendorRef = doc(db, 'vendors', vendorId)
-            batch.update(vendorRef, { xcard })
-            
-            // 2. Update all associated offers
-            const offersQuery = query(
-                collection(db, 'offers'),
-                where('vendorId', '==', vendorId)
-            )
-            const offersSnapshot = await getDocs(offersQuery)
-            
-            offersSnapshot.forEach((offerDoc) => {
-                batch.update(offerDoc.ref, { xcard })
-            })
-            
-            // 3. Commit the batch
-            await batch.commit()
+            await updateDoc(vendorRef, { xcard })
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['vendors-list'] })
-            queryClient.invalidateQueries({ queryKey: ['offers'] }) // Invalidate overall offers cache
         }
     })
 

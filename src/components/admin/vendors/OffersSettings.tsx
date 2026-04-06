@@ -1,32 +1,27 @@
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { SquarePen, Plus, Loader2, ArrowLeft, Check, Trash2, Upload, X } from 'lucide-react'
+import { SquarePen, Plus, Loader2, ArrowLeft, Check, Trash2 } from 'lucide-react'
 import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
-import { db, storage } from '@/firebase/config'
-import { collection, doc, updateDoc, addDoc, deleteDoc, serverTimestamp } from 'firebase/firestore'
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
+import { db } from '@/firebase/config'
+import { doc, updateDoc } from 'firebase/firestore'
 import { toast } from 'sonner'
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { Checkbox } from "@/components/ui/checkbox"
-import { offersQueryOptions, type Offer } from '@/queries'
+import { vendorQueryOptions, type EmbeddedOffer } from '@/queries'
 
 export function generateSearchTokens({
-    titleEn,
-    titleAr,
-    vendorName,
+    name,
     mainCategory,
-    categories,
+    subcategory,
+    offerTitles,
 }: {
-    titleEn?: string;
-    titleAr?: string;
-    vendorName?: string;
+    name?: string;
     mainCategory?: string;
-    categories?: string[];
+    subcategory?: string[];
+    offerTitles?: string[];
 }): string[] {
     const tokens = new Set<string>();
 
@@ -57,135 +52,90 @@ export function generateSearchTokens({
         });
     };
 
-    tokenize(titleEn);
-    tokenize(titleAr);
-    tokenize(vendorName);
+    tokenize(name);
     tokenize(mainCategory);
-    if (categories) {
-        categories.forEach(tokenize);
-    }
+    if (subcategory) subcategory.forEach(tokenize);
+    if (offerTitles) offerTitles.forEach(tokenize);
 
     return Array.from(tokens);
 }
 
 interface OffersSettingsProps {
     vendorId: string | undefined
-    vendorName?: string
-    vendorProfilePicture?: string
-    vendorXCard?: boolean
 }
 
-export function OffersSettings({ vendorId, vendorName, vendorProfilePicture, vendorXCard }: OffersSettingsProps) {
+export function OffersSettings({ vendorId }: OffersSettingsProps) {
     const queryClient = useQueryClient()
     const [isCreating, setIsCreating] = useState(false)
-    const [editingOffer, setEditingOffer] = useState<Offer | null>(null)
+    const [editingIndex, setEditingIndex] = useState<number | null>(null)
 
     // Form State
-    const [formData, setFormData] = useState<Partial<Offer>>({
-        categories: [],
+    const [formData, setFormData] = useState<Partial<EmbeddedOffer>>({
         discountType: 'percentage',
         discountValue: 0,
-        isTrending: false,
-        mainCategory: '',
-        status: 'active',
-        totalRedemptions: 0
     })
-    const [uploadingBanner, setUploadingBanner] = useState(false)
-    const [categoryInput, setCategoryInput] = useState("")
-    const bannerInputRef = useRef<HTMLInputElement>(null)
 
     // Reset form when entering Create mode
     useEffect(() => {
         if (isCreating) {
             setFormData({
-                vendorId: vendorId,
-                categories: [],
                 discountType: 'percentage',
                 discountValue: 0,
-                isTrending: false,
-                mainCategory: '',
-                status: 'active',
-                totalRedemptions: 0
             })
-            setCategoryInput("")
         }
-    }, [isCreating, vendorId])
+    }, [isCreating])
 
     // Populate form when entering Edit mode
     useEffect(() => {
-        if (editingOffer) {
-            setFormData({ ...editingOffer })
-            setCategoryInput("")
+        if (editingIndex !== null) {
+            const offers = vendor?.offers || []
+            if (offers[editingIndex]) {
+                setFormData({ ...offers[editingIndex] })
+            }
         }
-    }, [editingOffer])
+    }, [editingIndex])
 
-    const { data: offers } = useSuspenseQuery(offersQueryOptions(vendorId!))
-
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0]
-        if (!file || !vendorId) return
-
-        setUploadingBanner(true)
-        try {
-            const extension = file.name.split('.').pop()
-            const fileName = `offer_${Date.now()}`
-            const storagePath = `vendors/${vendorId}/offers/${fileName}.${extension}`
-            const storageRef = ref(storage, storagePath)
-            const snapshot = await uploadBytes(storageRef, file)
-            const downloadURL = await getDownloadURL(snapshot.ref)
-
-            setFormData(prev => ({ ...prev, bannerImage: downloadURL }))
-            toast.success("Banner uploaded successfully")
-        } catch (error) {
-            console.error("Upload failed:", error)
-            toast.error("Failed to upload banner")
-        } finally {
-            setUploadingBanner(false)
-        }
-    }
+    const { data: vendor } = useSuspenseQuery(vendorQueryOptions(vendorId!))
+    const offers = vendor?.offers || []
 
     const saveMutation = useMutation({
-        mutationFn: async (data: Partial<Offer>) => {
-            const searchTokens = generateSearchTokens({
-                titleEn: data.titleEn,
-                titleAr: data.titleAr,
-                vendorName: vendorName || '',
-                mainCategory: data.mainCategory,
-                categories: data.categories
-            });
+        mutationFn: async (data: Partial<EmbeddedOffer>) => {
+            if (!vendorId) throw new Error("Vendor ID is missing")
 
-            if (editingOffer) {
-                // Update
-                const docRef = doc(db, 'offers', editingOffer.id)
-                await updateDoc(docRef, {
-                    ...data,
-                    searchTokens,
-                    vendorRef: doc(db, 'vendors', vendorId || editingOffer.vendorId),
-                    vendorName: vendorName || '',
-                    vendorProfilePicture: vendorProfilePicture || '',
-                    updatedAt: serverTimestamp()
-                })
-            } else {
-                // Create
-                if (!vendorId) throw new Error("Vendor ID is missing")
-                await addDoc(collection(db, 'offers'), {
-                    ...data,
-                    searchTokens,
-                    vendorId,
-                    vendorRef: doc(db, 'vendors', vendorId),
-                    vendorName: vendorName || '',
-                    vendorProfilePicture: vendorProfilePicture || '',
-                    xcard: vendorXCard || false,
-                    createdAt: serverTimestamp(),
-                    updatedAt: serverTimestamp()
-                })
+            const offer: EmbeddedOffer = {
+                titleEn: data.titleEn || '',
+                titleAr: data.titleAr,
+                descriptionEn: data.descriptionEn,
+                descriptionAr: data.descriptionAr,
+                discountType: data.discountType || 'percentage',
+                discountValue: data.discountValue || 0,
             }
+
+            let updatedOffers: EmbeddedOffer[]
+            if (editingIndex !== null) {
+                updatedOffers = [...offers]
+                updatedOffers[editingIndex] = offer
+            } else {
+                updatedOffers = [...offers, offer]
+            }
+
+            const allTitles = updatedOffers.map(o => o.titleEn).filter(Boolean) as string[]
+
+            await updateDoc(doc(db, 'vendors', vendorId), {
+                offers: updatedOffers,
+                searchTokens: generateSearchTokens({
+                    name: vendor?.name,
+                    mainCategory: vendor?.mainCategory,
+                    subcategory: vendor?.subcategory,
+                    offerTitles: allTitles,
+                }),
+            })
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['offers', vendorId] })
-            toast.success(editingOffer ? 'Offer updated' : 'Offer created')
+            queryClient.invalidateQueries({ queryKey: ['vendor', vendorId] })
+            toast.success(editingIndex !== null ? 'Offer updated' : 'Offer created')
             setIsCreating(false)
-            setEditingOffer(null)
+            setEditingIndex(null)
         },
         onError: () => {
             toast.error('Failed to save offer')
@@ -193,53 +143,34 @@ export function OffersSettings({ vendorId, vendorName, vendorProfilePicture, ven
     })
 
     const deleteMutation = useMutation({
-        mutationFn: async (offerId: string) => {
-            await deleteDoc(doc(db, 'offers', offerId))
+        mutationFn: async (index: number) => {
+            if (!vendorId) throw new Error("Vendor ID is missing")
+
+            const updatedOffers = offers.filter((_, i) => i !== index)
+            const allTitles = updatedOffers.map(o => o.titleEn).filter(Boolean) as string[]
+
+            await updateDoc(doc(db, 'vendors', vendorId), {
+                offers: updatedOffers,
+                searchTokens: generateSearchTokens({
+                    name: vendor?.name,
+                    mainCategory: vendor?.mainCategory,
+                    subcategory: vendor?.subcategory,
+                    offerTitles: allTitles,
+                }),
+            })
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['offers', vendorId] })
+            queryClient.invalidateQueries({ queryKey: ['vendor', vendorId] })
             toast.success('Offer deleted')
-            setEditingOffer(null)
+            setEditingIndex(null)
         },
         onError: () => {
             toast.error('Failed to delete offer')
         }
     })
 
-    const addCategory = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter' && categoryInput.trim()) {
-            e.preventDefault()
-            const currentCats = formData.categories || []
-            if (!currentCats.includes(categoryInput.trim())) {
-                setFormData(prev => ({ ...prev, categories: [...currentCats, categoryInput.trim()] }))
-            }
-            setCategoryInput("")
-        }
-    }
 
-    const removeCategory = (cat: string) => {
-        setFormData(prev => ({
-            ...prev,
-            categories: (prev.categories || []).filter(c => c !== cat)
-        }))
-    }
-
-    const toggleStatusMutation = useMutation({
-        mutationFn: async ({ offerId, status }: { offerId: string; status: 'active' | 'inactive' }) => {
-            const docRef = doc(db, 'offers', offerId)
-            await updateDoc(docRef, { status, updatedAt: serverTimestamp() })
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['offers', vendorId] })
-            toast.success('Offer status updated')
-        },
-        onError: () => {
-            toast.error('Failed to update status')
-        }
-    })
-
-
-    if (isCreating || editingOffer) {
+    if (isCreating || editingIndex !== null) {
         return (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
                 {/* Header */}
@@ -251,23 +182,23 @@ export function OffersSettings({ vendorId, vendorName, vendorProfilePicture, ven
                             className="rounded-full h-10 w-10 border hover:bg-slate-100"
                             onClick={() => {
                                 setIsCreating(false)
-                                setEditingOffer(null)
+                                setEditingIndex(null)
                             }}
                         >
                             <ArrowLeft className="h-5 w-5" />
                         </Button>
                         <h1 className="text-3xl font-bold tracking-tight">
-                            <span className="text-slate-400 font-medium">{vendorName || 'Vendor'} / </span>
+                            <span className="text-slate-400 font-medium">{vendor?.name || 'Vendor'} / </span>
                             {isCreating ? 'Create new Offer' : 'Manage Offer'}
                         </h1>
                     </div>
-                    {editingOffer && (
+                    {editingIndex !== null && (
                         <Button
                             variant="destructive"
                             className="rounded-full px-6 h-10 bg-[#EF4444] hover:bg-[#DC2626] font-medium text-white flex items-center gap-2"
                             onClick={() => {
                                 if (confirm('Are you sure you want to delete this offer?')) {
-                                    deleteMutation.mutate(editingOffer.id)
+                                    deleteMutation.mutate(editingIndex!)
                                 }
                             }}
                             disabled={deleteMutation.isPending}
@@ -280,52 +211,8 @@ export function OffersSettings({ vendorId, vendorName, vendorProfilePicture, ven
 
                 {/* Form Fields - 2 Columns */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Left Column: Banner & Basic Info */}
+                    {/* Left Column: Titles & Descriptions */}
                     <div className="space-y-6">
-                        {/* Banner Image */}
-                        <div className="space-y-2">
-                            <Label className="text-base font-semibold text-slate-700">Banner Image</Label>
-                            <div className="relative h-48 w-full rounded-2xl overflow-hidden border-2 border-dashed border-slate-200 bg-slate-50 group hover:border-[#18B852]/50 transition-all">
-                                {uploadingBanner ? (
-                                    <div className="absolute inset-0 flex items-center justify-center bg-white/50">
-                                        <Loader2 className="w-8 h-8 text-[#18B852] animate-spin" />
-                                    </div>
-                                ) : formData.bannerImage ? (
-                                    <>
-                                        <img
-                                            src={formData.bannerImage}
-                                            alt="Banner"
-                                            className="w-full h-full object-cover"
-                                        />
-                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all" />
-                                        <Button
-                                            size="sm"
-                                            variant="secondary"
-                                            className="absolute bottom-4 right-4 shadow-lg"
-                                            onClick={() => bannerInputRef.current?.click()}
-                                        >
-                                            Change Image
-                                        </Button>
-                                    </>
-                                ) : (
-                                    <div
-                                        className="h-full w-full flex flex-col items-center justify-center cursor-pointer"
-                                        onClick={() => bannerInputRef.current?.click()}
-                                    >
-                                        <Upload className="w-8 h-8 text-slate-400 mb-2" />
-                                        <span className="text-sm text-slate-500 font-medium">Click to upload banner</span>
-                                    </div>
-                                )}
-                                <input
-                                    type="file"
-                                    ref={bannerInputRef}
-                                    className="hidden"
-                                    accept="image/*"
-                                    onChange={handleFileChange}
-                                />
-                            </div>
-                        </div>
-
                         {/* Titles */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
@@ -375,21 +262,9 @@ export function OffersSettings({ vendorId, vendorName, vendorProfilePicture, ven
                                 />
                             </div>
                         </div>
-
-                        {/* Main Category */}
-                        <div className="space-y-2">
-                            <Label htmlFor="mainCategory">Main Category</Label>
-                            <Input
-                                id="mainCategory"
-                                value={formData.mainCategory || ''}
-                                onChange={e => setFormData(prev => ({ ...prev, mainCategory: e.target.value }))}
-                                placeholder="Ex: Electronics"
-                                className="bg-slate-50 h-12"
-                            />
-                        </div>
                     </div>
 
-                    {/* Right Column: Settings & Details */}
+                    {/* Right Column: Discount Settings */}
                     <div className="space-y-6">
                         {/* Discount Settings */}
                         <div className="grid grid-cols-2 gap-4 p-5 bg-slate-50 rounded-2xl border border-slate-100">
@@ -419,65 +294,6 @@ export function OffersSettings({ vendorId, vendorName, vendorProfilePicture, ven
                                 />
                             </div>
                         </div>
-
-                        {/* Status & Flags */}
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label>Status</Label>
-                                <Select
-                                    value={formData.status}
-                                    onValueChange={(val: any) => setFormData(prev => ({ ...prev, status: val }))}
-                                >
-                                    <SelectTrigger className="bg-slate-50 h-11">
-                                        <SelectValue placeholder="Select status" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="active">Active</SelectItem>
-                                        <SelectItem value="inactive">Inactive</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="flex flex-col gap-3 justify-center pt-2">
-                                <div className="flex items-center space-x-2">
-                                    <Checkbox
-                                        id="trending"
-                                        checked={formData.isTrending}
-                                        onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isTrending: checked as boolean }))}
-                                    />
-                                    <Label htmlFor="trending" className="cursor-pointer">Trending</Label>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Categories */}
-                        <div className="space-y-2">
-                            <Label>Categories</Label>
-                            <div className="flex flex-wrap gap-2 p-3 bg-slate-50 rounded-xl min-h-[50px] border border-slate-200">
-                                {(formData.categories || []).map(cat => (
-                                    <Badge key={cat} variant="secondary" className="gap-1 pl-2 pr-1 py-1 bg-white border border-slate-200">
-                                        {cat}
-                                        <span
-                                            className="ml-1 cursor-pointer hover:text-red-500 transition-colors pointer-events-auto"
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                e.stopPropagation();
-                                                removeCategory(cat);
-                                            }}
-                                        >
-                                            <X className="w-3 h-3" />
-                                        </span>
-                                    </Badge>
-                                ))}
-                                <input
-                                    className="flex-1 bg-transparent border-none outline-none text-sm min-w-[100px] px-2"
-                                    placeholder="Add category + Enter"
-                                    value={categoryInput}
-                                    onChange={e => setCategoryInput(e.target.value)}
-                                    onKeyDown={addCategory}
-                                />
-                            </div>
-                        </div>
-
                     </div>
                 </div>
 
@@ -487,7 +303,7 @@ export function OffersSettings({ vendorId, vendorName, vendorProfilePicture, ven
                         variant="ghost"
                         onClick={() => {
                             setIsCreating(false)
-                            setEditingOffer(null)
+                            setEditingIndex(null)
                         }}
                         className="rounded-full px-6 h-12 text-base font-bold bg-slate-100 hover:bg-slate-200 text-black flex items-center gap-2"
                     >
@@ -496,8 +312,8 @@ export function OffersSettings({ vendorId, vendorName, vendorProfilePicture, ven
                     </Button>
                     <Button
                         onClick={() => saveMutation.mutate(formData)}
-                        disabled={saveMutation.isPending || uploadingBanner}
-                        className={`rounded-full px-8 h-12 text-base font-bold text-white shadow-lg flex items-center gap-2 ${editingOffer
+                        disabled={saveMutation.isPending}
+                        className={`rounded-full px-8 h-12 text-base font-bold text-white shadow-lg flex items-center gap-2 ${editingIndex !== null
                             ? 'bg-[#8B5CF6] hover:bg-[#8B5CF6]/90 shadow-purple-200'
                             : 'bg-[#18B852] hover:bg-[#18B852]/90 shadow-green-200'
                             }`}
@@ -509,7 +325,7 @@ export function OffersSettings({ vendorId, vendorName, vendorProfilePicture, ven
                                 <div className="bg-white/20 rounded-[4px] p-0.5">
                                     <Check className="w-3 h-3 text-white" strokeWidth={4} />
                                 </div>
-                                {editingOffer ? 'Save Changes' : 'Create Offer'}
+                                {editingIndex !== null ? 'Save Changes' : 'Create Offer'}
                             </>
                         )}
                     </Button>
@@ -520,47 +336,27 @@ export function OffersSettings({ vendorId, vendorName, vendorProfilePicture, ven
 
     return (
         <div className="flex flex-wrap gap-8 items-start py-4 overflow-x-auto pb-8">
-            {offers?.map((offer) => (
-                <div key={offer.id} className="flex items-center gap-6">
-                    <Card className="flex flex-col w-[340px] h-[360px] rounded-[32px] border-none shadow-[0_8px_30px_rgb(0,0,0,0.06)] bg-white p-0 overflow-hidden group transition-all duration-300 hover:shadow-[0_20px_40px_rgba(24,184,82,0.1)] relative">
-                        {/* Banner Image Area */}
-                        <div className="h-[160px] w-full bg-slate-100 relative">
-                            {offer.bannerImage ? (
-                                <img src={offer.bannerImage} alt={offer.titleEn} className="w-full h-full object-cover" />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center bg-slate-50 text-slate-300">
-                                    <Upload className="w-10 h-10 opacity-20" />
-                                </div>
-                            )}
-                            <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 text-xs font-bold shadow-sm">
+            {offers?.map((offer, index) => (
+                <div key={index} className="flex items-center gap-6">
+                    <Card className="flex flex-col w-[340px] h-[300px] rounded-[32px] border-none shadow-[0_8px_30px_rgb(0,0,0,0.06)] bg-white p-0 overflow-hidden group transition-all duration-300 hover:shadow-[0_20px_40px_rgba(24,184,82,0.1)] relative">
+                        {/* Discount Badge */}
+                        <div className="h-[80px] w-full bg-slate-50 relative flex items-center justify-center">
+                            <span className="text-2xl font-bold text-[#18B852]">
                                 {offer.discountType === 'percentage' ? `${offer.discountValue}% OFF` : `$${offer.discountValue} OFF`}
-                            </div>
-                            <div className="absolute top-4 left-4">
-                                <Switch
-                                    checked={offer.status === 'active'}
-                                    onChange={(checked) => toggleStatusMutation.mutate({ offerId: offer.id, status: checked ? 'active' : 'inactive' })}
-                                    disabled={toggleStatusMutation.isPending}
-                                />
-                            </div>
+                            </span>
                         </div>
 
                         <div className="flex flex-col p-6 flex-grow">
                             <h3 className="text-xl font-bold text-[#1a1a1a] leading-tight mb-2 line-clamp-1">
-                                {offer.titleEn}
+                                {offer.titleEn || 'Untitled Offer'}
                             </h3>
                             <p className="text-slate-500 text-sm leading-relaxed line-clamp-2 mb-4">
                                 {offer.descriptionEn || 'No description provided.'}
                             </p>
 
-                            <div className="mt-auto pt-2 flex justify-between items-center">
-                                <div className="flex gap-2">
-                                    {offer.isTrending && <Badge variant="secondary" className="bg-orange-100 text-orange-600 border-none">Trending</Badge>}
-                                </div>
-                            </div>
-
                             <Button
-                                className="mt-4 w-full bg-[#18B852] hover:bg-[#18B852]/90 text-white rounded-xl py-5 text-[15px] font-bold gap-2 shadow-[0_4px_15px_rgba(24,184,82,0.3)] transition-all active:scale-[0.98]"
-                                onClick={() => setEditingOffer(offer)}
+                                className="mt-auto w-full bg-[#18B852] hover:bg-[#18B852]/90 text-white rounded-xl py-5 text-[15px] font-bold gap-2 shadow-[0_4px_15px_rgba(24,184,82,0.3)] transition-all active:scale-[0.98]"
+                                onClick={() => setEditingIndex(index)}
                             >
                                 <SquarePen className="h-4 w-4" />
                                 Manage Offer
@@ -576,7 +372,7 @@ export function OffersSettings({ vendorId, vendorName, vendorProfilePicture, ven
                 </div>
             ))}
 
-            <Card className="flex flex-col items-center justify-between w-[340px] h-[360px] rounded-[32px] border-2 border-[#3b82f6] border-solid bg-white p-8 text-center transition-all shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
+            <Card className="flex flex-col items-center justify-between w-[340px] h-[300px] rounded-[32px] border-2 border-[#3b82f6] border-solid bg-white p-8 text-center transition-all shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
                 <div className="flex-grow flex flex-col items-center justify-center gap-6">
                     <div className="relative">
                         <div className="relative h-24 w-24 flex items-center justify-center">
@@ -597,7 +393,7 @@ export function OffersSettings({ vendorId, vendorName, vendorProfilePicture, ven
                     </div>
 
                     <p className="text-slate-500 font-bold text-[15px] max-w-[200px] leading-relaxed italic">
-                        Get more discounts for students Yallah Admin! 🚀🔥
+                        Get more discounts for students Yallah Admin!
                     </p>
                 </div>
 
@@ -608,24 +404,6 @@ export function OffersSettings({ vendorId, vendorName, vendorProfilePicture, ven
                     Create New Offer
                 </Button>
             </Card>
-        </div>
-    )
-}
-
-function Switch({ checked, onChange, disabled }: { checked: boolean; onChange: (val: boolean) => void; disabled?: boolean }) {
-    return (
-        <div
-            className={`w-[52px] h-[28px] rounded-full transition-all duration-300 cursor-pointer relative ${checked ? 'bg-[#18B852]' : 'bg-slate-200'
-                } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-            onClick={(e) => {
-                e.preventDefault()
-                if (!disabled) onChange(!checked)
-            }}
-        >
-            <div
-                className={`absolute top-1 left-1 w-[20px] h-[20px] bg-white rounded-full transition-all duration-300 shadow-sm ${checked ? 'translate-x-[24px]' : 'translate-x-0'
-                    }`}
-            />
         </div>
     )
 }

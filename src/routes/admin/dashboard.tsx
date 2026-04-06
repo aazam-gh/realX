@@ -18,25 +18,33 @@ async function fetchDashboardStats() {
   const [
     studentsCount,
     activeVendorsCount,
-    totalOffersCount,
-    activeOffersCount,
-    inactiveOffersCount,
-    totalTransactionsCount
+    totalTransactionsCount,
+    vendorsSnap
   ] = await Promise.all([
     getCountFromServer(collection(db, 'students')),
     getCountFromServer(query(collection(db, 'vendors'), where('status', '==', 'Active'))),
-    getCountFromServer(collection(db, 'offers')),
-    getCountFromServer(query(collection(db, 'offers'), where('status', '==', 'active'))),
-    getCountFromServer(query(collection(db, 'offers'), where('status', '==', 'inactive'))),
-    getCountFromServer(collection(db, 'transactions'))
+    getCountFromServer(collection(db, 'transactions')),
+    getDocs(collection(db, 'vendors'))
   ])
+
+  // Aggregate total offers from all vendor documents
+  let totalOffers = 0
+  let vendorsWithOffers = 0
+  let vendorsWithoutOffers = 0
+  vendorsSnap.forEach(doc => {
+    const data = doc.data()
+    const offerCount = data.offers?.length || 0
+    totalOffers += offerCount
+    if (offerCount > 0) vendorsWithOffers++
+    else vendorsWithoutOffers++
+  })
 
   return {
     students: studentsCount.data().count,
     activeVendors: activeVendorsCount.data().count,
-    offers: totalOffersCount.data().count,
-    activeOffers: activeOffersCount.data().count,
-    inactiveOffers: inactiveOffersCount.data().count,
+    offers: totalOffers,
+    vendorsWithOffers,
+    vendorsWithoutOffers,
     transactions: totalTransactionsCount.data().count
   }
 }
@@ -86,7 +94,7 @@ function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState('')
 
   // Optimized Aggregation Query
-  const { data: stats = { students: 0, activeVendors: 0, offers: 0, activeOffers: 0, inactiveOffers: 0, transactions: 0 } } = useQuery({
+  const { data: stats = { students: 0, activeVendors: 0, offers: 0, vendorsWithOffers: 0, vendorsWithoutOffers: 0, transactions: 0 } } = useQuery({
     queryKey: ['dashboardStats'],
     queryFn: fetchDashboardStats,
   })
@@ -131,8 +139,8 @@ function AdminDashboard() {
   }, [activity])
 
   const offersByCategory = [
-    { name: 'Active', value: stats.activeOffers },
-    { name: 'Inactive', value: stats.inactiveOffers },
+    { name: 'With Offers', value: stats.vendorsWithOffers },
+    { name: 'No Offers', value: stats.vendorsWithoutOffers },
   ]
 
   const statCards = [
@@ -242,8 +250,8 @@ function AdminDashboard() {
 
           {/* Offers Status */}
           <div className="bg-white border border-slate-100 rounded-xl p-6 shadow-sm flex flex-col">
-            <h3 className="m-0 font-bold text-lg text-slate-900">Offers Summary</h3>
-            <p className="text-xs text-slate-500 mb-6">Current offer availability</p>
+            <h3 className="m-0 font-bold text-lg text-slate-900">Vendor Offers</h3>
+            <p className="text-xs text-slate-500 mb-6">Vendors with and without offers</p>
             <div className="flex-1 flex flex-col md:flex-row items-center justify-around gap-10">
               <div className="h-55 w-full max-w-55 relative">
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
