@@ -10,17 +10,10 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
-import { Route as homeIndexRouteImport } from './routes/(home)/index'
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
 import { Route as vendorPanelVendorRouteImport } from './routes/(vendor-panel)/_vendor'
-import { Route as homeTermsAndConditionsRouteImport } from './routes/(home)/terms-and-conditions'
-import { Route as homePrivacyPolicyRouteImport } from './routes/(home)/privacy-policy'
-import { Route as homeOldHomeRouteImport } from './routes/(home)/old-home'
-import { Route as homeMobileInternRouteImport } from './routes/(home)/mobile-intern'
-import { Route as homeInternshipsRouteImport } from './routes/(home)/internships'
-import { Route as homeFullstackDevRouteImport } from './routes/(home)/fullstack-dev'
-import { Route as homeAppRouteImport } from './routes/(home)/app'
 import { Route as authUnauthorizedRouteImport } from './routes/(auth)/unauthorized'
 import { Route as authLoginRouteImport } from './routes/(auth)/login'
 import { Route as AdminVendorsIndexRouteImport } from './routes/admin/vendors/index'
@@ -54,18 +47,16 @@ const AdminRoute = AdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any).lazy(() => import('./routes/admin.lazy').then((d) => d.Route))
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminRoute,
 } as any)
-const homeIndexRoute = homeIndexRouteImport
-  .update({
-    id: '/(home)/',
-    path: '/',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-  .lazy(() => import('./routes/(home)/index.lazy').then((d) => d.Route))
 const AdminDashboardRoute = AdminDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -73,41 +64,6 @@ const AdminDashboardRoute = AdminDashboardRouteImport.update({
 } as any)
 const vendorPanelVendorRoute = vendorPanelVendorRouteImport.update({
   id: '/(vendor-panel)/_vendor',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const homeTermsAndConditionsRoute = homeTermsAndConditionsRouteImport.update({
-  id: '/(home)/terms-and-conditions',
-  path: '/terms-and-conditions',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const homePrivacyPolicyRoute = homePrivacyPolicyRouteImport.update({
-  id: '/(home)/privacy-policy',
-  path: '/privacy-policy',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const homeOldHomeRoute = homeOldHomeRouteImport.update({
-  id: '/(home)/old-home',
-  path: '/old-home',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const homeMobileInternRoute = homeMobileInternRouteImport.update({
-  id: '/(home)/mobile-intern',
-  path: '/mobile-intern',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const homeInternshipsRoute = homeInternshipsRouteImport.update({
-  id: '/(home)/internships',
-  path: '/internships',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const homeFullstackDevRoute = homeFullstackDevRouteImport.update({
-  id: '/(home)/fullstack-dev',
-  path: '/fullstack-dev',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const homeAppRoute = homeAppRouteImport.update({
-  id: '/(home)/app',
-  path: '/app',
   getParentRoute: () => rootRouteImport,
 } as any)
 const authUnauthorizedRoute = authUnauthorizedRouteImport.update({
@@ -279,18 +235,11 @@ const AdminVendorsVendorIdSettingsBrandingRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
+  '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/login': typeof authLoginRoute
   '/unauthorized': typeof authUnauthorizedRoute
-  '/app': typeof homeAppRoute
-  '/fullstack-dev': typeof homeFullstackDevRoute
-  '/internships': typeof homeInternshipsRoute
-  '/mobile-intern': typeof homeMobileInternRoute
-  '/old-home': typeof homeOldHomeRoute
-  '/privacy-policy': typeof homePrivacyPolicyRoute
-  '/terms-and-conditions': typeof homeTermsAndConditionsRoute
   '/admin/dashboard': typeof AdminDashboardRoute
-  '/': typeof homeIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/campaign': typeof vendorPanelVendorCampaignRoute
   '/contact-us': typeof vendorPanelVendorContactUsRoute
@@ -319,17 +268,10 @@ export interface FileRoutesByFullPath {
   '/admin/vendors/$vendorId/settings/': typeof AdminVendorsVendorIdSettingsIndexRoute
 }
 export interface FileRoutesByTo {
+  '/': typeof IndexRoute
   '/login': typeof authLoginRoute
   '/unauthorized': typeof authUnauthorizedRoute
-  '/app': typeof homeAppRoute
-  '/fullstack-dev': typeof homeFullstackDevRoute
-  '/internships': typeof homeInternshipsRoute
-  '/mobile-intern': typeof homeMobileInternRoute
-  '/old-home': typeof homeOldHomeRoute
-  '/privacy-policy': typeof homePrivacyPolicyRoute
-  '/terms-and-conditions': typeof homeTermsAndConditionsRoute
   '/admin/dashboard': typeof AdminDashboardRoute
-  '/': typeof homeIndexRoute
   '/admin': typeof AdminIndexRoute
   '/campaign': typeof vendorPanelVendorCampaignRoute
   '/contact-us': typeof vendorPanelVendorContactUsRoute
@@ -358,19 +300,12 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/(auth)/login': typeof authLoginRoute
   '/(auth)/unauthorized': typeof authUnauthorizedRoute
-  '/(home)/app': typeof homeAppRoute
-  '/(home)/fullstack-dev': typeof homeFullstackDevRoute
-  '/(home)/internships': typeof homeInternshipsRoute
-  '/(home)/mobile-intern': typeof homeMobileInternRoute
-  '/(home)/old-home': typeof homeOldHomeRoute
-  '/(home)/privacy-policy': typeof homePrivacyPolicyRoute
-  '/(home)/terms-and-conditions': typeof homeTermsAndConditionsRoute
   '/(vendor-panel)/_vendor': typeof vendorPanelVendorRouteWithChildren
   '/admin/dashboard': typeof AdminDashboardRoute
-  '/(home)/': typeof homeIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/(vendor-panel)/_vendor/campaign': typeof vendorPanelVendorCampaignRoute
   '/(vendor-panel)/_vendor/contact-us': typeof vendorPanelVendorContactUsRoute
@@ -401,18 +336,11 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/'
     | '/admin'
     | '/login'
     | '/unauthorized'
-    | '/app'
-    | '/fullstack-dev'
-    | '/internships'
-    | '/mobile-intern'
-    | '/old-home'
-    | '/privacy-policy'
-    | '/terms-and-conditions'
     | '/admin/dashboard'
-    | '/'
     | '/admin/'
     | '/campaign'
     | '/contact-us'
@@ -441,17 +369,10 @@ export interface FileRouteTypes {
     | '/admin/vendors/$vendorId/settings/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/'
     | '/login'
     | '/unauthorized'
-    | '/app'
-    | '/fullstack-dev'
-    | '/internships'
-    | '/mobile-intern'
-    | '/old-home'
-    | '/privacy-policy'
-    | '/terms-and-conditions'
     | '/admin/dashboard'
-    | '/'
     | '/admin'
     | '/campaign'
     | '/contact-us'
@@ -479,19 +400,12 @@ export interface FileRouteTypes {
     | '/admin/vendors/$vendorId/settings'
   id:
     | '__root__'
+    | '/'
     | '/admin'
     | '/(auth)/login'
     | '/(auth)/unauthorized'
-    | '/(home)/app'
-    | '/(home)/fullstack-dev'
-    | '/(home)/internships'
-    | '/(home)/mobile-intern'
-    | '/(home)/old-home'
-    | '/(home)/privacy-policy'
-    | '/(home)/terms-and-conditions'
     | '/(vendor-panel)/_vendor'
     | '/admin/dashboard'
-    | '/(home)/'
     | '/admin/'
     | '/(vendor-panel)/_vendor/campaign'
     | '/(vendor-panel)/_vendor/contact-us'
@@ -521,18 +435,11 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   authLoginRoute: typeof authLoginRoute
   authUnauthorizedRoute: typeof authUnauthorizedRoute
-  homeAppRoute: typeof homeAppRoute
-  homeFullstackDevRoute: typeof homeFullstackDevRoute
-  homeInternshipsRoute: typeof homeInternshipsRoute
-  homeMobileInternRoute: typeof homeMobileInternRoute
-  homeOldHomeRoute: typeof homeOldHomeRoute
-  homePrivacyPolicyRoute: typeof homePrivacyPolicyRoute
-  homeTermsAndConditionsRoute: typeof homeTermsAndConditionsRoute
   vendorPanelVendorRoute: typeof vendorPanelVendorRouteWithChildren
-  homeIndexRoute: typeof homeIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -544,19 +451,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/': {
       id: '/admin/'
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
-    }
-    '/(home)/': {
-      id: '/(home)/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof homeIndexRouteImport
-      parentRoute: typeof rootRouteImport
     }
     '/admin/dashboard': {
       id: '/admin/dashboard'
@@ -570,55 +477,6 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: ''
       preLoaderRoute: typeof vendorPanelVendorRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/(home)/terms-and-conditions': {
-      id: '/(home)/terms-and-conditions'
-      path: '/terms-and-conditions'
-      fullPath: '/terms-and-conditions'
-      preLoaderRoute: typeof homeTermsAndConditionsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/(home)/privacy-policy': {
-      id: '/(home)/privacy-policy'
-      path: '/privacy-policy'
-      fullPath: '/privacy-policy'
-      preLoaderRoute: typeof homePrivacyPolicyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/(home)/old-home': {
-      id: '/(home)/old-home'
-      path: '/old-home'
-      fullPath: '/old-home'
-      preLoaderRoute: typeof homeOldHomeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/(home)/mobile-intern': {
-      id: '/(home)/mobile-intern'
-      path: '/mobile-intern'
-      fullPath: '/mobile-intern'
-      preLoaderRoute: typeof homeMobileInternRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/(home)/internships': {
-      id: '/(home)/internships'
-      path: '/internships'
-      fullPath: '/internships'
-      preLoaderRoute: typeof homeInternshipsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/(home)/fullstack-dev': {
-      id: '/(home)/fullstack-dev'
-      path: '/fullstack-dev'
-      fullPath: '/fullstack-dev'
-      preLoaderRoute: typeof homeFullstackDevRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/(home)/app': {
-      id: '/(home)/app'
-      path: '/app'
-      fullPath: '/app'
-      preLoaderRoute: typeof homeAppRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(auth)/unauthorized': {
@@ -902,18 +760,11 @@ const vendorPanelVendorRouteWithChildren =
   vendorPanelVendorRoute._addFileChildren(vendorPanelVendorRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   authLoginRoute: authLoginRoute,
   authUnauthorizedRoute: authUnauthorizedRoute,
-  homeAppRoute: homeAppRoute,
-  homeFullstackDevRoute: homeFullstackDevRoute,
-  homeInternshipsRoute: homeInternshipsRoute,
-  homeMobileInternRoute: homeMobileInternRoute,
-  homeOldHomeRoute: homeOldHomeRoute,
-  homePrivacyPolicyRoute: homePrivacyPolicyRoute,
-  homeTermsAndConditionsRoute: homeTermsAndConditionsRoute,
   vendorPanelVendorRoute: vendorPanelVendorRouteWithChildren,
-  homeIndexRoute: homeIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
