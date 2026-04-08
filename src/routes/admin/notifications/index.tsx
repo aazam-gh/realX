@@ -35,7 +35,7 @@ export const Route = createFileRoute('/admin/notifications/')({
 
 function NotificationsPage() {
     const queryClient = useQueryClient()
-    const [form, setForm] = useState({ title: '', body: '', imageUrl: iconUrl as string })
+    const [form, setForm] = useState({ title: '', body: '', imageUrl: iconUrl as string, topic: 'all-users' })
 
     // Fetch notification history
     const { data: notifications, isLoading } = useQuery({
@@ -53,20 +53,18 @@ function NotificationsPage() {
 
     // Send notification mutation
     const sendMutation = useMutation({
-        mutationFn: async (data: { title: string; body: string; imageUrl?: string }) => {
+        mutationFn: async (data: { title: string; body: string; imageUrl?: string; topic: string }) => {
             const sendNotification = httpsCallable(functions, 'sendNotification')
             const result = await sendNotification(data)
             return result.data as {
                 success: boolean
-                successCount: number
-                failureCount: number
-                totalRecipients: number
+                messageId: string
             }
         },
-        onSuccess: (data) => {
+        onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['notifications'] })
-            toast.success(`Notification sent to ${data.successCount} devices`)
-            setForm({ title: '', body: '', imageUrl: iconUrl as string })
+            toast.success(`Notification sent (topic: ${form.topic})`)
+            setForm({ title: '', body: '', imageUrl: iconUrl as string, topic: 'all-users' })
         },
         onError: (error) => {
             toast.error('Failed to send notification: ' + (error instanceof Error ? error.message : 'Unknown error'))
@@ -78,9 +76,10 @@ function NotificationsPage() {
             toast.error('Title and body are required')
             return
         }
-        const payload: { title: string; body: string; imageUrl?: string } = {
+        const payload: { title: string; body: string; imageUrl?: string; topic: string } = {
             title: form.title.trim(),
             body: form.body.trim(),
+            topic: form.topic,
         }
         if (form.imageUrl.trim()) {
             payload.imageUrl = form.imageUrl.trim()
@@ -137,6 +136,20 @@ function NotificationsPage() {
                                 onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
                                 disabled={sendMutation.isPending}
                             />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>Target Audience</Label>
+                            <select
+                                value={form.topic}
+                                onChange={(e) => setForm({ ...form, topic: e.target.value })}
+                                disabled={sendMutation.isPending}
+                                className="w-full border rounded-md p-2 bg-background"
+                            >
+                                <option value="all-users">All Users</option>
+                                <option value="premium-users">Premium Users</option>
+                                <option value="inactive-users">Inactive Users</option>
+                            </select>
                         </div>
 
                         <Button
@@ -208,15 +221,14 @@ function NotificationsPage() {
                                 <TableRow>
                                     <TableHead className="font-bold">Title</TableHead>
                                     <TableHead className="font-bold">Body</TableHead>
+                                    <TableHead className="font-bold">Topic</TableHead>
                                     <TableHead className="font-bold">Sent At</TableHead>
-                                    <TableHead className="font-bold text-right">Recipients</TableHead>
-                                    <TableHead className="font-bold text-right">Success Rate</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {isLoading ? (
                                     <TableRow>
-                                        <TableCell colSpan={5} className="text-center py-10">
+                                        <TableCell colSpan={4} className="text-center py-10">
                                             <div className="flex flex-col items-center gap-2">
                                                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
                                                 <p className="text-muted-foreground">Loading notifications...</p>
@@ -225,7 +237,7 @@ function NotificationsPage() {
                                     </TableRow>
                                 ) : !notifications || notifications.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
+                                        <TableCell colSpan={4} className="text-center py-10 text-muted-foreground">
                                             No notifications sent yet.
                                         </TableCell>
                                     </TableRow>
@@ -236,16 +248,14 @@ function NotificationsPage() {
                                             <TableCell className="max-w-xs truncate text-muted-foreground">
                                                 {notification.body}
                                             </TableCell>
+                                            <TableCell>
+                                                <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
+                                                    {notification.topic || 'all-users'}
+                                                </span>
+                                            </TableCell>
                                             <TableCell className="text-muted-foreground">
                                                 {notification.sentAt?.seconds
                                                     ? format(new Date(notification.sentAt.seconds * 1000), 'MMM d, yyyy h:mm a')
-                                                    : '—'
-                                                }
-                                            </TableCell>
-                                            <TableCell className="text-right">{notification.totalRecipients}</TableCell>
-                                            <TableCell className="text-right">
-                                                {notification.totalRecipients > 0
-                                                    ? `${Math.round((notification.successCount / notification.totalRecipients) * 100)}%`
                                                     : '—'
                                                 }
                                             </TableCell>

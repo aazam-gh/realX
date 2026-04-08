@@ -5,7 +5,7 @@ import * as logger from "firebase-functions/logger";
 import {initializeApp} from "firebase-admin/app";
 import {getAuth} from "firebase-admin/auth";
 import {getFirestore} from "firebase-admin/firestore";
-import {getMessaging, MulticastMessage} from "firebase-admin/messaging";
+import {getMessaging} from "firebase-admin/messaging";
 
 // Init Admin SDK
 initializeApp();
@@ -242,92 +242,49 @@ export const sendNotification = onCall(
       throw new HttpsError("permission-denied", "Admin access required");
     }
 
-    const {title, body, imageUrl} = data;
+    const {title, body, imageUrl, topic} = data;
 
-    if (!title || !body) {
+    if (!title || !body || !topic) {
       throw new HttpsError(
         "invalid-argument",
-        "title and body are required"
+        "title, body, and topic are required"
       );
     }
 
     const db = getFirestore();
     const messaging = getMessaging();
 
-    // Get all FCM tokens
-    const tokensSnapshot = await db.collection("fcm_tokens").get();
-    const tokens = tokensSnapshot.docs
-      .map((doc) => doc.data().token)
-      .filter((token): token is string =>
-        typeof token === "string" && token.length > 0
-      );
-
-    if (tokens.length === 0) {
-      // Still log the notification even if no recipients
-      await db.collection("notifications").add({
+    const message = {
+      topic,
+      notification: {
         title,
         body,
-        imageUrl: imageUrl || null,
-        sentBy: auth.uid,
-        sentAt: new Date(),
-        successCount: 0,
-        failureCount: 0,
-        totalRecipients: 0,
-      });
+        ...(imageUrl ? {imageUrl} : {}),
+      },
+    };
 
-      return {
-        success: true,
-        successCount: 0,
-        failureCount: 0,
-        totalRecipients: 0,
-      };
-    }
-
-    // Send in batches of 500 (FCM multicast limit)
-    let totalSuccess = 0;
-    let totalFailure = 0;
-
-    for (let i = 0; i < tokens.length; i += 500) {
-      const batch = tokens.slice(i, i + 500);
-
-      const message: MulticastMessage = {
-        tokens: batch,
-        notification: {
-          title,
-          body,
-          ...(imageUrl ? {imageUrl} : {}),
-        },
-      };
-
-      const response = await messaging.sendEachForMulticast(message);
-      totalSuccess += response.successCount;
-      totalFailure += response.failureCount;
-    }
+    const messageId = await messaging.send(message);
 
     // Store notification record
     await db.collection("notifications").add({
       title,
       body,
       imageUrl: imageUrl || null,
+      topic,
       sentBy: auth.uid,
       sentAt: new Date(),
-      successCount: totalSuccess,
-      failureCount: totalFailure,
-      totalRecipients: tokens.length,
+      messageId,
     });
 
     logger.info("Notification sent", {
       title,
-      totalRecipients: tokens.length,
-      successCount: totalSuccess,
-      failureCount: totalFailure,
+      topic,
+      messageId,
     });
 
     return {
       success: true,
-      successCount: totalSuccess,
-      failureCount: totalFailure,
-      totalRecipients: tokens.length,
+      messageId,
     };
   }
 );
