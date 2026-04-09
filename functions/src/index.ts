@@ -254,12 +254,37 @@ export const sendNotification = onCall(
     const db = getFirestore();
     const messaging = getMessaging();
 
+    const isValidUrl = (url: string) => {
+      try {
+        new URL(url);
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
+    const notification: {title: string; body: string; imageUrl?: string} = {
+      title,
+      body,
+    };
+    if (imageUrl && isValidUrl(imageUrl)) {
+      notification.imageUrl = imageUrl;
+    }
+
     const message = {
       topic,
-      notification: {
-        title,
-        body,
-        ...(imageUrl ? {imageUrl} : {}),
+      notification,
+      apns: {
+        payload: {
+          aps: {
+            sound: "default",
+          },
+        },
+      },
+      android: {
+        notification: {
+          sound: "default",
+        },
       },
     };
 
