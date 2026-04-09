@@ -375,9 +375,9 @@ export const approveVerificationRequest = onCall(
       const displayName = `${firstName || "Student"} ${lastName || ""}`.trim();
 
       await resend.emails.send({
-        from: "RealX <welcome@realx.qa>",
+        from: "realX <welcome@realx.qa>",
         to: email,
-        subject: "Your RealX Account is Ready!",
+        subject: "Your realX Account is Ready!",
         html: [
           "<div style=\"font-family: Arial, sans-serif;",
           "  max-width: 600px; margin: 0 auto;\">",
@@ -387,11 +387,8 @@ export const approveVerificationRequest = onCall(
           "    and your RealX account is now ready.</p>",
           "  <p>You can log in using your email:",
           `    <strong>${email}</strong></p>`,
-          "  <p>A secure password has been generated for you.",
-          "    Please use the \"Forgot Password\" option",
-          "    on the login screen to set your own password.</p>",
           "  <p style=\"margin-top: 24px;\">",
-          "    Best regards,<br>The RealX Team</p>",
+          "    Best regards,<br>The realX Team</p>",
           "</div>",
         ].join("\n"),
       });
