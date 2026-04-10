@@ -17,7 +17,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
-import { Search, Upload, Plus, ChevronRight, Loader2, CheckCircle2, XCircle, Copy, Check } from 'lucide-react'
+import { Search, Upload, Plus, ChevronRight, Loader2, CheckCircle2, Copy, Check } from 'lucide-react'
 import { useState, useRef } from 'react'
 import {
     Dialog,
@@ -45,7 +45,7 @@ interface Student {
     lastName: string
     name: string
     contact: string
-    isVerified: boolean
+    role: string
     creatorCode: string
     profilePicture?: string
 }
@@ -113,6 +113,7 @@ function RouteComponent() {
                     name: (data.firstName || data.lastName) ? `${data.firstName || ''} ${data.lastName || ''}`.trim() : (data.name || 'Unnamed Student'),
                     contact: data.email || data.phoneNumber || 'No contact',
                     isVerified: !!data.isVerified,
+                    role: data.role || 'student',
                     creatorCode: data.creatorCode || '----',
                     profilePicture: data.profilePicture || '',
                 } as Student
@@ -386,7 +387,7 @@ function RouteComponent() {
                             </TableHead>
                             <TableHead className="text-foreground font-bold text-base">Student Name</TableHead>
                             <TableHead className="text-foreground font-bold text-base">Contact Info</TableHead>
-                            <TableHead className="text-foreground font-bold text-base">Verified status</TableHead>
+                            <TableHead className="text-foreground font-bold text-base">Role</TableHead>
                             <TableHead className="text-foreground font-bold text-base">Creator Code</TableHead>
                             <TableHead className="text-foreground font-bold text-base text-right pr-8">Actions:</TableHead>
                         </TableRow>
@@ -427,19 +428,9 @@ function RouteComponent() {
                                     </TableCell>
                                     <TableCell className="font-medium text-foreground">{student.contact}</TableCell>
                                     <TableCell>
-                                        <div className="flex items-center gap-2">
-                                            {student.isVerified ? (
-                                                <div className="flex items-center gap-1.5 text-green-600 font-medium">
-                                                    <CheckCircle2 className="h-4 w-4" />
-                                                    <span>Verified</span>
-                                                </div>
-                                            ) : (
-                                                <div className="flex items-center gap-1.5 text-red-500 font-medium">
-                                                    <XCircle className="h-4 w-4" />
-                                                    <span>Unverified</span>
-                                                </div>
-                                            )}
-                                        </div>
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize ${student.role === 'creator' ? 'bg-brand-green/10 text-brand-green' : 'bg-muted text-muted-foreground'}`}>
+                                            {student.role}
+                                        </span>
                                     </TableCell>
                                     <TableCell className="font-mono font-medium text-foreground tracking-widest">{student.creatorCode}</TableCell>
                                     <TableCell className="text-right">
