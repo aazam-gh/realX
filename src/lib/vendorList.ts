@@ -10,7 +10,6 @@ import {
 export interface VendorOption {
     id: string
     name: string
-    profilePicture?: string
 }
 
 const CACHE_DOC = 'meta/vendorList'
@@ -30,7 +29,7 @@ export async function refreshVendorList(): Promise<void> {
     const vendors: VendorOption[] = []
     snap.forEach(d => {
         const data = d.data()
-        vendors.push({ id: d.id, name: data.name || 'Unnamed', profilePicture: data.profilePicture })
+        vendors.push({ id: d.id, name: data.name || 'Unnamed' })
     })
     vendors.sort((a, b) => a.name.localeCompare(b.name))
     await setDoc(doc(db, CACHE_DOC), { vendors, lastUpdated: new Date().toISOString() })
