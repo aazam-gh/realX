@@ -115,6 +115,14 @@ async function doCreateStudentUser(input: CreateStudentInput) {
 
   await db.collection("students").doc(user.uid).set(studentData);
 
+  // If creator, also create a document in creator_codes collection
+  if (finalRole === "creator" && creatorCode) {
+    await db.collection("creator_codes").doc(creatorCode).set({
+      uid: user.uid,
+      createdAt: new Date(),
+    });
+  }
+
   logger.info("Student created", {
     studentId: user.uid,
     role: finalRole,
