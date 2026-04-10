@@ -12,10 +12,14 @@ function VendorTransactionHistory() {
   const { user } = useAuth()
   const vendorId = user?.uid || ''
 
-  const { data: transactions, isLoading } = useQuery(vendorTransactionsQueryOptions(vendorId))
+  const { data: transactions, isLoading, error } = useQuery(vendorTransactionsQueryOptions(vendorId))
 
   if (isLoading) {
     return <div className="flex justify-center items-center h-64"><Loader2 className="animate-spin" /></div>
+  }
+
+  if (error) {
+    return <div className="flex justify-center items-center h-64 text-destructive">Failed to load transactions: {error.message}</div>
   }
 
   return (

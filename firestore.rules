@@ -75,7 +75,9 @@ match /rewards/{rewardId} {
 // ─── transactions collection ──────────────────────────────────────────
 match /transactions/{transactionId} {
   allow read: if request.auth != null
-    && (resource.data.userId == request.auth.uid || isAdmin());
+    && (resource.data.userId == request.auth.uid
+      || resource.data.vendorId == request.auth.uid
+      || isAdmin());
 
   allow create: if request.auth != null
     && request.resource.data.userId == request.auth.uid;
