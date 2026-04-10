@@ -30,18 +30,28 @@ export interface Vendor {
 
 export interface Transaction {
     id: string
-    studentName: string
     vendorName: string
     vendorId: string
-    studentRef?: DocumentReference
-    vendorRef?: DocumentReference
     type: string
     totalAmount: number
     discountAmount: number
     discountType: 'percentage' | 'amount'
+    discountValue?: number
     finalAmount: number
     status: 'completed' | 'pending' | 'failed'
     createdAt: Timestamp
+    // Optional fields
+    studentRef?: DocumentReference
+    vendorRef?: DocumentReference
+    pin?: string
+    offerId?: string
+    cashbackAmount?: number
+    creatorCashbackAmount?: number
+    creatorCode?: string | null
+    creatorCodeOwnerId?: string | null
+    creatorUid?: string | null
+    redemptionCardAmount?: number
+    remainingAmount?: number
 }
 
 export interface VendorStats {
@@ -93,6 +103,18 @@ export const vendorTransactionsQueryOptions = (vendorId: string) => queryOptions
         )
         const snapshot = await getDocs(q)
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Transaction[]
+    },
+    staleTime: STALE_TIME.MEDIUM,
+})
+
+export const transactionQueryOptions = (transactionId: string) => queryOptions({
+    queryKey: ['transaction', transactionId],
+    queryFn: async () => {
+        if (!transactionId) throw new Error('No transaction ID provided')
+        const docRef = doc(db, 'transactions', transactionId)
+        const snapshot = await getDoc(docRef)
+        if (!snapshot.exists()) throw new Error('Transaction not found')
+        return { id: snapshot.id, ...snapshot.data() } as Transaction
     },
     staleTime: STALE_TIME.MEDIUM,
 })

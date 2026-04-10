@@ -33,12 +33,14 @@ import { Route as AdminCmsTrendingOffersIndexRouteImport } from './routes/admin/
 import { Route as AdminCmsCategoriesIndexRouteImport } from './routes/admin/cms/categories/index'
 import { Route as AdminCmsBrandsIndexRouteImport } from './routes/admin/cms/brands/index'
 import { Route as AdminCmsBannersIndexRouteImport } from './routes/admin/cms/banners/index'
+import { Route as vendorPanelVendorTransactionHistoryIndexRouteImport } from './routes/(vendor-panel)/_vendor.transaction-history.index'
 import { Route as AdminVendorsVendorIdSettingsRouteImport } from './routes/admin/vendors/$vendorId.settings'
 import { Route as AdminStudentsStudentIdSettingsRouteImport } from './routes/admin/students/$studentId.settings'
 import { Route as AdminCmsUniversitiesAddRouteImport } from './routes/admin/cms/universities/add'
 import { Route as AdminCmsCategoriesCategoryIdRouteImport } from './routes/admin/cms/categories/$categoryId'
 import { Route as AdminCmsBrandsAddRouteImport } from './routes/admin/cms/brands/add'
 import { Route as AdminCmsBannersAddRouteImport } from './routes/admin/cms/banners/add'
+import { Route as vendorPanelVendorTransactionHistoryTransactionIdRouteImport } from './routes/(vendor-panel)/_vendor.transaction-history.$transactionId'
 import { Route as AdminVendorsVendorIdSettingsIndexRouteImport } from './routes/admin/vendors/$vendorId.settings.index'
 import { Route as AdminVendorsVendorIdSettingsOffersRouteImport } from './routes/admin/vendors/$vendorId.settings.offers'
 import { Route as AdminVendorsVendorIdSettingsBrandingRouteImport } from './routes/admin/vendors/$vendorId.settings.branding'
@@ -193,6 +195,12 @@ const AdminCmsBannersIndexRoute = AdminCmsBannersIndexRouteImport.update({
 } as any).lazy(() =>
   import('./routes/admin/cms/banners/index.lazy').then((d) => d.Route),
 )
+const vendorPanelVendorTransactionHistoryIndexRoute =
+  vendorPanelVendorTransactionHistoryIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => vendorPanelVendorTransactionHistoryRoute,
+  } as any)
 const AdminVendorsVendorIdSettingsRoute =
   AdminVendorsVendorIdSettingsRouteImport.update({
     id: '/vendors/$vendorId/settings',
@@ -226,6 +234,12 @@ const AdminCmsBannersAddRoute = AdminCmsBannersAddRouteImport.update({
   path: '/cms/banners/add',
   getParentRoute: () => AdminRoute,
 } as any)
+const vendorPanelVendorTransactionHistoryTransactionIdRoute =
+  vendorPanelVendorTransactionHistoryTransactionIdRouteImport.update({
+    id: '/$transactionId',
+    path: '/$transactionId',
+    getParentRoute: () => vendorPanelVendorTransactionHistoryRoute,
+  } as any)
 const AdminVendorsVendorIdSettingsIndexRoute =
   AdminVendorsVendorIdSettingsIndexRouteImport.update({
     id: '/',
@@ -256,7 +270,7 @@ export interface FileRoutesByFullPath {
   '/contact-us': typeof vendorPanelVendorContactUsRoute
   '/dashboard': typeof vendorPanelVendorDashboardRoute
   '/pin': typeof vendorPanelVendorPinRoute
-  '/transaction-history': typeof vendorPanelVendorTransactionHistoryRoute
+  '/transaction-history': typeof vendorPanelVendorTransactionHistoryRouteWithChildren
   '/admin/transactions/$id': typeof AdminTransactionsIdRoute
   '/admin/cms/': typeof AdminCmsIndexRoute
   '/admin/notifications/': typeof AdminNotificationsIndexRoute
@@ -264,12 +278,14 @@ export interface FileRoutesByFullPath {
   '/admin/transactions/': typeof AdminTransactionsIndexRoute
   '/admin/vendors/': typeof AdminVendorsIndexRoute
   '/admin/verification-requests/': typeof AdminVerificationRequestsIndexRoute
+  '/transaction-history/$transactionId': typeof vendorPanelVendorTransactionHistoryTransactionIdRoute
   '/admin/cms/banners/add': typeof AdminCmsBannersAddRoute
   '/admin/cms/brands/add': typeof AdminCmsBrandsAddRoute
   '/admin/cms/categories/$categoryId': typeof AdminCmsCategoriesCategoryIdRoute
   '/admin/cms/universities/add': typeof AdminCmsUniversitiesAddRoute
   '/admin/students/$studentId/settings': typeof AdminStudentsStudentIdSettingsRoute
   '/admin/vendors/$vendorId/settings': typeof AdminVendorsVendorIdSettingsRouteWithChildren
+  '/transaction-history/': typeof vendorPanelVendorTransactionHistoryIndexRoute
   '/admin/cms/banners/': typeof AdminCmsBannersIndexRoute
   '/admin/cms/brands/': typeof AdminCmsBrandsIndexRoute
   '/admin/cms/categories/': typeof AdminCmsCategoriesIndexRoute
@@ -289,7 +305,6 @@ export interface FileRoutesByTo {
   '/contact-us': typeof vendorPanelVendorContactUsRoute
   '/dashboard': typeof vendorPanelVendorDashboardRoute
   '/pin': typeof vendorPanelVendorPinRoute
-  '/transaction-history': typeof vendorPanelVendorTransactionHistoryRoute
   '/admin/transactions/$id': typeof AdminTransactionsIdRoute
   '/admin/cms': typeof AdminCmsIndexRoute
   '/admin/notifications': typeof AdminNotificationsIndexRoute
@@ -297,11 +312,13 @@ export interface FileRoutesByTo {
   '/admin/transactions': typeof AdminTransactionsIndexRoute
   '/admin/vendors': typeof AdminVendorsIndexRoute
   '/admin/verification-requests': typeof AdminVerificationRequestsIndexRoute
+  '/transaction-history/$transactionId': typeof vendorPanelVendorTransactionHistoryTransactionIdRoute
   '/admin/cms/banners/add': typeof AdminCmsBannersAddRoute
   '/admin/cms/brands/add': typeof AdminCmsBrandsAddRoute
   '/admin/cms/categories/$categoryId': typeof AdminCmsCategoriesCategoryIdRoute
   '/admin/cms/universities/add': typeof AdminCmsUniversitiesAddRoute
   '/admin/students/$studentId/settings': typeof AdminStudentsStudentIdSettingsRoute
+  '/transaction-history': typeof vendorPanelVendorTransactionHistoryIndexRoute
   '/admin/cms/banners': typeof AdminCmsBannersIndexRoute
   '/admin/cms/brands': typeof AdminCmsBrandsIndexRoute
   '/admin/cms/categories': typeof AdminCmsCategoriesIndexRoute
@@ -324,7 +341,7 @@ export interface FileRoutesById {
   '/(vendor-panel)/_vendor/contact-us': typeof vendorPanelVendorContactUsRoute
   '/(vendor-panel)/_vendor/dashboard': typeof vendorPanelVendorDashboardRoute
   '/(vendor-panel)/_vendor/pin': typeof vendorPanelVendorPinRoute
-  '/(vendor-panel)/_vendor/transaction-history': typeof vendorPanelVendorTransactionHistoryRoute
+  '/(vendor-panel)/_vendor/transaction-history': typeof vendorPanelVendorTransactionHistoryRouteWithChildren
   '/admin/transactions/$id': typeof AdminTransactionsIdRoute
   '/admin/cms/': typeof AdminCmsIndexRoute
   '/admin/notifications/': typeof AdminNotificationsIndexRoute
@@ -332,12 +349,14 @@ export interface FileRoutesById {
   '/admin/transactions/': typeof AdminTransactionsIndexRoute
   '/admin/vendors/': typeof AdminVendorsIndexRoute
   '/admin/verification-requests/': typeof AdminVerificationRequestsIndexRoute
+  '/(vendor-panel)/_vendor/transaction-history/$transactionId': typeof vendorPanelVendorTransactionHistoryTransactionIdRoute
   '/admin/cms/banners/add': typeof AdminCmsBannersAddRoute
   '/admin/cms/brands/add': typeof AdminCmsBrandsAddRoute
   '/admin/cms/categories/$categoryId': typeof AdminCmsCategoriesCategoryIdRoute
   '/admin/cms/universities/add': typeof AdminCmsUniversitiesAddRoute
   '/admin/students/$studentId/settings': typeof AdminStudentsStudentIdSettingsRoute
   '/admin/vendors/$vendorId/settings': typeof AdminVendorsVendorIdSettingsRouteWithChildren
+  '/(vendor-panel)/_vendor/transaction-history/': typeof vendorPanelVendorTransactionHistoryIndexRoute
   '/admin/cms/banners/': typeof AdminCmsBannersIndexRoute
   '/admin/cms/brands/': typeof AdminCmsBrandsIndexRoute
   '/admin/cms/categories/': typeof AdminCmsCategoriesIndexRoute
@@ -368,12 +387,14 @@ export interface FileRouteTypes {
     | '/admin/transactions/'
     | '/admin/vendors/'
     | '/admin/verification-requests/'
+    | '/transaction-history/$transactionId'
     | '/admin/cms/banners/add'
     | '/admin/cms/brands/add'
     | '/admin/cms/categories/$categoryId'
     | '/admin/cms/universities/add'
     | '/admin/students/$studentId/settings'
     | '/admin/vendors/$vendorId/settings'
+    | '/transaction-history/'
     | '/admin/cms/banners/'
     | '/admin/cms/brands/'
     | '/admin/cms/categories/'
@@ -393,7 +414,6 @@ export interface FileRouteTypes {
     | '/contact-us'
     | '/dashboard'
     | '/pin'
-    | '/transaction-history'
     | '/admin/transactions/$id'
     | '/admin/cms'
     | '/admin/notifications'
@@ -401,11 +421,13 @@ export interface FileRouteTypes {
     | '/admin/transactions'
     | '/admin/vendors'
     | '/admin/verification-requests'
+    | '/transaction-history/$transactionId'
     | '/admin/cms/banners/add'
     | '/admin/cms/brands/add'
     | '/admin/cms/categories/$categoryId'
     | '/admin/cms/universities/add'
     | '/admin/students/$studentId/settings'
+    | '/transaction-history'
     | '/admin/cms/banners'
     | '/admin/cms/brands'
     | '/admin/cms/categories'
@@ -435,12 +457,14 @@ export interface FileRouteTypes {
     | '/admin/transactions/'
     | '/admin/vendors/'
     | '/admin/verification-requests/'
+    | '/(vendor-panel)/_vendor/transaction-history/$transactionId'
     | '/admin/cms/banners/add'
     | '/admin/cms/brands/add'
     | '/admin/cms/categories/$categoryId'
     | '/admin/cms/universities/add'
     | '/admin/students/$studentId/settings'
     | '/admin/vendors/$vendorId/settings'
+    | '/(vendor-panel)/_vendor/transaction-history/'
     | '/admin/cms/banners/'
     | '/admin/cms/brands/'
     | '/admin/cms/categories/'
@@ -629,6 +653,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCmsBannersIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/(vendor-panel)/_vendor/transaction-history/': {
+      id: '/(vendor-panel)/_vendor/transaction-history/'
+      path: '/'
+      fullPath: '/transaction-history/'
+      preLoaderRoute: typeof vendorPanelVendorTransactionHistoryIndexRouteImport
+      parentRoute: typeof vendorPanelVendorTransactionHistoryRoute
+    }
     '/admin/vendors/$vendorId/settings': {
       id: '/admin/vendors/$vendorId/settings'
       path: '/vendors/$vendorId/settings'
@@ -670,6 +701,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/cms/banners/add'
       preLoaderRoute: typeof AdminCmsBannersAddRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/(vendor-panel)/_vendor/transaction-history/$transactionId': {
+      id: '/(vendor-panel)/_vendor/transaction-history/$transactionId'
+      path: '/$transactionId'
+      fullPath: '/transaction-history/$transactionId'
+      preLoaderRoute: typeof vendorPanelVendorTransactionHistoryTransactionIdRouteImport
+      parentRoute: typeof vendorPanelVendorTransactionHistoryRoute
     }
     '/admin/vendors/$vendorId/settings/': {
       id: '/admin/vendors/$vendorId/settings/'
@@ -765,12 +803,30 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
+interface vendorPanelVendorTransactionHistoryRouteChildren {
+  vendorPanelVendorTransactionHistoryTransactionIdRoute: typeof vendorPanelVendorTransactionHistoryTransactionIdRoute
+  vendorPanelVendorTransactionHistoryIndexRoute: typeof vendorPanelVendorTransactionHistoryIndexRoute
+}
+
+const vendorPanelVendorTransactionHistoryRouteChildren: vendorPanelVendorTransactionHistoryRouteChildren =
+  {
+    vendorPanelVendorTransactionHistoryTransactionIdRoute:
+      vendorPanelVendorTransactionHistoryTransactionIdRoute,
+    vendorPanelVendorTransactionHistoryIndexRoute:
+      vendorPanelVendorTransactionHistoryIndexRoute,
+  }
+
+const vendorPanelVendorTransactionHistoryRouteWithChildren =
+  vendorPanelVendorTransactionHistoryRoute._addFileChildren(
+    vendorPanelVendorTransactionHistoryRouteChildren,
+  )
+
 interface vendorPanelVendorRouteChildren {
   vendorPanelVendorCampaignRoute: typeof vendorPanelVendorCampaignRoute
   vendorPanelVendorContactUsRoute: typeof vendorPanelVendorContactUsRoute
   vendorPanelVendorDashboardRoute: typeof vendorPanelVendorDashboardRoute
   vendorPanelVendorPinRoute: typeof vendorPanelVendorPinRoute
-  vendorPanelVendorTransactionHistoryRoute: typeof vendorPanelVendorTransactionHistoryRoute
+  vendorPanelVendorTransactionHistoryRoute: typeof vendorPanelVendorTransactionHistoryRouteWithChildren
 }
 
 const vendorPanelVendorRouteChildren: vendorPanelVendorRouteChildren = {
@@ -779,7 +835,7 @@ const vendorPanelVendorRouteChildren: vendorPanelVendorRouteChildren = {
   vendorPanelVendorDashboardRoute: vendorPanelVendorDashboardRoute,
   vendorPanelVendorPinRoute: vendorPanelVendorPinRoute,
   vendorPanelVendorTransactionHistoryRoute:
-    vendorPanelVendorTransactionHistoryRoute,
+    vendorPanelVendorTransactionHistoryRouteWithChildren,
 }
 
 const vendorPanelVendorRouteWithChildren =
