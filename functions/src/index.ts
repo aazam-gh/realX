@@ -33,13 +33,19 @@ interface VendorMapEntry {
 
 /**
  * Build a location entry from vendor data.
- * Returns null if the vendor is missing coordinates or is inactive.
+ * @param {FirebaseFirestore.DocumentData} data
+ * @return {VendorMapEntry|null}
  */
-function buildMapEntry(data: FirebaseFirestore.DocumentData): VendorMapEntry | null {
+function buildMapEntry(
+  data: FirebaseFirestore.DocumentData,
+): VendorMapEntry | null {
   if (!data.isActive) return null;
   const lat = data.latitude;
   const lng = data.longitude;
-  if (typeof lat !== "number" || isNaN(lat) || typeof lng !== "number" || isNaN(lng)) {
+  if (
+    typeof lat !== "number" || isNaN(lat) ||
+    typeof lng !== "number" || isNaN(lng)
+  ) {
     return null;
   }
   return {
@@ -778,7 +784,8 @@ export const backfillVendorGeohashes = onCall(
 
 /**
  * Firestore trigger: auto-sync maps/locations whenever a vendor doc changes.
- * Keeps a single cached document with all active vendor locations keyed by vendorId.
+ * Keeps a single cached document with all active vendor locations
+ * keyed by vendorId.
  */
 export const onVendorWrite = onDocumentWritten(
   {document: "vendors/{vendorId}", region: REGION},
@@ -797,7 +804,8 @@ export const onVendorWrite = onDocumentWritten(
       return;
     }
 
-    const data = event.data.after.data()!;
+    const data = event.data.after.data();
+    if (!data) return;
     const entry = buildMapEntry(data);
 
     if (entry) {
