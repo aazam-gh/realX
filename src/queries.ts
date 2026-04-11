@@ -2,6 +2,7 @@ import { queryOptions } from '@tanstack/react-query'
 import { db } from '@/firebase/config'
 import { doc, getDoc, query, collection, where, getDocs, Timestamp, DocumentReference, orderBy, limit, getAggregateFromServer, sum, count } from 'firebase/firestore'
 import { STALE_TIME } from '@/lib/constants'
+import type { Category } from '@/types/categories'
 
 export interface EmbeddedOffer {
     titleEn: string
@@ -14,17 +15,27 @@ export interface EmbeddedOffer {
 
 export interface Vendor {
     id: string
-    name: string
-    status: 'Active' | 'Inactive'
-    contact: string
-    pin: string
+    name?: string
+    nameAr?: string
+    email?: string
+    phoneNumber?: string
+    website?: string
+    status?: 'Active' | 'Inactive'
+    contact?: string
+    pin?: string
     profilePicture?: string
+    coverImage?: string
+    isFeatured?: boolean
+    tagsEn?: string[]
+    tagsAr?: string[]
     xcard?: boolean
     loyalty?: number[]
     mainCategory?: string
     subcategory?: string[]
     isTrending?: boolean
     searchTokens?: string[]
+    shortDescription?: string
+    shortDescriptionAr?: string
     offers?: EmbeddedOffer[]
 }
 
@@ -200,4 +211,14 @@ export const vendorChartDataQueryOptions = (vendorId: string, range: ChartRange)
         return Object.values(result)
     },
     staleTime: STALE_TIME.LONG,
+})
+
+export const categoriesQueryOptions = () => queryOptions({
+    queryKey: ['categories'],
+    queryFn: async () => {
+        const snapshot = await getDocs(collection(db, 'categories'))
+        const cats = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Category))
+        return cats.sort((a, b) => a.order - b.order)
+    },
+    staleTime: STALE_TIME.EXTENDED,
 })

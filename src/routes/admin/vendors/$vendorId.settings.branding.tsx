@@ -2,69 +2,27 @@ import { createFileRoute } from '@tanstack/react-router'
 import { BrandingSettings } from '@/components/admin/vendors/BrandingSettings'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { db } from '@/firebase/config'
-import { doc, getDoc, updateDoc } from 'firebase/firestore'
+import { doc, updateDoc } from 'firebase/firestore'
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Loader2, Save } from 'lucide-react'
 import { refreshVendorList } from '@/lib/vendorList'
+import { vendorQueryOptions, type Vendor } from '@/queries'
 
 export const Route = createFileRoute('/admin/vendors/$vendorId/settings/branding')({
     component: BrandingSettingsComponent,
     loader: async ({ context: { queryClient }, params: { vendorId } }) => {
-        await queryClient.ensureQueryData({
-            queryKey: ['vendor', vendorId],
-            queryFn: async () => {
-                const docRef = doc(db, 'vendors', vendorId)
-                const snapshot = await getDoc(docRef)
-                if (!snapshot.exists()) {
-                    throw new Error('Vendor not found')
-                }
-                return { id: snapshot.id, ...snapshot.data() } as Vendor
-            },
-        })
+        await queryClient.ensureQueryData(vendorQueryOptions(vendorId))
     },
 })
-
-interface Vendor {
-    id: string
-    name?: string
-    nameAr?: string
-    email?: string
-    phoneNumber?: string
-    website?: string
-    isFeatured?: boolean
-    tagsEn?: string[]
-    tagsAr?: string[]
-    profilePicture?: string
-    coverImage?: string
-    pin?: string
-    xcard?: boolean
-    loyalty?: number[]
-    mainCategory?: string
-    subcategory?: string[]
-    isTrending?: boolean
-    shortDescription?: string
-    shortDescriptionAr?: string
-    offers?: any[]
-}
 
 function BrandingSettingsComponent() {
     const { vendorId } = Route.useParams()
     const queryClient = useQueryClient()
     const [formData, setFormData] = useState<Vendor | null>(null)
 
-    const { data: vendor, isLoading } = useQuery({
-        queryKey: ['vendor', vendorId],
-        queryFn: async () => {
-            const docRef = doc(db, 'vendors', vendorId)
-            const snapshot = await getDoc(docRef)
-            if (!snapshot.exists()) {
-                throw new Error('Vendor not found')
-            }
-            return { id: snapshot.id, ...snapshot.data() } as Vendor
-        }
-    })
+    const { data: vendor, isLoading } = useQuery(vendorQueryOptions(vendorId))
 
     useEffect(() => {
         if (vendor) {
@@ -78,19 +36,33 @@ function BrandingSettingsComponent() {
             const vendorRef = doc(db, 'vendors', vendorId)
             await updateDoc(vendorRef, dataToUpdate)
         },
+        onMutate: async (updatedData) => {
+            await queryClient.cancelQueries({ queryKey: ['vendor', vendorId] })
+            const previousVendor = queryClient.getQueryData(['vendor', vendorId])
+            queryClient.setQueryData(['vendor', vendorId], (old: Vendor | undefined) => {
+                if (!old) return old
+                return { ...old, ...updatedData }
+            })
+            return { previousVendor }
+        },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['vendor', vendorId] })
-            refreshVendorList()
+            void refreshVendorList()
             toast.success('Settings updated successfully!', {
                 description: 'The vendor information has been synchronized with the database.',
                 duration: 3000,
             })
         },
-        onError: (error) => {
+        onError: (error, _variables, context) => {
+            if (context?.previousVendor) {
+                queryClient.setQueryData(['vendor', vendorId], context.previousVendor)
+            }
             toast.error('Failed to update settings', {
                 description: error instanceof Error ? error.message : 'An unknown error occurred',
             })
-        }
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: ['vendor', vendorId] })
+        },
     })
 
     const handleSave = () => {

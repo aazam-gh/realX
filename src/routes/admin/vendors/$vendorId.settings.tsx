@@ -1,40 +1,14 @@
 import { createFileRoute, Link, Outlet, useLocation } from '@tanstack/react-router'
-import { db } from '@/firebase/config'
-import { doc, getDoc } from 'firebase/firestore'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft } from 'lucide-react'
+import { vendorQueryOptions, type Vendor } from '@/queries'
 
-export interface Vendor {
-    id: string
-    name?: string
-    nameAr?: string
-    email?: string
-    phoneNumber?: string
-    website?: string
-    isFeatured?: boolean
-    tagsEn?: string[]
-    tagsAr?: string[]
-    profilePicture?: string
-    coverImage?: string
-    pin?: string
-    xcard?: boolean
-    loyalty?: number[]
-}
+export type { Vendor }
 
 export const Route = createFileRoute('/admin/vendors/$vendorId/settings')({
     component: VendorSettingsLayout,
     loader: async ({ context: { queryClient }, params: { vendorId } }) => {
-        await queryClient.ensureQueryData({
-            queryKey: ['vendor', vendorId],
-            queryFn: async () => {
-                const docRef = doc(db, 'vendors', vendorId)
-                const snapshot = await getDoc(docRef)
-                if (!snapshot.exists()) {
-                    throw new Error('Vendor not found')
-                }
-                return { id: snapshot.id, ...snapshot.data() } as Vendor
-            },
-        })
+        await queryClient.ensureQueryData(vendorQueryOptions(vendorId))
     },
 })
 
@@ -42,17 +16,7 @@ function VendorSettingsLayout() {
     const { vendorId } = Route.useParams()
     const location = useLocation()
 
-    const { data: vendor } = useQuery({
-        queryKey: ['vendor', vendorId],
-        queryFn: async () => {
-            const docRef = doc(db, 'vendors', vendorId)
-            const snapshot = await getDoc(docRef)
-            if (!snapshot.exists()) {
-                throw new Error('Vendor not found')
-            }
-            return { id: snapshot.id, ...snapshot.data() } as Vendor
-        }
-    })
+    const { data: vendor } = useQuery(vendorQueryOptions(vendorId))
 
     return (
         <div className="p-8 space-y-6 w-full max-w-[1200px] mx-auto">
