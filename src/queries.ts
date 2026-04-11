@@ -37,6 +37,11 @@ export interface Vendor {
     shortDescription?: string
     shortDescriptionAr?: string
     offers?: EmbeddedOffer[]
+    latitude?: number
+    longitude?: number
+    geohash?: string
+    address?: string
+    addressAr?: string
 }
 
 export interface Transaction {

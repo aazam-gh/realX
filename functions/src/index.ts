@@ -1,13 +1,15 @@
 import {setGlobalOptions} from "firebase-functions";
 import {onCall, HttpsError, CallableRequest} from "firebase-functions/v2/https";
+import {onDocumentWritten} from "firebase-functions/v2/firestore";
 import * as logger from "firebase-functions/logger";
 
 import {initializeApp} from "firebase-admin/app";
 import {getAuth} from "firebase-admin/auth";
-import {getFirestore} from "firebase-admin/firestore";
+import {getFirestore, FieldValue} from "firebase-admin/firestore";
 import {getStorage} from "firebase-admin/storage";
 import {getMessaging} from "firebase-admin/messaging";
 import {Resend} from "resend";
+import {geohashForLocation} from "geofire-common";
 
 // Init Admin SDK
 initializeApp();
@@ -15,6 +17,43 @@ initializeApp();
 setGlobalOptions({maxInstances: 10});
 
 const REGION = "me-central1";
+
+// Fields to include in the maps/locations cache document
+interface VendorMapEntry {
+  name: string | null;
+  nameAr: string | null;
+  latitude: number;
+  longitude: number;
+  geohash: string;
+  address: string | null;
+  addressAr: string | null;
+  mainCategory: string | null;
+  profilePicture: string | null;
+}
+
+/**
+ * Build a location entry from vendor data.
+ * Returns null if the vendor is missing coordinates or is inactive.
+ */
+function buildMapEntry(data: FirebaseFirestore.DocumentData): VendorMapEntry | null {
+  if (!data.isActive) return null;
+  const lat = data.latitude;
+  const lng = data.longitude;
+  if (typeof lat !== "number" || isNaN(lat) || typeof lng !== "number" || isNaN(lng)) {
+    return null;
+  }
+  return {
+    name: data.name || null,
+    nameAr: data.nameAr || null,
+    latitude: lat,
+    longitude: lng,
+    geohash: data.geohash || geohashForLocation([lat, lng]),
+    address: data.address || null,
+    addressAr: data.addressAr || null,
+    mainCategory: data.mainCategory || null,
+    profilePicture: data.profilePicture || null,
+  };
+}
 
 // Helper: Generate unique 6-char creator code
 const generateCreatorCode = () => {
@@ -634,4 +673,185 @@ export const sendNotification = onCall(
       messageId,
     };
   }
+);
+
+export const syncVendorGeohash = onCall(
+  {region: REGION, cors: true},
+  async (request: CallableRequest) => {
+    const {auth, data} = request;
+
+    if (!auth) {
+      throw new HttpsError("unauthenticated", "User not authenticated");
+    }
+
+    if (!auth.token.admin) {
+      throw new HttpsError("permission-denied", "Admin access required");
+    }
+
+    const {vendorId} = data;
+
+    if (!vendorId) {
+      throw new HttpsError("invalid-argument", "vendorId is required");
+    }
+
+    const db = getFirestore();
+    const vendorRef = db.collection("vendors").doc(vendorId);
+    const vendorSnap = await vendorRef.get();
+
+    if (!vendorSnap.exists) {
+      throw new HttpsError("not-found", "Vendor not found");
+    }
+
+    const vendorData = vendorSnap.data();
+    const lat = vendorData?.latitude;
+    const lng = vendorData?.longitude;
+
+    if (
+      typeof lat === "number" && !isNaN(lat) &&
+      typeof lng === "number" && !isNaN(lng)
+    ) {
+      const hash = geohashForLocation([lat, lng]);
+      await vendorRef.update({geohash: hash});
+      logger.info("Geohash synced", {vendorId, geohash: hash});
+    } else {
+      await vendorRef.update({geohash: FieldValue.delete()});
+      logger.info("Geohash cleared", {vendorId});
+    }
+
+    return {success: true};
+  }
+);
+
+export const backfillVendorGeohashes = onCall(
+  {region: REGION, cors: true},
+  async (request: CallableRequest) => {
+    const {auth} = request;
+
+    if (!auth) {
+      throw new HttpsError("unauthenticated", "User not authenticated");
+    }
+
+    if (!auth.token.admin) {
+      throw new HttpsError("permission-denied", "Admin access required");
+    }
+
+    const db = getFirestore();
+    const snapshot = await db.collection("vendors").get();
+
+    let updatedCount = 0;
+    const BATCH_LIMIT = 500;
+    let batch = db.batch();
+    let batchCount = 0;
+
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      const lat = data.latitude;
+      const lng = data.longitude;
+
+      if (
+        typeof lat === "number" && !isNaN(lat) &&
+        typeof lng === "number" && !isNaN(lng) &&
+        !data.geohash
+      ) {
+        const hash = geohashForLocation([lat, lng]);
+        batch.update(doc.ref, {geohash: hash});
+        updatedCount++;
+        batchCount++;
+
+        if (batchCount >= BATCH_LIMIT) {
+          batch.commit();
+          batch = db.batch();
+          batchCount = 0;
+        }
+      }
+    });
+
+    if (batchCount > 0) {
+      await batch.commit();
+    }
+
+    logger.info("Geohash backfill complete", {updatedCount});
+
+    return {success: true, updatedCount};
+  }
+);
+
+/**
+ * Firestore trigger: auto-sync maps/locations whenever a vendor doc changes.
+ * Keeps a single cached document with all active vendor locations keyed by vendorId.
+ */
+export const onVendorWrite = onDocumentWritten(
+  {document: "vendors/{vendorId}", region: REGION},
+  async (event) => {
+    const vendorId = event.params.vendorId;
+    const db = getFirestore();
+    const locationsRef = db.collection("maps").doc("locations");
+
+    // Vendor was deleted or has no data
+    if (!event.data?.after?.exists) {
+      await locationsRef.set(
+        {[vendorId]: FieldValue.delete()},
+        {merge: true},
+      );
+      logger.info("Removed vendor from locations cache", {vendorId});
+      return;
+    }
+
+    const data = event.data.after.data()!;
+    const entry = buildMapEntry(data);
+
+    if (entry) {
+      await locationsRef.set(
+        {[vendorId]: entry},
+        {merge: true},
+      );
+      logger.info("Updated vendor in locations cache", {vendorId});
+    } else {
+      // Vendor exists but isn't mappable (inactive or no coordinates)
+      await locationsRef.set(
+        {[vendorId]: FieldValue.delete()},
+        {merge: true},
+      );
+      logger.info("Removed unmappable vendor from locations cache", {vendorId});
+    }
+  },
+);
+
+/**
+ * Admin callable: rebuild the entire maps/locations document from scratch.
+ * Useful for initial seeding or fixing inconsistencies.
+ */
+export const rebuildLocationsCache = onCall(
+  {region: REGION, cors: true},
+  async (request: CallableRequest) => {
+    const {auth} = request;
+
+    if (!auth) {
+      throw new HttpsError("unauthenticated", "User not authenticated");
+    }
+
+    if (!auth.token.admin) {
+      throw new HttpsError("permission-denied", "Admin access required");
+    }
+
+    const db = getFirestore();
+    const snapshot = await db.collection("vendors").get();
+
+    const vendors: Record<string, VendorMapEntry> = {};
+    let count = 0;
+
+    snapshot.forEach((doc) => {
+      const entry = buildMapEntry(doc.data());
+      if (entry) {
+        vendors[doc.id] = entry;
+        count++;
+      }
+    });
+
+    await db.collection("maps").doc("locations").set({vendors});
+
+    logger.info("Locations cache rebuilt", {vendorCount: count});
+
+    return {success: true, vendorCount: count};
+  },
 );

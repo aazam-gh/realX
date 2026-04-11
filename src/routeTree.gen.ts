@@ -43,6 +43,7 @@ import { Route as AdminCmsBannersAddRouteImport } from './routes/admin/cms/banne
 import { Route as vendorPanelVendorTransactionHistoryTransactionIdRouteImport } from './routes/(vendor-panel)/_vendor.transaction-history.$transactionId'
 import { Route as AdminVendorsVendorIdSettingsIndexRouteImport } from './routes/admin/vendors/$vendorId.settings.index'
 import { Route as AdminVendorsVendorIdSettingsOffersRouteImport } from './routes/admin/vendors/$vendorId.settings.offers'
+import { Route as AdminVendorsVendorIdSettingsLocationRouteImport } from './routes/admin/vendors/$vendorId.settings.location'
 import { Route as AdminVendorsVendorIdSettingsBrandingRouteImport } from './routes/admin/vendors/$vendorId.settings.branding'
 
 const AdminRoute = AdminRouteImport.update({
@@ -252,6 +253,12 @@ const AdminVendorsVendorIdSettingsOffersRoute =
     path: '/offers',
     getParentRoute: () => AdminVendorsVendorIdSettingsRoute,
   } as any)
+const AdminVendorsVendorIdSettingsLocationRoute =
+  AdminVendorsVendorIdSettingsLocationRouteImport.update({
+    id: '/location',
+    path: '/location',
+    getParentRoute: () => AdminVendorsVendorIdSettingsRoute,
+  } as any)
 const AdminVendorsVendorIdSettingsBrandingRoute =
   AdminVendorsVendorIdSettingsBrandingRouteImport.update({
     id: '/branding',
@@ -292,6 +299,7 @@ export interface FileRoutesByFullPath {
   '/admin/cms/trending-offers/': typeof AdminCmsTrendingOffersIndexRoute
   '/admin/cms/universities/': typeof AdminCmsUniversitiesIndexRoute
   '/admin/vendors/$vendorId/settings/branding': typeof AdminVendorsVendorIdSettingsBrandingRoute
+  '/admin/vendors/$vendorId/settings/location': typeof AdminVendorsVendorIdSettingsLocationRoute
   '/admin/vendors/$vendorId/settings/offers': typeof AdminVendorsVendorIdSettingsOffersRoute
   '/admin/vendors/$vendorId/settings/': typeof AdminVendorsVendorIdSettingsIndexRoute
 }
@@ -325,6 +333,7 @@ export interface FileRoutesByTo {
   '/admin/cms/trending-offers': typeof AdminCmsTrendingOffersIndexRoute
   '/admin/cms/universities': typeof AdminCmsUniversitiesIndexRoute
   '/admin/vendors/$vendorId/settings/branding': typeof AdminVendorsVendorIdSettingsBrandingRoute
+  '/admin/vendors/$vendorId/settings/location': typeof AdminVendorsVendorIdSettingsLocationRoute
   '/admin/vendors/$vendorId/settings/offers': typeof AdminVendorsVendorIdSettingsOffersRoute
   '/admin/vendors/$vendorId/settings': typeof AdminVendorsVendorIdSettingsIndexRoute
 }
@@ -363,6 +372,7 @@ export interface FileRoutesById {
   '/admin/cms/trending-offers/': typeof AdminCmsTrendingOffersIndexRoute
   '/admin/cms/universities/': typeof AdminCmsUniversitiesIndexRoute
   '/admin/vendors/$vendorId/settings/branding': typeof AdminVendorsVendorIdSettingsBrandingRoute
+  '/admin/vendors/$vendorId/settings/location': typeof AdminVendorsVendorIdSettingsLocationRoute
   '/admin/vendors/$vendorId/settings/offers': typeof AdminVendorsVendorIdSettingsOffersRoute
   '/admin/vendors/$vendorId/settings/': typeof AdminVendorsVendorIdSettingsIndexRoute
 }
@@ -401,6 +411,7 @@ export interface FileRouteTypes {
     | '/admin/cms/trending-offers/'
     | '/admin/cms/universities/'
     | '/admin/vendors/$vendorId/settings/branding'
+    | '/admin/vendors/$vendorId/settings/location'
     | '/admin/vendors/$vendorId/settings/offers'
     | '/admin/vendors/$vendorId/settings/'
   fileRoutesByTo: FileRoutesByTo
@@ -434,6 +445,7 @@ export interface FileRouteTypes {
     | '/admin/cms/trending-offers'
     | '/admin/cms/universities'
     | '/admin/vendors/$vendorId/settings/branding'
+    | '/admin/vendors/$vendorId/settings/location'
     | '/admin/vendors/$vendorId/settings/offers'
     | '/admin/vendors/$vendorId/settings'
   id:
@@ -471,6 +483,7 @@ export interface FileRouteTypes {
     | '/admin/cms/trending-offers/'
     | '/admin/cms/universities/'
     | '/admin/vendors/$vendorId/settings/branding'
+    | '/admin/vendors/$vendorId/settings/location'
     | '/admin/vendors/$vendorId/settings/offers'
     | '/admin/vendors/$vendorId/settings/'
   fileRoutesById: FileRoutesById
@@ -723,6 +736,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminVendorsVendorIdSettingsOffersRouteImport
       parentRoute: typeof AdminVendorsVendorIdSettingsRoute
     }
+    '/admin/vendors/$vendorId/settings/location': {
+      id: '/admin/vendors/$vendorId/settings/location'
+      path: '/location'
+      fullPath: '/admin/vendors/$vendorId/settings/location'
+      preLoaderRoute: typeof AdminVendorsVendorIdSettingsLocationRouteImport
+      parentRoute: typeof AdminVendorsVendorIdSettingsRoute
+    }
     '/admin/vendors/$vendorId/settings/branding': {
       id: '/admin/vendors/$vendorId/settings/branding'
       path: '/branding'
@@ -735,6 +755,7 @@ declare module '@tanstack/react-router' {
 
 interface AdminVendorsVendorIdSettingsRouteChildren {
   AdminVendorsVendorIdSettingsBrandingRoute: typeof AdminVendorsVendorIdSettingsBrandingRoute
+  AdminVendorsVendorIdSettingsLocationRoute: typeof AdminVendorsVendorIdSettingsLocationRoute
   AdminVendorsVendorIdSettingsOffersRoute: typeof AdminVendorsVendorIdSettingsOffersRoute
   AdminVendorsVendorIdSettingsIndexRoute: typeof AdminVendorsVendorIdSettingsIndexRoute
 }
@@ -743,6 +764,8 @@ const AdminVendorsVendorIdSettingsRouteChildren: AdminVendorsVendorIdSettingsRou
   {
     AdminVendorsVendorIdSettingsBrandingRoute:
       AdminVendorsVendorIdSettingsBrandingRoute,
+    AdminVendorsVendorIdSettingsLocationRoute:
+      AdminVendorsVendorIdSettingsLocationRoute,
     AdminVendorsVendorIdSettingsOffersRoute:
       AdminVendorsVendorIdSettingsOffersRoute,
     AdminVendorsVendorIdSettingsIndexRoute:

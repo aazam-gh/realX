@@ -36,7 +36,7 @@ function VendorSettingsLayout() {
             </div>
 
             <div className="w-full border-b">
-                <div className="flex w-full max-w-md bg-muted/50 p-1 rounded-lg gap-1">
+                <div className="flex w-full max-w-lg bg-muted/50 p-1 rounded-lg gap-1">
                     <Link
                         to="/admin/vendors/$vendorId/settings/branding"
                         params={{ vendorId }}
@@ -56,6 +56,16 @@ function VendorSettingsLayout() {
                             }`}
                     >
                         Offers
+                    </Link>
+                    <Link
+                        to="/admin/vendors/$vendorId/settings/location"
+                        params={{ vendorId }}
+                        className={`flex-1 flex items-center justify-center h-10 rounded-md text-sm font-medium transition-all ${location.pathname.endsWith('location')
+                            ? 'bg-white text-black shadow-sm'
+                            : 'text-muted-foreground hover:text-black hover:bg-white/50'
+                            }`}
+                    >
+                        Location
                     </Link>
                 </div>
             </div>
