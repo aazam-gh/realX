@@ -786,53 +786,6 @@ export const registerPushToken = onCall(
   }
 );
 
-export const syncVendorGeohash = onCall(
-  {region: REGION, cors: true},
-  async (request: CallableRequest) => {
-    const {auth, data} = request;
-
-    if (!auth) {
-      throw new HttpsError("unauthenticated", "User not authenticated");
-    }
-
-    if (!auth.token.admin) {
-      throw new HttpsError("permission-denied", "Admin access required");
-    }
-
-    const {vendorId} = data;
-
-    if (!vendorId) {
-      throw new HttpsError("invalid-argument", "vendorId is required");
-    }
-
-    const db = getFirestore();
-    const vendorRef = db.collection("vendors").doc(vendorId);
-    const vendorSnap = await vendorRef.get();
-
-    if (!vendorSnap.exists) {
-      throw new HttpsError("not-found", "Vendor not found");
-    }
-
-    const vendorData = vendorSnap.data();
-    const lat = vendorData?.latitude;
-    const lng = vendorData?.longitude;
-
-    if (
-      typeof lat === "number" && !isNaN(lat) &&
-      typeof lng === "number" && !isNaN(lng)
-    ) {
-      const hash = geohashForLocation([lat, lng]);
-      await vendorRef.update({geohash: hash});
-      logger.info("Geohash synced", {vendorId, geohash: hash});
-    } else {
-      await vendorRef.update({geohash: FieldValue.delete()});
-      logger.info("Geohash cleared", {vendorId});
-    }
-
-    return {success: true};
-  }
-);
-
 export const backfillVendorGeohashes = onCall(
   {region: REGION, cors: true},
   async (request: CallableRequest) => {

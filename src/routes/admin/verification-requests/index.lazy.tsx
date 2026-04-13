@@ -48,6 +48,7 @@ interface VerificationRequest {
     rejectionReason: string | null
     reviewedAt: any
     reviewedBy: string | null
+    role: string
     status: "pending" | "approved" | "rejected"
     submittedAt: any
 }
@@ -113,6 +114,7 @@ function RouteComponent() {
                     rejectionReason: d.rejectionReason || null,
                     reviewedAt: d.reviewedAt || null,
                     reviewedBy: d.reviewedBy || null,
+                    role: d.role || 'student',
                     status: d.status || 'pending',
                     submittedAt: d.submittedAt || null,
                 } as VerificationRequest
@@ -301,6 +303,7 @@ function RouteComponent() {
                                 <Checkbox />
                             </TableHead>
                             <TableHead className="text-foreground font-bold text-base">Email</TableHead>
+                            <TableHead className="text-foreground font-bold text-base">Role</TableHead>
                             <TableHead className="text-foreground font-bold text-base">Status</TableHead>
                             <TableHead className="text-foreground font-bold text-base">Submitted At</TableHead>
                             <TableHead className="text-foreground font-bold text-base text-right pr-8">Actions</TableHead>
@@ -309,7 +312,7 @@ function RouteComponent() {
                     <TableBody>
                         {isLoading ? (
                             <TableRow>
-                                <TableCell colSpan={5} className="text-center py-10">
+                                <TableCell colSpan={6} className="text-center py-10">
                                     <div className="flex flex-col items-center gap-2">
                                         <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-green border-t-transparent" />
                                         <p className="text-muted-foreground font-medium">Loading requests...</p>
@@ -318,7 +321,7 @@ function RouteComponent() {
                             </TableRow>
                         ) : requestList.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
+                                <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
                                     No verification requests found.
                                 </TableCell>
                             </TableRow>
@@ -329,6 +332,7 @@ function RouteComponent() {
                                         <Checkbox />
                                     </TableCell>
                                     <TableCell className="font-medium text-foreground">{request.email}</TableCell>
+                                    <TableCell className="capitalize">{request.role}</TableCell>
                                     <TableCell>{statusBadge(request.status)}</TableCell>
                                     <TableCell className="text-muted-foreground">{formatDate(request.submittedAt)}</TableCell>
                                     <TableCell className="text-right">
@@ -411,6 +415,10 @@ function RouteComponent() {
                                 <div>
                                     <p className="text-sm text-muted-foreground">Status</p>
                                     {statusBadge(selectedRequest.status)}
+                                </div>
+                                <div>
+                                    <p className="text-sm text-muted-foreground">Role</p>
+                                    <p className="font-medium capitalize">{selectedRequest.role}</p>
                                 </div>
                                 <div>
                                     <p className="text-sm text-muted-foreground">Submitted At</p>

@@ -1,9 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { LocationSettings } from '@/components/admin/vendors/LocationSettings'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { db, functions } from '@/firebase/config'
-import { doc, updateDoc, setDoc } from 'firebase/firestore'
-import { httpsCallable } from 'firebase/functions'
+import { db } from '@/firebase/config'
+import { doc, updateDoc } from 'firebase/firestore'
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -36,23 +35,6 @@ function LocationSettingsComponent() {
             const { id, ...dataToUpdate } = updatedData
             const vendorRef = doc(db, 'vendors', vendorId)
             await updateDoc(vendorRef, dataToUpdate)
-
-            const syncGeohash = httpsCallable(functions, 'syncVendorGeohash')
-            const result = await syncGeohash({ vendorId })
-
-            // Write location data to maps/locations document
-            const locationsRef = doc(db, 'maps', 'locations')
-            await setDoc(locationsRef, {
-                [vendorId]: {
-                    latitude: updatedData.latitude ?? null,
-                    longitude: updatedData.longitude ?? null,
-                    geohash: (result.data as { geohash?: string })?.geohash ?? updatedData.geohash ?? null,
-                    address: updatedData.address ?? null,
-                    addressAr: updatedData.addressAr ?? null,
-                    vendorName: updatedData.name ?? null,
-                    updatedAt: new Date(),
-                },
-            }, { merge: true })
         },
         onMutate: async (updatedData) => {
             await queryClient.cancelQueries({ queryKey: ['vendor', vendorId] })
