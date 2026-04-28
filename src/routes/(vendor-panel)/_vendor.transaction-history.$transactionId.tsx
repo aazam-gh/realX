@@ -63,8 +63,8 @@ function TransactionDetail() {
 
         <DetailCard title="Payment">
           <DetailRow label="Total Amount" value={`QAR ${tx.totalAmount}`} />
-          <DetailRow label="Discount Type" value={tx.discountType ? tx.discountType.charAt(0).toUpperCase() + tx.discountType.slice(1) : 'N/A'} />
-          <DetailRow label="Discount Value" value={tx.discountType === 'percentage' ? `${tx.discountValue ?? tx.discountAmount}%` : `QAR ${tx.discountAmount}`} />
+          <DetailRow label="Discount Type" value={tx.discountType === 'buy1get1' ? 'Buy 1 Get 1' : tx.discountType ? tx.discountType.charAt(0).toUpperCase() + tx.discountType.slice(1) : 'N/A'} />
+          <DetailRow label="Discount Value" value={tx.discountType === 'buy1get1' ? 'Buy 1 Get 1' : tx.discountType === 'percentage' ? `${tx.discountValue ?? tx.discountAmount}%` : `QAR ${tx.discountAmount}`} />
           <DetailRow label="Final Amount" value={`QAR ${tx.finalAmount}`} highlight />
         </DetailCard>
 

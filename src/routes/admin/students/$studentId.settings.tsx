@@ -415,9 +415,11 @@ function StudentSettings() {
                                             </TableCell>
                                             <TableCell className="text-muted-foreground">
                                                 {redemption.offerTitle || 'Unknown Offer'}
-                                                {redemption.discountType === 'percentage'
-                                                    ? ` (${redemption.discountAmount}%)`
-                                                    : ` ($${redemption.discountAmount})`
+                                                {redemption.discountType === 'buy1get1'
+                                                    ? ' (Buy 1 Get 1)'
+                                                    : redemption.discountType === 'percentage'
+                                                      ? ` (${redemption.discountAmount}%)`
+                                                      : ` ($${redemption.discountAmount})`
                                                 }
                                             </TableCell>
                                             <TableCell>
@@ -430,7 +432,9 @@ function StudentSettings() {
                                                     ? `$${((redemption.originalPrice * redemption.discountAmount) / 100).toFixed(2)}`
                                                     : redemption.discountType === 'amount'
                                                         ? `$${redemption.discountAmount?.toFixed(2)}`
-                                                        : '-'
+                                                        : redemption.discountType === 'buy1get1'
+                                                          ? 'Buy 1 Get 1'
+                                                          : '-'
                                                 }
                                             </TableCell>
                                         </TableRow>

@@ -433,6 +433,22 @@ export const approveVerificationRequest = onCall(
       authUid: result.uid,
     });
 
+    // Delete ID images from Storage
+    const bucket = getStorage().bucket();
+    const deleteFile = async (filePath: string) => {
+      if (filePath) {
+        try {
+          await bucket.file(filePath).delete();
+        } catch (err) {
+          logger.warn("Failed to delete storage file", {filePath, error: err});
+        }
+      }
+    };
+    await Promise.all([
+      deleteFile(requestData?.idFrontPath),
+      deleteFile(requestData?.idBackPath),
+    ]);
+
     // Send welcome email via Resend
     try {
       const resend = new Resend(process.env.RESEND_API_KEY);
@@ -528,6 +544,22 @@ export const rejectVerificationRequest = onCall(
       reviewedAt: new Date(),
       reviewedBy: auth.uid,
     });
+
+    // Delete ID images from Storage
+    const bucket = getStorage().bucket();
+    const deleteFile = async (filePath: string) => {
+      if (filePath) {
+        try {
+          await bucket.file(filePath).delete();
+        } catch (err) {
+          logger.warn("Failed to delete storage file", {filePath, error: err});
+        }
+      }
+    };
+    await Promise.all([
+      deleteFile(requestData?.idFrontPath),
+      deleteFile(requestData?.idBackPath),
+    ]);
 
     logger.info("Verification request rejected", {verificationRequestId});
 

@@ -109,7 +109,7 @@ export function OffersSettings({ vendorId }: OffersSettingsProps) {
                 descriptionEn: data.descriptionEn,
                 descriptionAr: data.descriptionAr,
                 discountType: data.discountType || 'percentage',
-                discountValue: data.discountValue || 0,
+                ...(data.discountType !== 'buy1get1' && { discountValue: data.discountValue || 0 }),
             }
 
             let updatedOffers: EmbeddedOffer[]
@@ -283,19 +283,22 @@ export function OffersSettings({ vendorId }: OffersSettingsProps) {
                                     <SelectContent>
                                         <SelectItem value="percentage">Percentage (%)</SelectItem>
                                         <SelectItem value="amount">Fixed Amount</SelectItem>
+                                        <SelectItem value="buy1get1">Buy 1 Get 1</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <div className="space-y-2">
-                                <Label>Discount Value</Label>
-                                <Input
-                                    type="number"
-                                    value={formData.discountValue}
-                                    onChange={e => setFormData(prev => ({ ...prev, discountValue: parseFloat(e.target.value) }))}
-                                    className="bg-white h-11"
-                                    placeholder="0"
-                                />
-                            </div>
+                            {formData.discountType !== 'buy1get1' && (
+                                <div className="space-y-2">
+                                    <Label>Discount Value</Label>
+                                    <Input
+                                        type="number"
+                                        value={formData.discountValue}
+                                        onChange={e => setFormData(prev => ({ ...prev, discountValue: parseFloat(e.target.value) }))}
+                                        className="bg-white h-11"
+                                        placeholder="0"
+                                    />
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -345,7 +348,7 @@ export function OffersSettings({ vendorId }: OffersSettingsProps) {
                         {/* Discount Badge */}
                         <div className="h-[80px] w-full bg-slate-50 relative flex items-center justify-center">
                             <span className="text-2xl font-bold text-brand-green">
-                                {offer.discountType === 'percentage' ? `${offer.discountValue}% OFF` : `$${offer.discountValue} OFF`}
+                                {offer.discountType === 'buy1get1' ? 'Buy 1 Get 1' : offer.discountType === 'percentage' ? `${offer.discountValue}% OFF` : `$${offer.discountValue} OFF`}
                             </span>
                         </div>
 

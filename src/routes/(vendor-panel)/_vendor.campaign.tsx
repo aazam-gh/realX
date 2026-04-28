@@ -33,7 +33,7 @@ function VendorCampaign() {
               <p className="text-sm text-gray-500 line-clamp-2">{offer.descriptionEn}</p>
               <div className="pt-4 flex justify-between items-center text-sm">
                 <span className="font-medium text-blue-600">
-                  {offer.discountType === 'percentage' ? `${offer.discountValue}% OFF` : `$${offer.discountValue} OFF`}
+                  {offer.discountType === 'buy1get1' ? 'Buy 1 Get 1' : offer.discountType === 'percentage' ? `${offer.discountValue}% OFF` : `$${offer.discountValue} OFF`}
                 </span>
               </div>
             </div>

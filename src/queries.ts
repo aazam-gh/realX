@@ -9,8 +9,8 @@ export interface EmbeddedOffer {
     titleAr?: string
     descriptionEn?: string
     descriptionAr?: string
-    discountType: 'percentage' | 'amount'
-    discountValue: number
+    discountType: 'percentage' | 'amount' | 'buy1get1'
+    discountValue?: number
 }
 
 export interface Vendor {
@@ -51,7 +51,7 @@ export interface Transaction {
     type: string
     totalAmount: number
     discountAmount: number
-    discountType: 'percentage' | 'amount'
+    discountType: 'percentage' | 'amount' | 'buy1get1'
     discountValue?: number
     finalAmount: number
     status: 'completed' | 'pending' | 'failed'

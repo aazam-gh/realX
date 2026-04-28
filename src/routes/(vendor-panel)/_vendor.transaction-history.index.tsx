@@ -55,9 +55,11 @@ function VendorTransactionHistory() {
                   <td className="px-6 py-4 capitalize">{tx.type || 'N/A'}</td>
                   <td className="px-6 py-4">QAR {tx.totalAmount}</td>
                   <td className="px-6 py-4 text-muted-foreground">
-                    {tx.discountType === 'percentage'
-                      ? `${tx.discountValue ?? tx.discountAmount}%`
-                      : `QAR ${tx.discountAmount}`}
+                    {tx.discountType === 'buy1get1'
+                      ? 'Buy 1 Get 1'
+                      : tx.discountType === 'percentage'
+                        ? `${tx.discountValue ?? tx.discountAmount}%`
+                        : `QAR ${tx.discountAmount}`}
                   </td>
                   <td className="px-6 py-4 font-medium">QAR {tx.finalAmount}</td>
                   <td className="px-6 py-4">
