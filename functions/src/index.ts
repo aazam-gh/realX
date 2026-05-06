@@ -691,7 +691,7 @@ export const sendNotification = onCall(
       to: entry.token,
       title,
       body,
-      sound: "default" as const,
+      sound: "sound.wav" as const,
       data: {imageUrl: imageUrl || null},
     }));
 
