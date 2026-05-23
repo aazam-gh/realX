@@ -5,7 +5,8 @@ import {
     FolderOpen,
     Tag,
     Flame,
-    GraduationCap
+    GraduationCap,
+    Sparkles
 } from 'lucide-react'
 
 export const Route = createFileRoute('/admin/cms/')({
@@ -44,6 +45,14 @@ const CMS_ITEMS = [
         color: 'bg-orange-100 text-orange-600',
         hoverBorder: 'hover:border-orange-200',
         href: '/admin/cms/trending-offers' as const,
+    },
+    {
+        title: 'Featured Brand Showcase',
+        description: 'Edit the mobile featured brand hero',
+        icon: Sparkles,
+        color: 'bg-rose-100 text-rose-600',
+        hoverBorder: 'hover:border-rose-200',
+        href: '/admin/cms/featured-brand-showcase' as const,
     },
     {
         title: 'Universities',
