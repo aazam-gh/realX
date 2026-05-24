@@ -13,6 +13,18 @@ export interface EmbeddedOffer {
     discountValue?: number
 }
 
+export interface VendorLocation {
+    id: string
+    name?: string
+    nameAr?: string
+    address?: string
+    addressAr?: string
+    latitude?: number
+    longitude?: number
+    geohash?: string
+    isPrimary?: boolean
+}
+
 export interface Vendor {
     id: string
     name?: string
@@ -39,9 +51,12 @@ export interface Vendor {
     offers?: EmbeddedOffer[]
     latitude?: number
     longitude?: number
+    lat?: number
+    lng?: number
     geohash?: string
     address?: string
     addressAr?: string
+    locations?: VendorLocation[]
 }
 
 export interface Transaction {

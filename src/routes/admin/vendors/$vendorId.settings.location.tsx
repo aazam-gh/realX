@@ -10,6 +10,21 @@ import { Loader2, Save } from 'lucide-react'
 import { refreshVendorList } from '@/lib/vendorList'
 import { vendorQueryOptions, type Vendor } from '@/queries'
 
+function stripUndefined<T>(value: T): T {
+    if (Array.isArray(value)) {
+        return value.map((item) => stripUndefined(item)).filter((item) => item !== undefined) as T
+    }
+    if (value && typeof value === 'object') {
+        return Object.entries(value as Record<string, unknown>).reduce((acc, [key, entry]) => {
+            if (entry !== undefined) {
+                acc[key] = stripUndefined(entry)
+            }
+            return acc
+        }, {} as Record<string, unknown>) as T
+    }
+    return value
+}
+
 export const Route = createFileRoute('/admin/vendors/$vendorId/settings/location')({
     component: LocationSettingsComponent,
     loader: async ({ context: { queryClient }, params: { vendorId } }) => {
@@ -33,8 +48,10 @@ function LocationSettingsComponent() {
     const updateMutation = useMutation({
         mutationFn: async (updatedData: Partial<Vendor>) => {
             const { id, ...dataToUpdate } = updatedData
+            if (typeof dataToUpdate.latitude === 'number') dataToUpdate.lat = dataToUpdate.latitude
+            if (typeof dataToUpdate.longitude === 'number') dataToUpdate.lng = dataToUpdate.longitude
             const vendorRef = doc(db, 'vendors', vendorId)
-            await updateDoc(vendorRef, dataToUpdate)
+            await updateDoc(vendorRef, stripUndefined(dataToUpdate))
         },
         onMutate: async (updatedData) => {
             await queryClient.cancelQueries({ queryKey: ['vendor', vendorId] })

@@ -6,7 +6,8 @@ import {
     Tag,
     Flame,
     GraduationCap,
-    Sparkles
+    Sparkles,
+    CalendarDays
 } from 'lucide-react'
 
 export const Route = createFileRoute('/admin/cms/')({
@@ -45,6 +46,14 @@ const CMS_ITEMS = [
         color: 'bg-orange-100 text-orange-600',
         hoverBorder: 'hover:border-orange-200',
         href: '/admin/cms/trending-offers' as const,
+    },
+    {
+        title: 'Student Events',
+        description: 'Manage the mobile events feed and fallback data',
+        icon: CalendarDays,
+        color: 'bg-sky-100 text-sky-600',
+        hoverBorder: 'hover:border-sky-200',
+        href: '/admin/cms/events' as const,
     },
     {
         title: 'Featured Brand Showcase',

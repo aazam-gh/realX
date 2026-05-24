@@ -31,6 +31,7 @@ import { Route as vendorPanelVendorCampaignRouteImport } from './routes/(vendor-
 import { Route as AdminCmsUniversitiesIndexRouteImport } from './routes/admin/cms/universities/index'
 import { Route as AdminCmsTrendingOffersIndexRouteImport } from './routes/admin/cms/trending-offers/index'
 import { Route as AdminCmsFeaturedBrandShowcaseIndexRouteImport } from './routes/admin/cms/featured-brand-showcase/index'
+import { Route as AdminCmsEventsIndexRouteImport } from './routes/admin/cms/events/index'
 import { Route as AdminCmsCategoriesIndexRouteImport } from './routes/admin/cms/categories/index'
 import { Route as AdminCmsBrandsIndexRouteImport } from './routes/admin/cms/brands/index'
 import { Route as AdminCmsBannersIndexRouteImport } from './routes/admin/cms/banners/index'
@@ -189,6 +190,13 @@ const AdminCmsFeaturedBrandShowcaseIndexRoute =
       (d) => d.Route,
     ),
   )
+const AdminCmsEventsIndexRoute = AdminCmsEventsIndexRouteImport.update({
+  id: '/cms/events/',
+  path: '/cms/events/',
+  getParentRoute: () => AdminRoute,
+} as any).lazy(() =>
+  import('./routes/admin/cms/events/index.lazy').then((d) => d.Route),
+)
 const AdminCmsCategoriesIndexRoute = AdminCmsCategoriesIndexRouteImport.update({
   id: '/cms/categories/',
   path: '/cms/categories/',
@@ -314,6 +322,7 @@ export interface FileRoutesByFullPath {
   '/admin/cms/banners/': typeof AdminCmsBannersIndexRoute
   '/admin/cms/brands/': typeof AdminCmsBrandsIndexRoute
   '/admin/cms/categories/': typeof AdminCmsCategoriesIndexRoute
+  '/admin/cms/events/': typeof AdminCmsEventsIndexRoute
   '/admin/cms/featured-brand-showcase/': typeof AdminCmsFeaturedBrandShowcaseIndexRoute
   '/admin/cms/trending-offers/': typeof AdminCmsTrendingOffersIndexRoute
   '/admin/cms/universities/': typeof AdminCmsUniversitiesIndexRoute
@@ -350,6 +359,7 @@ export interface FileRoutesByTo {
   '/admin/cms/banners': typeof AdminCmsBannersIndexRoute
   '/admin/cms/brands': typeof AdminCmsBrandsIndexRoute
   '/admin/cms/categories': typeof AdminCmsCategoriesIndexRoute
+  '/admin/cms/events': typeof AdminCmsEventsIndexRoute
   '/admin/cms/featured-brand-showcase': typeof AdminCmsFeaturedBrandShowcaseIndexRoute
   '/admin/cms/trending-offers': typeof AdminCmsTrendingOffersIndexRoute
   '/admin/cms/universities': typeof AdminCmsUniversitiesIndexRoute
@@ -391,6 +401,7 @@ export interface FileRoutesById {
   '/admin/cms/banners/': typeof AdminCmsBannersIndexRoute
   '/admin/cms/brands/': typeof AdminCmsBrandsIndexRoute
   '/admin/cms/categories/': typeof AdminCmsCategoriesIndexRoute
+  '/admin/cms/events/': typeof AdminCmsEventsIndexRoute
   '/admin/cms/featured-brand-showcase/': typeof AdminCmsFeaturedBrandShowcaseIndexRoute
   '/admin/cms/trending-offers/': typeof AdminCmsTrendingOffersIndexRoute
   '/admin/cms/universities/': typeof AdminCmsUniversitiesIndexRoute
@@ -432,6 +443,7 @@ export interface FileRouteTypes {
     | '/admin/cms/banners/'
     | '/admin/cms/brands/'
     | '/admin/cms/categories/'
+    | '/admin/cms/events/'
     | '/admin/cms/featured-brand-showcase/'
     | '/admin/cms/trending-offers/'
     | '/admin/cms/universities/'
@@ -468,6 +480,7 @@ export interface FileRouteTypes {
     | '/admin/cms/banners'
     | '/admin/cms/brands'
     | '/admin/cms/categories'
+    | '/admin/cms/events'
     | '/admin/cms/featured-brand-showcase'
     | '/admin/cms/trending-offers'
     | '/admin/cms/universities'
@@ -508,6 +521,7 @@ export interface FileRouteTypes {
     | '/admin/cms/banners/'
     | '/admin/cms/brands/'
     | '/admin/cms/categories/'
+    | '/admin/cms/events/'
     | '/admin/cms/featured-brand-showcase/'
     | '/admin/cms/trending-offers/'
     | '/admin/cms/universities/'
@@ -682,6 +696,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCmsFeaturedBrandShowcaseIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/cms/events/': {
+      id: '/admin/cms/events/'
+      path: '/cms/events'
+      fullPath: '/admin/cms/events/'
+      preLoaderRoute: typeof AdminCmsEventsIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/cms/categories/': {
       id: '/admin/cms/categories/'
       path: '/cms/categories'
@@ -843,6 +864,7 @@ interface AdminRouteChildren {
   AdminCmsBannersIndexRoute: typeof AdminCmsBannersIndexRoute
   AdminCmsBrandsIndexRoute: typeof AdminCmsBrandsIndexRoute
   AdminCmsCategoriesIndexRoute: typeof AdminCmsCategoriesIndexRoute
+  AdminCmsEventsIndexRoute: typeof AdminCmsEventsIndexRoute
   AdminCmsFeaturedBrandShowcaseIndexRoute: typeof AdminCmsFeaturedBrandShowcaseIndexRoute
   AdminCmsTrendingOffersIndexRoute: typeof AdminCmsTrendingOffersIndexRoute
   AdminCmsUniversitiesIndexRoute: typeof AdminCmsUniversitiesIndexRoute
@@ -868,6 +890,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminCmsBannersIndexRoute: AdminCmsBannersIndexRoute,
   AdminCmsBrandsIndexRoute: AdminCmsBrandsIndexRoute,
   AdminCmsCategoriesIndexRoute: AdminCmsCategoriesIndexRoute,
+  AdminCmsEventsIndexRoute: AdminCmsEventsIndexRoute,
   AdminCmsFeaturedBrandShowcaseIndexRoute:
     AdminCmsFeaturedBrandShowcaseIndexRoute,
   AdminCmsTrendingOffersIndexRoute: AdminCmsTrendingOffersIndexRoute,

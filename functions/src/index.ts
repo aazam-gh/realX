@@ -22,13 +22,39 @@ const REGION = "me-central1";
 interface VendorMapEntry {
   name: string | null;
   nameAr: string | null;
+  vendorName: string | null;
+  vendorNameAr: string | null;
+  latitude?: number;
+  longitude?: number;
+  geohash?: string;
+  address: string | null;
+  addressAr: string | null;
+  mainCategory: string | null;
+  profilePicture: string | null;
+  xcard: boolean;
+  offerTypes: string[];
+  hasBuyOneGetOne: boolean;
+  hasStudentDeal: boolean;
+  openingHours: unknown;
+  searchTokens: string[];
+  firstOffer: {
+    titleEn?: string;
+    titleAr?: string;
+    discountType?: string;
+  } | null;
+  locations: VendorMapLocation[];
+}
+
+interface VendorMapLocation {
+  id: string;
+  name: string | null;
+  nameAr: string | null;
   latitude: number;
   longitude: number;
   geohash: string;
   address: string | null;
   addressAr: string | null;
-  mainCategory: string | null;
-  profilePicture: string | null;
+  isPrimary: boolean;
 }
 
 /**
@@ -39,24 +65,98 @@ interface VendorMapEntry {
 function buildMapEntry(
   data: FirebaseFirestore.DocumentData,
 ): VendorMapEntry | null {
-  const lat = data.latitude;
-  const lng = data.longitude;
-  if (
-    typeof lat !== "number" || isNaN(lat) ||
-    typeof lng !== "number" || isNaN(lng)
-  ) {
+  const hasBranchLocations =
+    Array.isArray(data.locations) && data.locations.length > 0;
+  const rawLocations = hasBranchLocations ?
+    data.locations :
+    [{
+      id: "primary",
+      latitude: data.latitude,
+      longitude: data.longitude,
+      geohash: data.geohash,
+      address: data.address,
+      addressAr: data.addressAr,
+      isPrimary: true,
+    }];
+
+  const locations = rawLocations.flatMap((
+    location: Record<string, unknown>,
+    index: number,
+  ) => {
+    const lat = location.latitude;
+    const lng = location.longitude;
+    if (
+      typeof lat !== "number" || isNaN(lat) ||
+      typeof lng !== "number" || isNaN(lng)
+    ) {
+      return [];
+    }
+
+    return [{
+      id: typeof location.id === "string" && location.id.length > 0 ?
+        location.id :
+        (location.isPrimary === true ? "primary" : `branch-${index + 1}`),
+      name: typeof location.name === "string" ? location.name : null,
+      nameAr: typeof location.nameAr === "string" ? location.nameAr : null,
+      latitude: lat,
+      longitude: lng,
+      geohash: typeof location.geohash === "string" &&
+        location.geohash.length > 0 ?
+        location.geohash :
+        geohashForLocation([lat, lng]).slice(0, 5),
+      address: typeof location.address === "string" ?
+        location.address :
+        data.address || null,
+      addressAr: typeof location.addressAr === "string" ?
+        location.addressAr :
+        data.addressAr || null,
+      isPrimary: location.isPrimary === true || index === 0,
+    }];
+  });
+
+  if (!locations.length) {
     return null;
   }
+
+  const primaryLocation = locations.find((
+    location: VendorMapLocation,
+  ) => location.isPrimary) || locations[0];
+  const firstOffer = Array.isArray(data.offers) && data.offers.length > 0 ?
+    {
+      titleEn: data.offers[0]?.titleEn || undefined,
+      titleAr: data.offers[0]?.titleAr || undefined,
+      discountType: data.offers[0]?.discountType || undefined,
+    } :
+    null;
+  const rawOfferTypes = Array.isArray(data.offers) ?
+    data.offers
+      .map((offer: Record<string, unknown>) => offer.discountType)
+      .filter((discountType: unknown) => typeof discountType === "string") :
+    [];
+  const offerTypes = rawOfferTypes.length ?
+    [...new Set(rawOfferTypes)] as string[] :
+    [];
+
   return {
     name: data.name || null,
     nameAr: data.nameAr || null,
-    latitude: lat,
-    longitude: lng,
-    geohash: data.geohash || geohashForLocation([lat, lng]),
+    vendorName: data.name || null,
+    vendorNameAr: data.nameAr || null,
+    latitude: primaryLocation.latitude,
+    longitude: primaryLocation.longitude,
+    geohash: primaryLocation.geohash,
     address: data.address || null,
     addressAr: data.addressAr || null,
     mainCategory: data.mainCategory || null,
     profilePicture: data.profilePicture || null,
+    xcard: data.xcard === true,
+    offerTypes,
+    hasBuyOneGetOne: offerTypes.includes("buy1get1"),
+    hasStudentDeal: Array.isArray(data.offers) && data.offers.length > 0,
+    openingHours: data.openingHours || data.hours || null,
+    searchTokens: Array.isArray(data.searchTokens) ? data.searchTokens : [],
+    firstOffer,
+    locations,
   };
 }
 
@@ -946,7 +1046,7 @@ export const rebuildLocationsCache = onCall(
       }
     });
 
-    await db.collection("maps").doc("locations").set({vendors});
+    await db.collection("maps").doc("locations").set(vendors);
 
     logger.info("Locations cache rebuilt", {vendorCount: count});
 

@@ -18,7 +18,7 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { Search, Upload, Plus, ChevronRight, Loader2, Trash2 } from 'lucide-react'
-import { useState, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import {
     Dialog,
     DialogContent,
@@ -34,7 +34,7 @@ import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { httpsCallable } from 'firebase/functions'
 import { doc, setDoc, updateDoc } from 'firebase/firestore'
 import { Switch } from '@/components/ui/switch'
-import { fetchAllVendors, type Vendor } from './index'
+import { fetchVendorsPage, type Vendor } from './index'
 import { refreshVendorList } from '@/lib/vendorList'
 
 export const Route = createLazyFileRoute('/admin/vendors/')({
@@ -45,51 +45,35 @@ function RouteComponent() {
     const queryClient = useQueryClient()
     const navigate = useNavigate({ from: '/admin/vendors/' })
     const { page, pageSize, search: searchQuery, sort, xcard: xcardFilter } = useSearch({ from: '/admin/vendors/' })
+    const [searchInput, setSearchInput] = useState(searchQuery)
     const [open, setOpen] = useState(false)
     const [form, setForm] = useState({ name: '', email: '', password: '' })
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
     const [vendorToDelete, setVendorToDelete] = useState<Vendor | null>(null)
 
-    const { data: allVendors = [], isLoading } = useQuery({
-        queryKey: ['vendors-all'],
-        queryFn: fetchAllVendors,
+    useEffect(() => {
+        setSearchInput(searchQuery)
+    }, [searchQuery])
+
+    const { data = { vendors: [], totalCount: 0 }, isLoading } = useQuery({
+        queryKey: ['vendors-page', { page, pageSize, search: searchQuery, sort, xcard: xcardFilter }],
+        queryFn: () => fetchVendorsPage({ page, pageSize, search: searchQuery, sort, xcard: xcardFilter }),
         staleTime: 1000 * 60 * 5,
     })
 
-    // Client-side filter + sort
-    const filtered = useMemo(() => {
-        let result = [...allVendors]
-
-        if (searchQuery) {
-            const q = searchQuery.toLowerCase()
-            result = result.filter(v =>
-                v.name.toLowerCase().includes(q) ||
-                v.contact.toLowerCase().includes(q)
-            )
-        }
-
-        if (xcardFilter === 'enabled') result = result.filter(v => v.xcard)
-        else if (xcardFilter === 'disabled') result = result.filter(v => !v.xcard)
-
-        result.sort((a, b) => {
-            const cmp = a.name.localeCompare(b.name)
-            return sort === 'name-desc' ? -cmp : cmp
-        })
-
-        return result
-    }, [allVendors, searchQuery, sort, xcardFilter])
-
-    // Client-side pagination
-    const totalVendors = filtered.length
+    const totalVendors = data.totalCount
     const totalPages = Math.max(1, Math.ceil(totalVendors / pageSize))
     const effectivePage = Math.min(page, totalPages)
-    const vendorList = filtered.slice((effectivePage - 1) * pageSize, effectivePage * pageSize)
+    const vendorList = data.vendors
     const hasNextPage = effectivePage < totalPages
     const hasPrevPage = effectivePage > 1
 
-    // Update filters and reset to page 1
     const updateFilters = (updates: Record<string, string>) => {
         navigate({ search: (prev) => ({ ...prev, ...updates, page: 1 }) })
+    }
+
+    const submitSearch = () => {
+        updateFilters({ search: searchInput.trim().toLowerCase() })
     }
 
     const addVendorMutation = useMutation({
@@ -107,7 +91,7 @@ function RouteComponent() {
             return result.data
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['vendors-all'] })
+            queryClient.invalidateQueries({ queryKey: ['vendors-page'] })
             setForm({ name: '', email: '', password: '' })
             setOpen(false)
             void refreshVendorList()
@@ -124,7 +108,7 @@ function RouteComponent() {
             await updateDoc(vendorRef, { xcard })
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['vendors-all'] })
+            queryClient.invalidateQueries({ queryKey: ['vendors-page'] })
             void refreshVendorList()
         }
     })
@@ -135,7 +119,7 @@ function RouteComponent() {
             await deleteVendorUser({ uid: vendorId })
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['vendors-all'] })
+            queryClient.invalidateQueries({ queryKey: ['vendors-page'] })
             setDeleteConfirmOpen(false)
             setVendorToDelete(null)
             void refreshVendorList()
@@ -204,12 +188,23 @@ function RouteComponent() {
                     <div className="relative flex-1">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
-                            placeholder="Search by name or contact"
+                            placeholder="Search by indexed keyword"
                             className="pl-9 bg-muted/50 border-none h-10"
-                            value={searchQuery}
-                            onChange={(e) => updateFilters({ search: e.target.value })}
+                            value={searchInput}
+                            onChange={(e) => setSearchInput(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') submitSearch()
+                            }}
                         />
                     </div>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        className="h-10"
+                        onClick={submitSearch}
+                    >
+                        Search
+                    </Button>
                     <Select value={xcardFilter} onValueChange={(v) => updateFilters({ xcard: v })}>
                         <SelectTrigger className="w-[150px] h-10 bg-muted/50 border-none">
                             <SelectValue />

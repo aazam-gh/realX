@@ -81,7 +81,10 @@ function RouteComponent() {
         queryKey: ['verification-requests', page, pageSize, statusFilter],
         queryFn: async () => {
             const collRef = collection(db, 'verification_requests')
-            const countSnapshot = await getCountFromServer(collRef)
+            const countQuery = statusFilter && statusFilter !== 'all'
+                ? query(collRef, where('status', '==', statusFilter))
+                : collRef
+            const countSnapshot = await getCountFromServer(countQuery)
             const totalCount = countSnapshot.data().count
 
             let q

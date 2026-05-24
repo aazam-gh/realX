@@ -45,6 +45,9 @@ export interface Student {
     uid?: string
     createdAt?: any
     updatedAt?: any
+    university?: string
+    campus?: string
+    interests?: string[]
 }
 
 export interface Redemption {
@@ -58,6 +61,18 @@ export interface Redemption {
     discountType: string
     originalPrice?: number
     createdAt: any
+}
+
+export interface SavedItem {
+    id: string
+    type?: 'vendor' | 'offer' | 'event'
+    sourceId?: string
+    title?: string
+    subtitle?: string
+    vendorId?: string
+    routePath?: string
+    externalUrl?: string
+    savedAt?: string
 }
 
 const studentSettingsSearchSchema = z.object({
@@ -144,6 +159,23 @@ function StudentSettings() {
             return { transactions, totalCount }
         }
     })
+
+    const { data: savedItems = [], isLoading: isSavedItemsLoading } = useQuery({
+        queryKey: ['student-saved-items', studentId],
+        queryFn: async () => {
+            const savedItemsRef = collection(db, 'students', studentId, 'savedItems')
+            const savedItemsQuery = query(savedItemsRef, limit(50))
+            const snapshot = await getDocs(savedItemsQuery)
+
+            return snapshot.docs
+                .map((docSnap) => ({
+                    id: docSnap.id,
+                    ...docSnap.data(),
+                })) as SavedItem[]
+        },
+    })
+
+    const sortedSavedItems = [...savedItems].sort((a, b) => (b.savedAt || '').localeCompare(a.savedAt || ''))
 
     const deleteStudentMutation = useMutation({
         mutationFn: async () => {
@@ -253,6 +285,34 @@ function StudentSettings() {
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground mb-1">Date of Birth</p>
                                 <p className="font-medium text-foreground">{student.dob || 'N/A'}</p>
+                            </div>
+                        </div>
+
+                        <div className="pt-2 border-t space-y-3">
+                            <div>
+                                <p className="text-sm font-medium text-muted-foreground mb-1">University</p>
+                                <p className="font-medium text-foreground">{student.university || 'N/A'}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-muted-foreground mb-1">Campus</p>
+                                <p className="font-medium text-foreground">{student.campus || 'N/A'}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-muted-foreground mb-1">Interests</p>
+                                {student.interests?.length ? (
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {student.interests.map((interest) => (
+                                            <span
+                                                key={interest}
+                                                className="rounded-full bg-muted px-2.5 py-1 text-xs font-semibold text-muted-foreground"
+                                            >
+                                                {interest}
+                                            </span>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="font-medium text-foreground">N/A</p>
+                                )}
                             </div>
                         </div>
 
@@ -474,7 +534,91 @@ function StudentSettings() {
                     </div>
                 </Card>
             </div>
+
+            <Card className="shadow-sm border-border/50">
+                <CardHeader className="pb-4 border-b">
+                    <div className="flex items-center justify-between">
+                        <CardTitle className="text-lg flex items-center gap-2">
+                            <Tag className="h-5 w-5 text-muted-foreground" />
+                            Saved Items
+                        </CardTitle>
+                        <div className="text-sm font-medium text-muted-foreground bg-muted/50 px-3 py-1 rounded-full">
+                            {sortedSavedItems.length} total
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent className="p-0 overflow-auto">
+                    <Table>
+                        <TableHeader className="bg-muted/30">
+                            <TableRow>
+                                <TableHead>Type</TableHead>
+                                <TableHead>Title</TableHead>
+                                <TableHead>Source</TableHead>
+                                <TableHead>Vendor</TableHead>
+                                <TableHead>Route / URL</TableHead>
+                                <TableHead>Saved</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {isSavedItemsLoading ? (
+                                <TableRow>
+                                    <TableCell colSpan={6} className="text-center py-10">
+                                        <div className="flex flex-col items-center gap-2">
+                                            <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-green border-t-transparent" />
+                                            <p className="text-muted-foreground font-medium text-sm">Loading saved items...</p>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ) : sortedSavedItems.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={6} className="h-36 text-center">
+                                        <div className="flex flex-col items-center justify-center text-muted-foreground space-y-2">
+                                            <Tag className="h-8 w-8 opacity-20" />
+                                            <p>No saved items found</p>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                sortedSavedItems.map((item) => (
+                                    <TableRow key={item.id} className="hover:bg-muted/50">
+                                        <TableCell>
+                                            <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-semibold capitalize text-muted-foreground">
+                                                {item.type || 'unknown'}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell className="font-medium text-foreground">
+                                            <div className="space-y-0.5">
+                                                <p>{item.title || 'Untitled'}</p>
+                                                {item.subtitle && (
+                                                    <p className="text-xs text-muted-foreground">{item.subtitle}</p>
+                                                )}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="font-mono text-xs text-muted-foreground">
+                                            {item.sourceId || item.id}
+                                        </TableCell>
+                                        <TableCell className="font-mono text-xs text-muted-foreground">
+                                            {item.vendorId || '-'}
+                                        </TableCell>
+                                        <TableCell className="text-xs text-muted-foreground">
+                                            {item.externalUrl ? (
+                                                <a href={item.externalUrl} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
+                                                    External URL
+                                                </a>
+                                            ) : (
+                                                item.routePath || '-'
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="text-sm text-muted-foreground">
+                                            {item.savedAt ? format(new Date(item.savedAt), 'MMM d, yyyy h:mm a') : 'Unknown'}
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
         </div>
     )
 }
-

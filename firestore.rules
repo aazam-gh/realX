@@ -7,6 +7,74 @@ function isAdmin() {
   return request.auth != null && request.auth.token.admin == true;
 }
 
+function isValidSavedOffer() {
+  return request.resource.data.keys().hasOnly([
+      'type',
+      'vendorId',
+      'offerIndex',
+      'vendorName',
+      'vendorNameAr',
+      'vendorLogo',
+      'vendorCoverImage',
+      'titleEn',
+      'titleAr',
+      'descriptionEn',
+      'descriptionAr',
+      'discountType',
+      'discountValue',
+      'xcard',
+      'createdAt',
+      'updatedAt'
+    ])
+    && request.resource.data.keys().hasAll([
+      'type',
+      'vendorId',
+      'offerIndex',
+      'createdAt',
+      'updatedAt'
+    ])
+    && request.resource.data.type == 'offer'
+    && request.resource.data.vendorId is string
+    && request.resource.data.offerIndex is int
+    && request.resource.data.createdAt is timestamp
+    && request.resource.data.updatedAt is timestamp;
+}
+
+function isValidSavedMapPlace() {
+  return request.resource.data.keys().hasOnly([
+      'type',
+      'vendorId',
+      'locationId',
+      'vendorName',
+      'vendorNameAr',
+      'branchName',
+      'branchNameAr',
+      'address',
+      'addressAr',
+      'latitude',
+      'longitude',
+      'mainCategory',
+      'createdAt',
+      'updatedAt'
+    ])
+    && request.resource.data.keys().hasAll([
+      'type',
+      'vendorId',
+      'locationId',
+      'latitude',
+      'longitude',
+      'createdAt',
+      'updatedAt'
+    ])
+    && request.resource.data.type == 'mapPlace'
+    && request.resource.data.vendorId is string
+    && request.resource.data.locationId is string
+    && request.resource.data.latitude is number
+    && request.resource.data.longitude is number
+    && request.resource.data.createdAt is timestamp
+    && request.resource.data.updatedAt is timestamp;
+}
+
 // ─── students collection ───────────────────────────────────────────────
 match /students/{userId} {
 
@@ -28,6 +96,16 @@ match /students/{userId} {
 
   // Admin can write anything
   allow write: if isAdmin();
+
+  match /savedItems/{savedItemId} {
+    allow read: if request.auth != null
+      && (request.auth.uid == userId || isAdmin());
+    allow create, update: if request.auth != null
+      && request.auth.uid == userId
+      && (isValidSavedOffer() || isValidSavedMapPlace());
+    allow delete: if request.auth != null
+      && (request.auth.uid == userId || isAdmin());
+  }
 }
 
 // ─── creator_codes collection ──────────────────────────────────────────
@@ -60,9 +138,21 @@ match /offers/{offerId} {
   allow write: if isAdmin();
 }
 
+// ─── events collection ────────────────────────────────────────────────
+match /events/{eventId} {
+  allow read: if true;
+  allow write: if isAdmin();
+}
+
 // ─── vendors collection ───────────────────────────────────────────────
 match /vendors/{vendorId} {
   allow read: if true;
+  allow write: if isAdmin();
+}
+
+// ─── maps collection ──────────────────────────────────────────────────
+match /maps/{mapDocId} {
+  allow read: if request.auth != null;
   allow write: if isAdmin();
 }
 
