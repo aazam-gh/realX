@@ -165,6 +165,8 @@ function RouteComponent() {
             queryClient.invalidateQueries({ queryKey: ['verification-requests'] })
             if (data?.creatorCode) {
                 setCreatorCodeResult(data.creatorCode)
+                setApproveOpen(true)
+                setDetailOpen(false)
             } else {
                 setApproveOpen(false)
                 setDetailOpen(false)
@@ -219,11 +221,6 @@ function RouteComponent() {
     const handleView = (request: VerificationRequest) => {
         setSelectedRequest(request)
         setDetailOpen(true)
-    }
-
-    const handleApproveClick = () => {
-        setDetailOpen(false)
-        setApproveOpen(true)
     }
 
     const handleRejectClick = () => {
@@ -404,13 +401,13 @@ function RouteComponent() {
 
             {/* Detail Dialog */}
             <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-                <DialogContent className="sm:max-w-[700px]">
+                <DialogContent className="max-h-[90vh] w-[calc(100vw-2rem)] overflow-y-auto sm:max-w-[700px]">
                     <DialogHeader>
                         <DialogTitle>Verification Request Details</DialogTitle>
                     </DialogHeader>
                     {selectedRequest && (
                         <div className="space-y-4 py-2">
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid gap-4 sm:grid-cols-2">
                                 <div>
                                     <p className="text-sm text-muted-foreground">Email</p>
                                     <p className="font-medium">{selectedRequest.email}</p>
@@ -444,7 +441,7 @@ function RouteComponent() {
                             {/* ID Images */}
                             <div>
                                 <p className="text-sm text-muted-foreground mb-2">ID Documents</p>
-                                <div className="grid grid-cols-2 gap-3">
+                                <div className="grid gap-3 sm:grid-cols-2">
                                     <div className="rounded-lg border bg-muted/30 overflow-hidden">
                                         <p className="text-xs text-muted-foreground p-2 border-b">Front</p>
                                         {frontImageUrl ? (
@@ -468,24 +465,132 @@ function RouteComponent() {
                                 </div>
                             </div>
 
-                            {/* Action buttons for pending requests */}
+                            {/* Approval form for pending requests */}
                             {selectedRequest.status === 'pending' && (
-                                <div className="flex gap-3 pt-2">
-                                    <Button
-                                        className="flex-1 bg-brand-green hover:bg-brand-green/90 text-white"
-                                        onClick={handleApproveClick}
-                                    >
-                                        <CheckCircle2 className="h-4 w-4 mr-2" />
-                                        Approve & Create Account
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        className="flex-1 text-red-600 border-red-200 hover:bg-red-50"
-                                        onClick={handleRejectClick}
-                                    >
-                                        <XCircle className="h-4 w-4 mr-2" />
-                                        Reject
-                                    </Button>
+                                <div className="space-y-4 rounded-lg border bg-muted/20 p-4">
+                                    <div>
+                                        <p className="text-sm font-medium">Account Details</p>
+                                        <p className="text-sm text-muted-foreground">
+                                            Review the ID images above, then enter the account details before approving.
+                                        </p>
+                                    </div>
+                                    <div className="grid gap-3 sm:grid-cols-2">
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="detail-approve-firstName">First Name</Label>
+                                            <Input
+                                                id="detail-approve-firstName"
+                                                value={approveForm.firstName}
+                                                onChange={(e) => setApproveForm({ ...approveForm, firstName: e.target.value })}
+                                                placeholder="Student"
+                                                disabled={approveMutation.isPending}
+                                            />
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="detail-approve-lastName">Last Name</Label>
+                                            <Input
+                                                id="detail-approve-lastName"
+                                                value={approveForm.lastName}
+                                                onChange={(e) => setApproveForm({ ...approveForm, lastName: e.target.value })}
+                                                placeholder="Doe"
+                                                disabled={approveMutation.isPending}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label>Email Address</Label>
+                                        <Input
+                                            value={selectedRequest.email || ''}
+                                            disabled
+                                            className="bg-muted"
+                                        />
+                                    </div>
+                                    <div className="grid gap-3 sm:grid-cols-2">
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="detail-approve-gender">Gender</Label>
+                                            <Select
+                                                value={approveForm.gender}
+                                                onValueChange={(value) => setApproveForm({ ...approveForm, gender: value })}
+                                            >
+                                                <SelectTrigger id="detail-approve-gender" disabled={approveMutation.isPending}>
+                                                    <SelectValue placeholder="Select gender" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="Male">Male</SelectItem>
+                                                    <SelectItem value="Female">Female</SelectItem>
+                                                    <SelectItem value="Unspecified">Unspecified</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="detail-approve-dob">Date of Birth</Label>
+                                            <Input
+                                                id="detail-approve-dob"
+                                                type="date"
+                                                value={approveForm.dob}
+                                                onChange={(e) => setApproveForm({ ...approveForm, dob: e.target.value })}
+                                                disabled={approveMutation.isPending}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="detail-approve-role">Role</Label>
+                                        <Select
+                                            value={approveForm.role}
+                                            onValueChange={(value) => setApproveForm({ ...approveForm, role: value })}
+                                        >
+                                            <SelectTrigger id="detail-approve-role" disabled={approveMutation.isPending}>
+                                                <SelectValue placeholder="Select role" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="student">Student</SelectItem>
+                                                <SelectItem value="creator">Creator</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="detail-approve-studentId">Student ID</Label>
+                                        <Input
+                                            id="detail-approve-studentId"
+                                            value={approveForm.studentId}
+                                            onChange={(e) => setApproveForm({ ...approveForm, studentId: e.target.value })}
+                                            placeholder="e.g. STU-2024-001"
+                                            disabled={approveMutation.isPending}
+                                        />
+                                    </div>
+                                    {approveForm.role === 'creator' && (
+                                        <div className="rounded-lg border border-brand-green/30 bg-brand-green/5 p-3">
+                                            <p className="text-sm text-muted-foreground">
+                                                A unique 4-character creator code will be automatically generated for this account upon creation.
+                                            </p>
+                                        </div>
+                                    )}
+                                    <div className="flex flex-col gap-3 pt-2 sm:flex-row">
+                                        <Button
+                                            variant="outline"
+                                            className="flex-1 text-red-600 border-red-200 hover:bg-red-50"
+                                            onClick={handleRejectClick}
+                                        >
+                                            <XCircle className="h-4 w-4 mr-2" />
+                                            Reject
+                                        </Button>
+                                        <Button
+                                            className="flex-1 bg-brand-green hover:bg-brand-green/90 text-white"
+                                            onClick={() => approveMutation.mutate()}
+                                            disabled={approveMutation.isPending}
+                                        >
+                                            {approveMutation.isPending ? (
+                                                <>
+                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                    Creating Account...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                                                    Approve & Create Account
+                                                </>
+                                            )}
+                                        </Button>
+                                    </div>
                                 </div>
                             )}
 
@@ -511,7 +616,7 @@ function RouteComponent() {
             <Dialog open={approveOpen} onOpenChange={setApproveOpen}>
                 <DialogContent className="sm:max-w-[550px]">
                     <DialogHeader>
-                        <DialogTitle>Approve & Create Student Account</DialogTitle>
+                        <DialogTitle>Creator Account Created</DialogTitle>
                     </DialogHeader>
                     {creatorCodeResult ? (
                         <div className="py-4 space-y-4">
@@ -548,115 +653,7 @@ function RouteComponent() {
                                 Done
                             </Button>
                         </div>
-                    ) : (
-                        <>
-                            <div className="grid gap-4 py-4 px-1 max-h-[60vh] overflow-y-auto">
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="approve-firstName">First Name</Label>
-                                        <Input
-                                            id="approve-firstName"
-                                            value={approveForm.firstName}
-                                            onChange={(e) => setApproveForm({ ...approveForm, firstName: e.target.value })}
-                                            placeholder="Student"
-                                            disabled={approveMutation.isPending}
-                                        />
-                                    </div>
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="approve-lastName">Last Name</Label>
-                                        <Input
-                                            id="approve-lastName"
-                                            value={approveForm.lastName}
-                                            onChange={(e) => setApproveForm({ ...approveForm, lastName: e.target.value })}
-                                            placeholder="Doe"
-                                            disabled={approveMutation.isPending}
-                                        />
-                                    </div>
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label>Email Address</Label>
-                                    <Input
-                                        value={selectedRequest?.email || ''}
-                                        disabled
-                                        className="bg-muted"
-                                    />
-                                </div>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="approve-gender">Gender</Label>
-                                        <Select value={approveForm.gender} onValueChange={(value) => setApproveForm({ ...approveForm, gender: value })}>
-                                            <SelectTrigger id="approve-gender" disabled={approveMutation.isPending}>
-                                                <SelectValue placeholder="Select gender" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="Male">Male</SelectItem>
-                                                <SelectItem value="Female">Female</SelectItem>
-                                                <SelectItem value="Unspecified">Unspecified</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="approve-dob">Date of Birth</Label>
-                                        <Input
-                                            id="approve-dob"
-                                            type="date"
-                                            value={approveForm.dob}
-                                            onChange={(e) => setApproveForm({ ...approveForm, dob: e.target.value })}
-                                            disabled={approveMutation.isPending}
-                                        />
-                                    </div>
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="approve-role">Role</Label>
-                                    <Select value={approveForm.role} onValueChange={(value) => setApproveForm({ ...approveForm, role: value })}>
-                                        <SelectTrigger id="approve-role" disabled={approveMutation.isPending}>
-                                            <SelectValue placeholder="Select role" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="student">Student</SelectItem>
-                                            <SelectItem value="creator">Creator</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="approve-studentId">Student ID</Label>
-                                    <Input
-                                        id="approve-studentId"
-                                        value={approveForm.studentId}
-                                        onChange={(e) => setApproveForm({ ...approveForm, studentId: e.target.value })}
-                                        placeholder="e.g. STU-2024-001"
-                                        disabled={approveMutation.isPending}
-                                    />
-                                </div>
-                                {approveForm.role === 'creator' && (
-                                    <div className="rounded-lg border border-brand-green/30 bg-brand-green/5 p-3">
-                                        <p className="text-sm text-muted-foreground">
-                                            A unique 4-character creator code will be automatically generated for this account upon creation.
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
-                            <DialogFooter>
-                                <Button variant="outline" onClick={() => setApproveOpen(false)}>
-                                    Cancel
-                                </Button>
-                                <Button
-                                    className="bg-brand-green hover:bg-brand-green/90 text-white"
-                                    onClick={() => approveMutation.mutate()}
-                                    disabled={approveMutation.isPending}
-                                >
-                                    {approveMutation.isPending ? (
-                                        <>
-                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                            Creating Account...
-                                        </>
-                                    ) : (
-                                        'Approve & Create Account'
-                                    )}
-                                </Button>
-                            </DialogFooter>
-                        </>
-                    )}
+                    ) : null}
                 </DialogContent>
             </Dialog>
 
