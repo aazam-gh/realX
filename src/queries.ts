@@ -13,6 +13,13 @@ export interface EmbeddedOffer {
     discountValue?: number
 }
 
+export interface OnlineRedemptionConfig {
+    discountCode: string
+    purchaseUrl: string
+    dailyLimitPerUser: number
+    enabled: boolean
+}
+
 export interface VendorLocation {
     id: string
     name?: string
@@ -40,6 +47,7 @@ export interface Vendor {
     isFeatured?: boolean
     tagsEn?: string[]
     tagsAr?: string[]
+    vendorType?: 'in_store' | 'online'
     xcard?: boolean
     loyalty?: number[]
     mainCategory?: string

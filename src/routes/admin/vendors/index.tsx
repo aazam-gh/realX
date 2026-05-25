@@ -38,6 +38,7 @@ export interface Vendor {
     contact: string
     pin: string
     profilePicture?: string
+    vendorType?: 'in_store' | 'online'
     xcard: boolean
     mainCategory?: string
     subcategory?: string[]
@@ -93,6 +94,7 @@ export async function fetchVendorsPage(search: VendorsSearch): Promise<VendorsPa
             contact: data.phoneNumber?.toString() || data.contact || '',
             pin: data.pin || '----',
             profilePicture: data.profilePicture || '',
+            vendorType: data.vendorType || 'in_store',
             xcard: !!data.xcard,
             mainCategory: data.mainCategory,
             subcategory: data.subcategory,
@@ -125,6 +127,7 @@ export async function fetchAllVendors(): Promise<Vendor[]> {
             contact: data.phoneNumber?.toString() || data.contact || '',
             pin: data.pin || '----',
             profilePicture: data.profilePicture || '',
+            vendorType: data.vendorType || 'in_store',
             xcard: !!data.xcard,
             mainCategory: data.mainCategory,
             subcategory: data.subcategory,

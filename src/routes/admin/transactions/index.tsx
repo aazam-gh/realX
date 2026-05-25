@@ -43,9 +43,11 @@ export interface Transaction {
     creatorCodeOwnerId?: string | null
     creatorUid?: string | null
     discountAmount?: number
+    discountCode?: string
     discountType?: string
     discountValue?: number
     finalAmount?: number
+    purchaseUrl?: string
     offerId?: string
     pin?: string
     userId?: string

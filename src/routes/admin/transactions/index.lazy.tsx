@@ -246,11 +246,18 @@ function RouteComponent() {
                                     <TableCell>
                                         <div className="flex flex-col gap-1">
                                             <Badge
-                                                variant={(tx.type === 'offer_redemption' || tx.type === 'offer') ? 'default' : 'secondary'}
-                                                className={(tx.type === 'offer_redemption' || tx.type === 'offer') ? 'bg-brand-green hover:bg-brand-green/90 w-fit' : 'bg-blue-500 hover:bg-blue-500/90 w-fit'}
+                                                variant={(tx.type === 'offer_redemption' || tx.type === 'offer' || tx.type === 'online_redemption') ? 'default' : 'secondary'}
+                                                className={tx.type === 'online_redemption'
+                                                    ? 'bg-blue-600 hover:bg-blue-600/90 w-fit'
+                                                    : (tx.type === 'offer_redemption' || tx.type === 'offer') ? 'bg-brand-green hover:bg-brand-green/90 w-fit' : 'bg-blue-500 hover:bg-blue-500/90 w-fit'}
                                             >
                                                 {tx.type.replace(/_/g, ' ')}
                                             </Badge>
+                                            {tx.discountCode && (
+                                                <span className="text-[10px] text-muted-foreground font-mono">
+                                                    Code: {tx.discountCode}
+                                                </span>
+                                            )}
                                             {tx.offerId && (
                                                 <span className="text-[10px] text-muted-foreground font-mono">
                                                     ID: {tx.offerId.slice(0, 8)}...
@@ -301,7 +308,7 @@ function RouteComponent() {
                                     <TableCell className="text-right">
                                         <div className="flex flex-col items-end">
                                             <span className="font-bold text-gray-900">
-                                                {tx.finalAmount !== undefined ? `QAR ${tx.finalAmount}` : tx.totalAmount}
+                                                {tx.type === 'online_redemption' ? 'Online' : tx.finalAmount !== undefined ? `QAR ${tx.finalAmount}` : tx.totalAmount}
                                             </span>
                                             {tx.finalAmount !== undefined && tx.totalAmount && parseInt(tx.totalAmount.replace(/[^\d.]/g, '')) !== tx.finalAmount && (
                                                 <span className="text-[10px] text-muted-foreground line-through">

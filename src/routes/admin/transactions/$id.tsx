@@ -37,11 +37,13 @@ export const Route = createFileRoute('/admin/transactions/$id')({
             totalAmount: data.totalAmount ? `QAR ${data.totalAmount}` : 'QAR 0',
             finalAmount: data.finalAmount || null,
             discountAmount: data.discountAmount || 0,
+            discountCode: data.discountCode || null,
             type: data.type || 'N/A',
             cashbackAmount: data.cashbackAmount || 0,
             creatorCashbackAmount: data.creatorCashbackAmount || 0,
             creatorCode: data.creatorCode || null,
             creatorUid: data.creatorUid || null,
+            purchaseUrl: data.purchaseUrl || null,
         } as Transaction
     },
 })

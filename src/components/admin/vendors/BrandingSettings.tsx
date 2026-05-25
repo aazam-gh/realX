@@ -3,20 +3,22 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Upload, Phone, Loader2, CreditCard, X, Tag, Plus, TrendingUp } from "lucide-react"
+import { Upload, Phone, Loader2, CreditCard, X, Tag, Plus, TrendingUp, Globe } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useState, useRef } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { categoriesQueryOptions, type Vendor } from "@/queries"
+import { categoriesQueryOptions, type OnlineRedemptionConfig, type Vendor } from "@/queries"
 import { uploadImage } from "@/lib/upload"
 
 interface BrandingSettingsProps {
     formData: Vendor
     setFormData: (val: Vendor) => void
     vendorId: string
+    onlineConfig: OnlineRedemptionConfig
+    setOnlineConfig: (val: OnlineRedemptionConfig) => void
 }
 
-export function BrandingSettings({ formData, setFormData, vendorId }: BrandingSettingsProps) {
+export function BrandingSettings({ formData, setFormData, vendorId, onlineConfig, setOnlineConfig }: BrandingSettingsProps) {
     const [uploadingProfile, setUploadingProfile] = useState(false)
     const [uploadingCover, setUploadingCover] = useState(false)
     const profileInputRef = useRef<HTMLInputElement>(null)
@@ -353,6 +355,79 @@ export function BrandingSettings({ formData, setFormData, vendorId }: BrandingSe
                 </div>
 
             </div >
+
+            {/* Vendor Type & Online Redemption */}
+            <div className="space-y-6 pt-8 border-t border-slate-100">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                        <Label className="text-base font-semibold text-slate-700">Vendor Type</Label>
+                        <Select
+                            value={formData.vendorType || 'in_store'}
+                            onValueChange={(value: 'in_store' | 'online') => setFormData({ ...formData, vendorType: value })}
+                        >
+                            <SelectTrigger className="w-full bg-slate-50 border-none h-14 rounded-2xl px-5 text-sm">
+                                <SelectValue placeholder="Select vendor type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="in_store">In-store vendor</SelectItem>
+                                <SelectItem value="online">Online vendor</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="flex items-center gap-3 bg-slate-50/50 p-4 rounded-2xl border border-slate-100/50">
+                        <Checkbox
+                            id="onlineRedemptionEnabled"
+                            checked={onlineConfig.enabled || false}
+                            onCheckedChange={(checked) => setOnlineConfig({ ...onlineConfig, enabled: !!checked })}
+                            disabled={(formData.vendorType || 'in_store') !== 'online'}
+                            className="h-5 w-5 rounded-md border-slate-300 data-[state=checked]:bg-brand-green data-[state=checked]:border-brand-green"
+                        />
+                        <div className="flex items-center gap-2">
+                            <Globe className="w-5 h-5 text-slate-400" />
+                            <Label htmlFor="onlineRedemptionEnabled" className="text-base font-semibold text-slate-700 cursor-pointer">
+                                Enable Online Redemption
+                            </Label>
+                        </div>
+                    </div>
+                </div>
+
+                {(formData.vendorType || 'in_store') === 'online' && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in slide-in-from-top-4 duration-300">
+                        <div className="space-y-4">
+                            <Label className="text-sm font-medium text-slate-600 ml-1">Discount Code</Label>
+                            <Input
+                                placeholder="REALX20"
+                                value={onlineConfig.discountCode || ''}
+                                onChange={(e) => setOnlineConfig({ ...onlineConfig, discountCode: e.target.value.toUpperCase() })}
+                                className="bg-slate-50 border-none ring-0 focus-visible:ring-1 focus-visible:ring-blue-400 h-14 rounded-2xl px-5 text-sm font-mono tracking-[0.15em]"
+                            />
+                        </div>
+
+                        <div className="space-y-4">
+                            <Label className="text-sm font-medium text-slate-600 ml-1">Purchase URL</Label>
+                            <Input
+                                placeholder="https://store.example.com"
+                                value={onlineConfig.purchaseUrl || ''}
+                                onChange={(e) => setOnlineConfig({ ...onlineConfig, purchaseUrl: e.target.value })}
+                                className="bg-slate-50 border-none ring-0 focus-visible:ring-1 focus-visible:ring-blue-400 h-14 rounded-2xl px-5 text-sm"
+                            />
+                        </div>
+
+                        <div className="space-y-4">
+                            <Label className="text-sm font-medium text-slate-600 ml-1">Redemptions Per User Per Day</Label>
+                            <Input
+                                type="number"
+                                min={1}
+                                placeholder="1"
+                                value={onlineConfig.dailyLimitPerUser || 1}
+                                onChange={(e) => setOnlineConfig({ ...onlineConfig, dailyLimitPerUser: parseInt(e.target.value, 10) || 1 })}
+                                className="bg-slate-50 border-none ring-0 focus-visible:ring-1 focus-visible:ring-blue-400 h-14 rounded-2xl px-5 text-sm"
+                            />
+                        </div>
+                    </div>
+                )}
+            </div>
 
             {/* XCard & Loyalty */}
             <div className="space-y-6 pt-8 border-t border-slate-100">

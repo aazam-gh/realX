@@ -89,8 +89,12 @@ function TransactionDetailsRoute() {
                                 </div>
                                 <Separator className="bg-gray-200" />
                                 <div className="flex justify-between items-center">
-                                    <span className="text-muted-foreground text-sm font-medium">Original Total</span>
-                                    <span className="font-medium text-gray-700">{transaction.totalAmount}</span>
+                                    <span className="text-muted-foreground text-sm font-medium">
+                                        {transaction.type === 'online_redemption' ? 'Redemption Channel' : 'Original Total'}
+                                    </span>
+                                    <span className="font-medium text-gray-700">
+                                        {transaction.type === 'online_redemption' ? 'Online store' : transaction.totalAmount}
+                                    </span>
                                 </div>
                                 
                                 {transaction.discountAmount !== undefined && transaction.discountAmount > 0 && (
@@ -119,7 +123,29 @@ function TransactionDetailsRoute() {
                                     </div>
                                 )}
 
-                                {(transaction.finalAmount !== undefined || transaction.type?.includes('offer') || transaction.type?.includes('giftcard')) && (
+                                {transaction.type === 'online_redemption' && (
+                                    <>
+                                        <Separator className="my-2 bg-gray-200" />
+                                        <div className="space-y-3">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-muted-foreground text-sm font-medium">Discount Code</span>
+                                                <span className="font-mono font-black text-lg text-blue-700 bg-white px-3 py-1 rounded-lg border border-blue-100">
+                                                    {transaction.discountCode || 'N/A'}
+                                                </span>
+                                            </div>
+                                            {transaction.purchaseUrl && (
+                                                <div className="flex justify-between items-center gap-4">
+                                                    <span className="text-muted-foreground text-sm font-medium">Purchase URL</span>
+                                                    <a className="text-blue-600 text-sm font-bold hover:underline truncate" href={transaction.purchaseUrl} target="_blank" rel="noreferrer">
+                                                        {transaction.purchaseUrl}
+                                                    </a>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </>
+                                )}
+
+                                {transaction.type !== 'online_redemption' && (transaction.finalAmount !== undefined || transaction.type?.includes('offer') || transaction.type?.includes('giftcard')) && (
                                     <>
                                         <Separator className="my-2 bg-gray-200" />
                                         <div className="flex justify-between items-end">

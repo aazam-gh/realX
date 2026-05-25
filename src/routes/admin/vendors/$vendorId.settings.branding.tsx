@@ -2,13 +2,13 @@ import { createFileRoute } from '@tanstack/react-router'
 import { BrandingSettings } from '@/components/admin/vendors/BrandingSettings'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { db } from '@/firebase/config'
-import { doc, updateDoc } from 'firebase/firestore'
+import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore'
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Loader2, Save } from 'lucide-react'
 import { refreshVendorList } from '@/lib/vendorList'
-import { vendorQueryOptions, type Vendor } from '@/queries'
+import { vendorQueryOptions, type OnlineRedemptionConfig, type Vendor } from '@/queries'
 
 export const Route = createFileRoute('/admin/vendors/$vendorId/settings/branding')({
     component: BrandingSettingsComponent,
@@ -21,6 +21,12 @@ function BrandingSettingsComponent() {
     const { vendorId } = Route.useParams()
     const queryClient = useQueryClient()
     const [formData, setFormData] = useState<Vendor | null>(null)
+    const [onlineConfig, setOnlineConfig] = useState<OnlineRedemptionConfig>({
+        discountCode: '',
+        purchaseUrl: '',
+        dailyLimitPerUser: 1,
+        enabled: false,
+    })
 
     const { data: vendor, isLoading } = useQuery(vendorQueryOptions(vendorId))
 
@@ -30,18 +36,76 @@ function BrandingSettingsComponent() {
         }
     }, [vendor])
 
+    useEffect(() => {
+        let active = true
+
+        const loadOnlineConfig = async () => {
+            const snapshot = await getDoc(doc(db, 'vendorOnlineRedemptionConfigs', vendorId))
+            if (!active) return
+
+            if (!snapshot.exists()) {
+                setOnlineConfig({
+                    discountCode: '',
+                    purchaseUrl: '',
+                    dailyLimitPerUser: 1,
+                    enabled: false,
+                })
+                return
+            }
+
+            const data = snapshot.data()
+            setOnlineConfig({
+                discountCode: data.discountCode || '',
+                purchaseUrl: data.purchaseUrl || '',
+                dailyLimitPerUser: Number(data.dailyLimitPerUser || 1),
+                enabled: data.enabled === true,
+            })
+        }
+
+        void loadOnlineConfig()
+
+        return () => {
+            active = false
+        }
+    }, [vendorId])
+
     const updateMutation = useMutation({
-        mutationFn: async (updatedData: Partial<Vendor>) => {
-            const { id, ...dataToUpdate } = updatedData
+        mutationFn: async ({ vendorData, configData }: { vendorData: Partial<Vendor>, configData: OnlineRedemptionConfig }) => {
+            if (vendorData.vendorType === 'online') {
+                const discountCode = configData.discountCode.trim()
+                const purchaseUrl = configData.purchaseUrl.trim()
+                const dailyLimitPerUser = Number(configData.dailyLimitPerUser)
+
+                if (!discountCode || !purchaseUrl || !Number.isFinite(dailyLimitPerUser) || dailyLimitPerUser < 1) {
+                    throw new Error('Online vendors require a discount code, purchase URL, and daily limit of at least 1.')
+                }
+
+                try {
+                    new URL(purchaseUrl)
+                } catch {
+                    throw new Error('Purchase URL must be a valid URL.')
+                }
+            }
+
+            const dataToUpdate = { ...vendorData }
+            delete dataToUpdate.id
             const vendorRef = doc(db, 'vendors', vendorId)
             await updateDoc(vendorRef, dataToUpdate)
+
+            await setDoc(doc(db, 'vendorOnlineRedemptionConfigs', vendorId), {
+                discountCode: configData.discountCode.trim(),
+                purchaseUrl: configData.purchaseUrl.trim(),
+                dailyLimitPerUser: Math.max(1, Math.floor(Number(configData.dailyLimitPerUser) || 1)),
+                enabled: configData.enabled === true,
+                updatedAt: serverTimestamp(),
+            }, { merge: true })
         },
-        onMutate: async (updatedData) => {
+        onMutate: async ({ vendorData }) => {
             await queryClient.cancelQueries({ queryKey: ['vendor', vendorId] })
             const previousVendor = queryClient.getQueryData(['vendor', vendorId])
             queryClient.setQueryData(['vendor', vendorId], (old: Vendor | undefined) => {
                 if (!old) return old
-                return { ...old, ...updatedData }
+                return { ...old, ...vendorData }
             })
             return { previousVendor }
         },
@@ -67,7 +131,7 @@ function BrandingSettingsComponent() {
 
     const handleSave = () => {
         if (formData) {
-            updateMutation.mutate(formData)
+            updateMutation.mutate({ vendorData: formData, configData: onlineConfig })
         }
     }
 
@@ -84,7 +148,13 @@ function BrandingSettingsComponent() {
     return (
         <div className="space-y-6 pt-6">
             {formData && (
-                <BrandingSettings formData={formData} setFormData={setFormData} vendorId={vendorId} />
+                <BrandingSettings
+                    formData={formData}
+                    setFormData={setFormData}
+                    vendorId={vendorId}
+                    onlineConfig={onlineConfig}
+                    setOnlineConfig={setOnlineConfig}
+                />
             )}
 
             <div className="flex justify-end gap-4 pt-4 border-t">
