@@ -38,14 +38,14 @@ import { fetchVendorsPage } from '@/lib/vendor-directory'
 import type { Vendor } from '@/queries'
 import { refreshVendorList } from '@/lib/vendorList'
 
-export const Route = createLazyFileRoute('/admin/vendors/')({
+export const Route = createLazyFileRoute('/admin/online-vendors/')({
     component: RouteComponent,
 })
 
 function RouteComponent() {
     const queryClient = useQueryClient()
-    const navigate = useNavigate({ from: '/admin/vendors/' })
-    const { page, pageSize, search: searchQuery, sort, xcard: xcardFilter } = useSearch({ from: '/admin/vendors/' })
+    const navigate = useNavigate({ from: '/admin/online-vendors/' })
+    const { page, pageSize, search: searchQuery, sort, xcard: xcardFilter } = useSearch({ from: '/admin/online-vendors/' })
     const [searchInput, setSearchInput] = useState(searchQuery)
     const [open, setOpen] = useState(false)
     const [form, setForm] = useState({ name: '', email: '', password: '' })
@@ -57,8 +57,8 @@ function RouteComponent() {
     }, [searchQuery])
 
     const { data = { vendors: [], totalCount: 0 }, isLoading } = useQuery({
-        queryKey: ['vendors-page', 'in_store', { page, pageSize, search: searchQuery, sort, xcard: xcardFilter }],
-        queryFn: () => fetchVendorsPage({ page, pageSize, search: searchQuery, sort, xcard: xcardFilter }, 'in_store'),
+        queryKey: ['vendors-page', 'online', { page, pageSize, search: searchQuery, sort, xcard: xcardFilter }],
+        queryFn: () => fetchVendorsPage({ page, pageSize, search: searchQuery, sort, xcard: xcardFilter }, 'online'),
         staleTime: 1000 * 60 * 5,
     })
 
@@ -87,7 +87,7 @@ function RouteComponent() {
             })
             const dataResult = result.data as { uid: string }
             if (dataResult?.uid) {
-                await setDoc(doc(db, 'vendors', dataResult.uid), { xcard: false, vendorType: 'in_store' }, { merge: true })
+                await setDoc(doc(db, 'vendors', dataResult.uid), { xcard: false, vendorType: 'online' }, { merge: true })
             }
             return result.data
         },
@@ -98,8 +98,8 @@ function RouteComponent() {
             void refreshVendorList()
         },
         onError: (error) => {
-            console.error('Error adding vendor: ', error)
-            alert('Failed to add vendor: ' + (error instanceof Error ? error.message : 'Unknown error'))
+            console.error('Error adding online vendor: ', error)
+            alert('Failed to add online vendor: ' + (error instanceof Error ? error.message : 'Unknown error'))
         }
     })
 
@@ -126,8 +126,8 @@ function RouteComponent() {
             void refreshVendorList()
         },
         onError: (error) => {
-            console.error('Error deleting vendor: ', error)
-            alert('Failed to delete vendor: ' + (error instanceof Error ? error.message : 'Unknown error'))
+            console.error('Error deleting online vendor: ', error)
+            alert('Failed to delete online vendor: ' + (error instanceof Error ? error.message : 'Unknown error'))
         }
     })
 
@@ -151,13 +151,12 @@ function RouteComponent() {
 
     return (
         <div className="p-8 space-y-6 w-full max-w-[1600px] mx-auto">
-            <h1 className="text-3xl font-bold tracking-tight">Vendor Overview</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Online Vendor Overview</h1>
 
-            {/* Delete Confirmation Dialog */}
             <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Delete Vendor</DialogTitle>
+                        <DialogTitle>Delete Online Vendor</DialogTitle>
                         <DialogDescription>
                             Are you sure you want to delete <strong>{vendorToDelete?.name}</strong>? This action will remove the user's access and delete their data. This cannot be undone.
                         </DialogDescription>
@@ -224,12 +223,12 @@ function RouteComponent() {
                     <Dialog open={open} onOpenChange={setOpen}>
                         <DialogTrigger asChild>
                             <Button className="bg-brand-green hover:bg-brand-green/90 text-white gap-2 h-10">
-                                <Plus className="h-4 w-4" /> Add New Vendor
+                                <Plus className="h-4 w-4" /> Add New Online Vendor
                             </Button>
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-[425px]">
                             <DialogHeader>
-                                <DialogTitle>Add New Vendor</DialogTitle>
+                                <DialogTitle>Add New Online Vendor</DialogTitle>
                             </DialogHeader>
                             <div className="grid gap-4 py-4">
                                 <div className="grid gap-2">
@@ -298,7 +297,6 @@ function RouteComponent() {
                 </div>
             </div>
 
-            {/* Results info */}
             {(searchQuery || xcardFilter !== 'all') && (
                 <p className="text-sm text-muted-foreground">
                     {totalVendors} result{totalVendors !== 1 ? 's' : ''} found
@@ -333,8 +331,8 @@ function RouteComponent() {
                             <TableRow>
                                 <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
                                     {searchQuery || xcardFilter !== 'all'
-                                        ? 'No vendors match your filters.'
-                                        : 'No vendors found.'}
+                                        ? 'No online vendors match your filters.'
+                                        : 'No online vendors found.'}
                                 </TableCell>
                             </TableRow>
                         ) : (
@@ -346,7 +344,7 @@ function RouteComponent() {
                                     <TableCell>
                                         <div className="flex items-center gap-3">
                                             {vendor.profilePicture ? (
-                                            <img src={vendor.profilePicture} alt={vendor.name || 'Vendor'} className="h-10 w-10 rounded-lg object-cover shrink-0" loading="lazy" />
+                                                <img src={vendor.profilePicture} alt={vendor.name || 'Vendor'} className="h-10 w-10 rounded-lg object-cover shrink-0" loading="lazy" />
                                             ) : (
                                                 <div className="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
                                                     <span className="text-gray-400 text-xs font-bold">{(vendor.name || 'V').charAt(0)}</span>
@@ -366,7 +364,7 @@ function RouteComponent() {
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex items-center justify-end gap-2">
-                                            <Link to="/admin/vendors/$vendorId/settings" params={{ vendorId: vendor.id }}>
+                                            <Link to="/admin/online-vendors/$vendorId/settings" params={{ vendorId: vendor.id }}>
                                                 <Button variant="outline" size="sm" className="rounded-full h-8 px-4 gap-1 text-xs font-semibold">
                                                     Manage <ChevronRight className="h-3 w-3" />
                                                 </Button>
@@ -388,11 +386,10 @@ function RouteComponent() {
                 </Table>
             </div>
 
-            {/* Pagination */}
             {(hasPrevPage || hasNextPage) && (
                 <div className="flex items-center justify-center gap-4 pt-4">
                     <Link
-                        from="/admin/vendors/"
+                        from="/admin/online-vendors/"
                         search={(prev) => ({
                             ...prev,
                             page: Math.max(1, (prev.page ?? 1) - 1),
@@ -415,7 +412,7 @@ function RouteComponent() {
                     </div>
 
                     <Link
-                        from="/admin/vendors/"
+                        from="/admin/online-vendors/"
                         search={(prev) => ({
                             ...prev,
                             page: (prev.page ?? 1) + 1,

@@ -6,6 +6,7 @@ import {
   IconInfoCircle,
   IconReceipt,
   IconShield,
+  IconShoppingBag,
   IconUsers,
 } from "@tabler/icons-react"
 
@@ -42,6 +43,11 @@ const data = {
       title: "Vendors",
       url: "/admin/vendors",
       icon: IconShield,
+    },
+    {
+      title: "Online Vendors",
+      url: "/admin/online-vendors",
+      icon: IconShoppingBag,
     },
     {
       title: "Students",

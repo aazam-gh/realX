@@ -1,4 +1,4 @@
-import { createFileRoute, Link, Outlet, useLocation } from '@tanstack/react-router'
+import { createFileRoute, Link, Outlet, redirect, useLocation } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft } from 'lucide-react'
 import { vendorQueryOptions, type Vendor } from '@/queries'
@@ -8,7 +8,10 @@ export type { Vendor }
 export const Route = createFileRoute('/admin/vendors/$vendorId/settings')({
     component: VendorSettingsLayout,
     loader: async ({ context: { queryClient }, params: { vendorId } }) => {
-        await queryClient.ensureQueryData(vendorQueryOptions(vendorId))
+        const vendor = await queryClient.ensureQueryData(vendorQueryOptions(vendorId))
+        if (vendor.vendorType === 'online') {
+            throw redirect({ to: '/admin/online-vendors/$vendorId/settings', params: { vendorId } })
+        }
     },
 })
 

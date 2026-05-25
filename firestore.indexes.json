@@ -143,6 +143,74 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
+          "fieldPath": "vendorType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "vendors",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "vendorType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "vendors",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "vendorType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "xcard",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "vendors",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "vendorType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "xcard",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "vendors",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
           "fieldPath": "isTrending",
           "order": "ASCENDING"
         },
@@ -360,6 +428,10 @@
           "arrayConfig": "CONTAINS"
         },
         {
+          "fieldPath": "vendorType",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "name",
           "order": "ASCENDING"
         }
@@ -375,6 +447,10 @@
           "arrayConfig": "CONTAINS"
         },
         {
+          "fieldPath": "vendorType",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "name",
           "order": "DESCENDING"
         }
@@ -388,6 +464,10 @@
         {
           "fieldPath": "searchTokens",
           "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "vendorType",
+          "order": "ASCENDING"
         },
         {
           "fieldPath": "xcard",
@@ -407,6 +487,10 @@
         {
           "fieldPath": "searchTokens",
           "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "vendorType",
+          "order": "ASCENDING"
         },
         {
           "fieldPath": "xcard",

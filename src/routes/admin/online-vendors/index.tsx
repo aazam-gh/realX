@@ -5,13 +5,13 @@ import {
     vendorsSearchSchema,
 } from '@/lib/vendor-directory'
 
-export const Route = createFileRoute('/admin/vendors/')({
+export const Route = createFileRoute('/admin/online-vendors/')({
     validateSearch: (search) => vendorsSearchSchema.parse(search),
     loader: async ({ context: { queryClient }, location }) => {
         const search = vendorsSearchSchema.parse(location.search)
         await queryClient.ensureQueryData({
-            queryKey: ['vendors-page', 'in_store', search],
-            queryFn: () => fetchVendorsPage(search, 'in_store'),
+            queryKey: ['vendors-page', 'online', search],
+            queryFn: () => fetchVendorsPage(search, 'online'),
         })
     },
 })
