@@ -50,37 +50,22 @@
   --animate-fade-up: fade-in 0.7s ease-out forwards;
 
   --font-sans: "Poppins", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  --font-heading: "Poppins", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  --font-heading: "Hanson", "Poppins", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
 }
 
 /* Font Faces */
 @font-face {
-  font-family: 'Integral CF';
-  src: url('./assets/fonts/integralcf-bold.otf') format('opentype');
-  font-weight: bold;
-  font-style: normal;
-  font-display: swap;
-}
-
-/* Fix for demo font watermark on % character */
-@font-face {
-  font-family: 'CleanPercent';
-  src: url('./assets/fonts/metropolis.semi-bold.otf') format('opentype');
-  unicode-range: U+0025;
-}
-
-@font-face {
-  font-family: 'Metropolis';
-  src: url('./assets/fonts/metropolis.medium.otf') format('opentype');
-  font-weight: 500;
+  font-family: 'Hanson';
+  src: url('./assets/fonts/Hanson-Bold.otf') format('opentype');
+  font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Metropolis';
-  src: url('./assets/fonts/metropolis.semi-bold.otf') format('opentype');
-  font-weight: 600;
+  font-family: 'Poppins';
+  src: url('./assets/fonts/poppins.ttf') format('truetype');
+  font-weight: 100 900;
   font-style: normal;
   font-display: swap;
 }
@@ -203,10 +188,11 @@
 
 @layer base {
   html {
-    font-family: "CleanPercent", "Metropolis", ui-sans-serif, system-ui, sans-serif;
+    font-family: "Poppins", ui-sans-serif, system-ui, sans-serif;
   }
 
   body {
+    font-family: "Poppins", ui-sans-serif, system-ui, sans-serif;
     background-color: var(--background);
     color: var(--foreground);
     font-feature-settings: 'rlig' 1, 'calt' 1;
@@ -218,7 +204,7 @@
   h4,
   h5,
   h6 {
-    font-family: "CleanPercent", "Integral CF", ui-sans-serif, system-ui, sans-serif;
+    font-family: "Hanson", "Poppins", ui-sans-serif, system-ui, sans-serif;
     letter-spacing: -0.025em;
   }
 }
