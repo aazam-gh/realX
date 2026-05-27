@@ -21,7 +21,7 @@ export const vendorsSearchSchema = z.object({
 })
 
 export type VendorsSearch = z.infer<typeof vendorsSearchSchema>
-export type VendorScope = 'in_store' | 'online'
+export type VendorScope = 'all' | 'in_store' | 'online'
 
 export interface VendorsPageResult {
     vendors: Vendor[]
@@ -31,9 +31,11 @@ export interface VendorsPageResult {
 export async function fetchVendorsPage(search: VendorsSearch, vendorScope: VendorScope): Promise<VendorsPageResult> {
     const collRef = collection(db, 'vendors')
     const trimmedSearch = search.search.trim().toLowerCase()
-    const constraints: QueryConstraint[] = [
-        where('vendorType', '==', vendorScope),
-    ]
+    const constraints: QueryConstraint[] = []
+
+    if (vendorScope !== 'all') {
+        constraints.push(where('vendorType', '==', vendorScope))
+    }
 
     if (trimmedSearch) {
         constraints.push(where('searchTokens', 'array-contains', trimmedSearch))

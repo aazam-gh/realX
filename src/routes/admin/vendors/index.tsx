@@ -10,8 +10,8 @@ export const Route = createFileRoute('/admin/vendors/')({
     loader: async ({ context: { queryClient }, location }) => {
         const search = vendorsSearchSchema.parse(location.search)
         await queryClient.ensureQueryData({
-            queryKey: ['vendors-page', 'in_store', search],
-            queryFn: () => fetchVendorsPage(search, 'in_store'),
+            queryKey: ['vendors-page', 'all', search],
+            queryFn: () => fetchVendorsPage(search, 'all'),
         })
     },
 })
