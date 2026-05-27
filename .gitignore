@@ -36,3 +36,4 @@ setAdmin.cjs
 # Project specific
 package-lock.json
 src/routeTree.gen.ts
+scripts/
