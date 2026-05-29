@@ -157,6 +157,7 @@ function OnlineVendorBrandingSettingsComponent() {
                     vendorId={vendorId}
                     onlineConfig={onlineConfig}
                     setOnlineConfig={setOnlineConfig}
+                    showOnlineBrandOfferFields
                 />
             )}
 

@@ -16,9 +16,17 @@ interface BrandingSettingsProps {
     vendorId: string
     onlineConfig: OnlineRedemptionConfig
     setOnlineConfig: (val: OnlineRedemptionConfig) => void
+    showOnlineBrandOfferFields?: boolean
 }
 
-export function BrandingSettings({ formData, setFormData, vendorId, onlineConfig, setOnlineConfig }: BrandingSettingsProps) {
+export function BrandingSettings({
+    formData,
+    setFormData,
+    vendorId,
+    onlineConfig,
+    setOnlineConfig,
+    showOnlineBrandOfferFields = false,
+}: BrandingSettingsProps) {
     const [uploadingProfile, setUploadingProfile] = useState(false)
     const [uploadingCover, setUploadingCover] = useState(false)
     const profileInputRef = useRef<HTMLInputElement>(null)
@@ -375,7 +383,32 @@ export function BrandingSettings({ formData, setFormData, vendorId, onlineConfig
                 </div>
 
                 {(formData.vendorType || 'in_store') === 'online' && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in slide-in-from-top-4 duration-300">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-4 duration-300">
+                        {showOnlineBrandOfferFields && (
+                            <>
+                                <div className="space-y-4">
+                                    <Label className="text-sm font-medium text-slate-600 ml-1">Brand Offer Name (English)</Label>
+                                    <Input
+                                        placeholder="20% off your first order"
+                                        value={formData.brandOfferName || ''}
+                                        onChange={(e) => setFormData({ ...formData, brandOfferName: e.target.value })}
+                                        className="bg-slate-50 border-none ring-0 focus-visible:ring-1 focus-visible:ring-blue-400 h-14 rounded-2xl px-5 text-sm"
+                                    />
+                                </div>
+
+                                <div className="space-y-4 text-right">
+                                    <Label className="text-sm font-medium text-slate-600 mr-1">Brand Offer Name (Arabic)</Label>
+                                    <Input
+                                        placeholder="خصم 20% على أول طلب"
+                                        value={formData.brandOfferNameAr || ''}
+                                        onChange={(e) => setFormData({ ...formData, brandOfferNameAr: e.target.value })}
+                                        dir="rtl"
+                                        className="bg-slate-50 border-none ring-0 focus-visible:ring-1 focus-visible:ring-blue-400 h-14 rounded-2xl px-5 text-sm"
+                                    />
+                                </div>
+                            </>
+                        )}
+
                         <div className="space-y-4">
                             <Label className="text-sm font-medium text-slate-600 ml-1">Discount Code</Label>
                             <Input

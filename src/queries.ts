@@ -56,6 +56,8 @@ export interface Vendor {
     searchTokens?: string[]
     shortDescription?: string
     shortDescriptionAr?: string
+    brandOfferName?: string
+    brandOfferNameAr?: string
     offers?: EmbeddedOffer[]
     latitude?: number
     longitude?: number
