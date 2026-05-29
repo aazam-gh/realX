@@ -50,7 +50,7 @@ export function VendorInfoTable({ vendor, vendorId, brandingPath }: VendorInfoTa
                         </tr>
                         <tr>
                             <th className="px-6 py-4 text-left font-medium text-muted-foreground">Contact</th>
-                            <td className="px-6 py-4 font-medium text-foreground">{formatValue(vendor.contact || vendor.phoneNumber)}</td>
+                            <td className="px-6 py-4 font-medium text-foreground">{formatValue(vendor.contact)}</td>
                         </tr>
                         <tr>
                             <th className="px-6 py-4 text-left font-medium text-muted-foreground">Email</th>

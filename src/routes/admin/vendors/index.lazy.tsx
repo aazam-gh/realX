@@ -57,8 +57,8 @@ function RouteComponent() {
     }, [searchQuery])
 
     const { data = { vendors: [], totalCount: 0 }, isLoading } = useQuery({
-        queryKey: ['vendors-page', 'all', { page, pageSize, search: searchQuery, sort, xcard: xcardFilter }],
-        queryFn: () => fetchVendorsPage({ page, pageSize, search: searchQuery, sort, xcard: xcardFilter }, 'all'),
+        queryKey: ['vendors-page', 'in_store', { page, pageSize, search: searchQuery, sort, xcard: xcardFilter }],
+        queryFn: () => fetchVendorsPage({ page, pageSize, search: searchQuery, sort, xcard: xcardFilter }, 'in_store'),
         staleTime: 1000 * 60 * 5,
     })
 

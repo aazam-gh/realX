@@ -24,6 +24,7 @@ export interface VendorLocation {
     id: string
     name?: string
     nameAr?: string
+    phoneNumber?: string
     address?: string
     addressAr?: string
     latitude?: number

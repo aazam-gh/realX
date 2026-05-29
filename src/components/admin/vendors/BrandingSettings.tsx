@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Upload, Phone, Loader2, CreditCard, X, Tag, Plus, TrendingUp } from "lucide-react"
+import { Upload, Loader2, CreditCard, X, Tag, Plus, TrendingUp } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useState, useRef } from "react"
 import { useQuery } from "@tanstack/react-query"
@@ -170,20 +170,6 @@ export function BrandingSettings({
                         dir="rtl"
                         className="bg-slate-50 border-none ring-0 focus-visible:ring-1 focus-visible:ring-blue-400 h-14 rounded-2xl px-5 text-sm"
                     />
-                </div>
-
-                {/* Phone Number */}
-                <div className="space-y-4">
-                    <Label className="text-base font-semibold text-slate-700">Phone Number</Label>
-                    <div className="relative">
-                        <Phone className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <Input
-                            placeholder="+974 4432 9958"
-                            value={formData.phoneNumber || ""}
-                            onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                            className="bg-slate-50 border-none ring-0 focus-visible:ring-1 focus-visible:ring-blue-400 pl-12 h-14 rounded-2xl text-sm"
-                        />
-                    </div>
                 </div>
 
                 {/* Vendor PIN */}

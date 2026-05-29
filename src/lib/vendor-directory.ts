@@ -66,7 +66,7 @@ export async function fetchVendorsPage(search: VendorsSearch, vendorScope: Vendo
         return {
             id: docSnap.id,
             name: data.name || 'Unnamed Vendor',
-            contact: data.phoneNumber?.toString() || data.contact || '',
+            contact: data.contact || '',
             pin: data.pin || '----',
             profilePicture: data.profilePicture || '',
             vendorType: data.vendorType || 'in_store',
@@ -99,7 +99,7 @@ export async function fetchAllVendors(): Promise<Vendor[]> {
         return {
             id: docSnap.id,
             name: data.name || 'Unnamed Vendor',
-            contact: data.phoneNumber?.toString() || data.contact || '',
+            contact: data.contact || '',
             pin: data.pin || '----',
             profilePicture: data.profilePicture || '',
             vendorType: data.vendorType || 'in_store',

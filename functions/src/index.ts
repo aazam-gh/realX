@@ -49,6 +49,7 @@ interface VendorMapLocation {
   id: string;
   name: string | null;
   nameAr: string | null;
+  phoneNumber: string | null;
   latitude: number;
   longitude: number;
   geohash: string;
@@ -98,6 +99,9 @@ function buildMapEntry(
         (location.isPrimary === true ? "primary" : `branch-${index + 1}`),
       name: typeof location.name === "string" ? location.name : null,
       nameAr: typeof location.nameAr === "string" ? location.nameAr : null,
+      phoneNumber: typeof location.phoneNumber === "string" ?
+        location.phoneNumber :
+        null,
       latitude: lat,
       longitude: lng,
       geohash: typeof location.geohash === "string" &&

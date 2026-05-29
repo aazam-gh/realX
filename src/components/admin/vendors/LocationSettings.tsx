@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import type { Vendor, VendorLocation } from "@/queries"
-import { MapPin, Plus, Trash2 } from "lucide-react"
+import { MapPin, Phone, Plus, Trash2 } from "lucide-react"
 
 interface LocationSettingsProps {
     formData: Vendor
@@ -76,6 +76,7 @@ export function LocationSettings({ formData, setFormData }: LocationSettingsProp
                 id: newLocationId(),
                 name: '',
                 nameAr: '',
+                phoneNumber: '',
                 address: '',
                 addressAr: '',
                 isPrimary: false,
@@ -160,6 +161,21 @@ export function LocationSettings({ formData, setFormData }: LocationSettingsProp
                                         dir="rtl"
                                         className="h-12 rounded-lg border-none bg-slate-50 px-4 text-sm ring-0 focus-visible:ring-1 focus-visible:ring-blue-400"
                                     />
+                                </div>
+
+                                <div className="space-y-3 md:col-span-2">
+                                    <Label className="text-sm font-semibold text-slate-700">Branch Phone Number</Label>
+                                    <div className="relative">
+                                        <Phone className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                                        <Input
+                                            type="tel"
+                                            inputMode="tel"
+                                            placeholder="+974 4432 9958"
+                                            value={location.phoneNumber || ""}
+                                            onChange={(event) => updateLocation(location.id, { phoneNumber: event.target.value })}
+                                            className="h-12 rounded-lg border-none bg-slate-50 px-4 pl-11 text-sm ring-0 focus-visible:ring-1 focus-visible:ring-blue-400"
+                                        />
+                                    </div>
                                 </div>
 
                                 <div className="space-y-3">
