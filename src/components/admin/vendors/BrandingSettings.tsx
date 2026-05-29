@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Upload, Phone, Loader2, CreditCard, X, Tag, Plus, TrendingUp, Globe } from "lucide-react"
+import { Upload, Phone, Loader2, CreditCard, X, Tag, Plus, TrendingUp } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useState, useRef } from "react"
 import { useQuery } from "@tanstack/react-query"
@@ -358,38 +358,20 @@ export function BrandingSettings({ formData, setFormData, vendorId, onlineConfig
 
             {/* Vendor Type & Online Redemption */}
             <div className="space-y-6 pt-8 border-t border-slate-100">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                        <Label className="text-base font-semibold text-slate-700">Vendor Type</Label>
-                        <Select
-                            value={formData.vendorType || 'in_store'}
-                            onValueChange={(value: 'in_store' | 'online') => setFormData({ ...formData, vendorType: value })}
-                        >
-                            <SelectTrigger className="w-full bg-slate-50 border-none h-14 rounded-2xl px-5 text-sm">
-                                <SelectValue placeholder="Select vendor type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="in_store">In-store vendor</SelectItem>
-                                <SelectItem value="online">Online vendor</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    <div className="flex items-center gap-3 bg-slate-50/50 p-4 rounded-2xl border border-slate-100/50">
-                        <Checkbox
-                            id="onlineRedemptionEnabled"
-                            checked={onlineConfig.enabled || false}
-                            onCheckedChange={(checked) => setOnlineConfig({ ...onlineConfig, enabled: !!checked })}
-                            disabled={(formData.vendorType || 'in_store') !== 'online'}
-                            className="h-5 w-5 rounded-md border-slate-300 data-[state=checked]:bg-brand-green data-[state=checked]:border-brand-green"
-                        />
-                        <div className="flex items-center gap-2">
-                            <Globe className="w-5 h-5 text-slate-400" />
-                            <Label htmlFor="onlineRedemptionEnabled" className="text-base font-semibold text-slate-700 cursor-pointer">
-                                Enable Online Redemption
-                            </Label>
-                        </div>
-                    </div>
+                <div className="space-y-4 max-w-md">
+                    <Label className="text-base font-semibold text-slate-700">Vendor Type</Label>
+                    <Select
+                        value={formData.vendorType || 'in_store'}
+                        onValueChange={(value: 'in_store' | 'online') => setFormData({ ...formData, vendorType: value })}
+                    >
+                        <SelectTrigger className="w-full bg-slate-50 border-none h-14 rounded-2xl px-5 text-sm">
+                            <SelectValue placeholder="Select vendor type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="in_store">In-store vendor</SelectItem>
+                            <SelectItem value="online">Online vendor</SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
 
                 {(formData.vendorType || 'in_store') === 'online' && (
