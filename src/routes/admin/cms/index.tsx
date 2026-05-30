@@ -48,6 +48,14 @@ const CMS_ITEMS = [
         href: '/admin/cms/trending-offers' as const,
     },
     {
+        title: 'Trending Offer Banners',
+        description: 'Manage custom trending banners for the next app version',
+        icon: Flame,
+        color: 'bg-red-100 text-red-600',
+        hoverBorder: 'hover:border-red-200',
+        href: '/admin/cms/trending-offer-banners' as const,
+    },
+    {
         title: 'Student Events',
         description: 'Manage the mobile events feed and fallback data',
         icon: CalendarDays,

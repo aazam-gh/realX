@@ -31,6 +31,7 @@ import { Route as vendorPanelVendorContactUsRouteImport } from './routes/(vendor
 import { Route as vendorPanelVendorCampaignRouteImport } from './routes/(vendor-panel)/_vendor.campaign'
 import { Route as AdminCmsUniversitiesIndexRouteImport } from './routes/admin/cms/universities/index'
 import { Route as AdminCmsTrendingOffersIndexRouteImport } from './routes/admin/cms/trending-offers/index'
+import { Route as AdminCmsTrendingOfferBannersIndexRouteImport } from './routes/admin/cms/trending-offer-banners/index'
 import { Route as AdminCmsFeaturedBrandShowcaseIndexRouteImport } from './routes/admin/cms/featured-brand-showcase/index'
 import { Route as AdminCmsEventsIndexRouteImport } from './routes/admin/cms/events/index'
 import { Route as AdminCmsCategoriesIndexRouteImport } from './routes/admin/cms/categories/index'
@@ -189,6 +190,16 @@ const AdminCmsTrendingOffersIndexRoute =
     getParentRoute: () => AdminRoute,
   } as any).lazy(() =>
     import('./routes/admin/cms/trending-offers/index.lazy').then(
+      (d) => d.Route,
+    ),
+  )
+const AdminCmsTrendingOfferBannersIndexRoute =
+  AdminCmsTrendingOfferBannersIndexRouteImport.update({
+    id: '/cms/trending-offer-banners/',
+    path: '/cms/trending-offer-banners/',
+    getParentRoute: () => AdminRoute,
+  } as any).lazy(() =>
+    import('./routes/admin/cms/trending-offer-banners/index.lazy').then(
       (d) => d.Route,
     ),
   )
@@ -362,6 +373,7 @@ export interface FileRoutesByFullPath {
   '/admin/cms/categories/': typeof AdminCmsCategoriesIndexRoute
   '/admin/cms/events/': typeof AdminCmsEventsIndexRoute
   '/admin/cms/featured-brand-showcase/': typeof AdminCmsFeaturedBrandShowcaseIndexRoute
+  '/admin/cms/trending-offer-banners/': typeof AdminCmsTrendingOfferBannersIndexRoute
   '/admin/cms/trending-offers/': typeof AdminCmsTrendingOffersIndexRoute
   '/admin/cms/universities/': typeof AdminCmsUniversitiesIndexRoute
   '/admin/online-vendors/$vendorId/settings/branding': typeof AdminOnlineVendorsVendorIdSettingsBrandingRoute
@@ -403,6 +415,7 @@ export interface FileRoutesByTo {
   '/admin/cms/categories': typeof AdminCmsCategoriesIndexRoute
   '/admin/cms/events': typeof AdminCmsEventsIndexRoute
   '/admin/cms/featured-brand-showcase': typeof AdminCmsFeaturedBrandShowcaseIndexRoute
+  '/admin/cms/trending-offer-banners': typeof AdminCmsTrendingOfferBannersIndexRoute
   '/admin/cms/trending-offers': typeof AdminCmsTrendingOffersIndexRoute
   '/admin/cms/universities': typeof AdminCmsUniversitiesIndexRoute
   '/admin/online-vendors/$vendorId/settings/branding': typeof AdminOnlineVendorsVendorIdSettingsBrandingRoute
@@ -450,6 +463,7 @@ export interface FileRoutesById {
   '/admin/cms/categories/': typeof AdminCmsCategoriesIndexRoute
   '/admin/cms/events/': typeof AdminCmsEventsIndexRoute
   '/admin/cms/featured-brand-showcase/': typeof AdminCmsFeaturedBrandShowcaseIndexRoute
+  '/admin/cms/trending-offer-banners/': typeof AdminCmsTrendingOfferBannersIndexRoute
   '/admin/cms/trending-offers/': typeof AdminCmsTrendingOffersIndexRoute
   '/admin/cms/universities/': typeof AdminCmsUniversitiesIndexRoute
   '/admin/online-vendors/$vendorId/settings/branding': typeof AdminOnlineVendorsVendorIdSettingsBrandingRoute
@@ -497,6 +511,7 @@ export interface FileRouteTypes {
     | '/admin/cms/categories/'
     | '/admin/cms/events/'
     | '/admin/cms/featured-brand-showcase/'
+    | '/admin/cms/trending-offer-banners/'
     | '/admin/cms/trending-offers/'
     | '/admin/cms/universities/'
     | '/admin/online-vendors/$vendorId/settings/branding'
@@ -538,6 +553,7 @@ export interface FileRouteTypes {
     | '/admin/cms/categories'
     | '/admin/cms/events'
     | '/admin/cms/featured-brand-showcase'
+    | '/admin/cms/trending-offer-banners'
     | '/admin/cms/trending-offers'
     | '/admin/cms/universities'
     | '/admin/online-vendors/$vendorId/settings/branding'
@@ -584,6 +600,7 @@ export interface FileRouteTypes {
     | '/admin/cms/categories/'
     | '/admin/cms/events/'
     | '/admin/cms/featured-brand-showcase/'
+    | '/admin/cms/trending-offer-banners/'
     | '/admin/cms/trending-offers/'
     | '/admin/cms/universities/'
     | '/admin/online-vendors/$vendorId/settings/branding'
@@ -758,6 +775,13 @@ declare module '@tanstack/react-router' {
       path: '/cms/trending-offers'
       fullPath: '/admin/cms/trending-offers/'
       preLoaderRoute: typeof AdminCmsTrendingOffersIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/cms/trending-offer-banners/': {
+      id: '/admin/cms/trending-offer-banners/'
+      path: '/cms/trending-offer-banners'
+      fullPath: '/admin/cms/trending-offer-banners/'
+      preLoaderRoute: typeof AdminCmsTrendingOfferBannersIndexRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/cms/featured-brand-showcase/': {
@@ -988,6 +1012,7 @@ interface AdminRouteChildren {
   AdminCmsCategoriesIndexRoute: typeof AdminCmsCategoriesIndexRoute
   AdminCmsEventsIndexRoute: typeof AdminCmsEventsIndexRoute
   AdminCmsFeaturedBrandShowcaseIndexRoute: typeof AdminCmsFeaturedBrandShowcaseIndexRoute
+  AdminCmsTrendingOfferBannersIndexRoute: typeof AdminCmsTrendingOfferBannersIndexRoute
   AdminCmsTrendingOffersIndexRoute: typeof AdminCmsTrendingOffersIndexRoute
   AdminCmsUniversitiesIndexRoute: typeof AdminCmsUniversitiesIndexRoute
 }
@@ -1018,6 +1043,8 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminCmsEventsIndexRoute: AdminCmsEventsIndexRoute,
   AdminCmsFeaturedBrandShowcaseIndexRoute:
     AdminCmsFeaturedBrandShowcaseIndexRoute,
+  AdminCmsTrendingOfferBannersIndexRoute:
+    AdminCmsTrendingOfferBannersIndexRoute,
   AdminCmsTrendingOffersIndexRoute: AdminCmsTrendingOffersIndexRoute,
   AdminCmsUniversitiesIndexRoute: AdminCmsUniversitiesIndexRoute,
 }
