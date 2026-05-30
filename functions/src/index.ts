@@ -790,8 +790,14 @@ export const sendNotification = onCall(
       return {success: true, sentCount: 0};
     }
 
+    // Deduplicate by token so stale duplicate docs do not send
+    // duplicate pushes.
+    const uniqueEntries = Array.from(
+      new Map(validEntries.map((entry) => [entry.token, entry])).values()
+    );
+
     // Build push messages
-    const messages = validEntries.map((entry) => ({
+    const messages = uniqueEntries.map((entry) => ({
       to: entry.token,
       title,
       body,
@@ -819,11 +825,11 @@ export const sendNotification = onCall(
           details?.error === "DeviceNotRegistered" ||
           details?.error === "InvalidCredentials"
         ) {
-          const docId = tokenToDocId.get(validEntries[index].token);
+          const docId = tokenToDocId.get(uniqueEntries[index].token);
           if (docId) invalidDocIds.push(docId);
         }
         logger.warn("Push ticket error", {
-          token: validEntries[index].token,
+          token: uniqueEntries[index].token,
           error: details,
         });
       } else if (ticket.id) {
@@ -851,20 +857,20 @@ export const sendNotification = onCall(
       topic: topic || "all-users",
       sentBy: auth.uid,
       sentAt: new Date(),
-      sentCount: validEntries.length,
+      sentCount: uniqueEntries.length,
       totalRegistered: allTokens.length,
       receiptIds,
     });
 
     logger.info("Notification sent", {
       title,
-      sentCount: validEntries.length,
+      sentCount: uniqueEntries.length,
       totalRegistered: allTokens.length,
     });
 
     return {
       success: true,
-      sentCount: validEntries.length,
+      sentCount: uniqueEntries.length,
     };
   }
 );
