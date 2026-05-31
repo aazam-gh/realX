@@ -18,21 +18,11 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog'
-import { Search, Upload, Eye, Trash2, ArrowUpDown, ArrowUp, ArrowDown, Loader2 } from 'lucide-react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+    Search, Upload, Eye, ArrowUpDown, ArrowUp, ArrowDown,
+} from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import { fetchTransactions, type Transaction, type TransactionSearch } from './index'
 import { Badge } from '@/components/ui/badge'
-import { db } from '@/firebase/config'
-import { deleteDoc, doc } from 'firebase/firestore'
-import { toast } from 'sonner'
-import { useState } from 'react'
 import { STALE_TIME } from '@/lib/constants'
 
 export const Route = createLazyFileRoute('/admin/transactions/')({
@@ -56,30 +46,11 @@ function SortIcon({ field }: { field: 'date' | 'amount' | 'vendor' }) {
 function RouteComponent() {
     const { page, pageSize, vendorName, sort } = useSearch({ from: '/admin/transactions/' })
     const navigate = useNavigate()
-    const queryClient = useQueryClient()
-
-    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
-    const [txToDelete, setTxToDelete] = useState<Transaction | null>(null)
 
     const { data, isLoading: isQueryLoading } = useQuery({
         queryKey: ['transactions-list', page, pageSize, vendorName, sort],
         queryFn: () => fetchTransactions(page, pageSize, vendorName, sort),
         staleTime: STALE_TIME.MEDIUM,
-    })
-
-    const deleteMutation = useMutation({
-        mutationFn: async (id: string) => {
-            await deleteDoc(doc(db, 'transactions', id))
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['transactions-list'] })
-            toast.success('Transaction deleted')
-            setDeleteConfirmOpen(false)
-            setTxToDelete(null)
-        },
-        onError: () => {
-            toast.error('Failed to delete transaction')
-        },
     })
 
     const transactionList = data?.transactions || []
@@ -365,17 +336,6 @@ function RouteComponent() {
                                                 <Eye className="h-4 w-4 mr-2" />
                                                 Details
                                             </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => {
-                                                    setTxToDelete(tx)
-                                                    setDeleteConfirmOpen(true)
-                                                }}
-                                                className="hover:bg-red-50 hover:text-red-600 rounded-lg text-muted-foreground"
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
                                         </div>
                                     </TableCell>
                                 </TableRow>
@@ -384,35 +344,6 @@ function RouteComponent() {
                     </TableBody>
                 </Table>
             </div>
-
-            {/* Delete Confirmation Dialog */}
-            <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Delete Transaction</DialogTitle>
-                        <DialogDescription>
-                            Are you sure you want to delete transaction <strong>{txToDelete?.transactionId || txToDelete?.id?.slice(0, 8)}</strong> from <strong>{txToDelete?.vendorName}</strong>? This action cannot be undone.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter className="gap-2 sm:gap-0">
-                        <Button variant="outline" onClick={() => setDeleteConfirmOpen(false)}>
-                            Cancel
-                        </Button>
-                        <Button
-                            variant="destructive"
-                            onClick={() => txToDelete && deleteMutation.mutate(txToDelete.id)}
-                            disabled={deleteMutation.isPending}
-                        >
-                            {deleteMutation.isPending ? (
-                                <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Deleting...
-                                </>
-                            ) : 'Delete Transaction'}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
 
             {/* Pagination */}
             {(hasPrevPage || hasNextPage) && (
