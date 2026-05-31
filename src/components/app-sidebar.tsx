@@ -5,6 +5,7 @@ import {
   IconMail,
   IconSettings,
   IconStar,
+  IconUserCircle,
 } from "@tabler/icons-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -28,9 +29,15 @@ const data = {
   },
   navMain: [
     {
+      
       title: "Dashboard",
       url: "/dashboard",
       icon: IconLayoutDashboard,
+    },
+    {
+      title: "Profile",
+      url: "/profile",
+      icon: IconUserCircle,
     },
     {
       title: "Transaction History",
