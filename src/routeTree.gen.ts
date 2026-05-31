@@ -25,6 +25,7 @@ import { Route as AdminNotificationsIndexRouteImport } from './routes/admin/noti
 import { Route as AdminCmsIndexRouteImport } from './routes/admin/cms/index'
 import { Route as AdminTransactionsIdRouteImport } from './routes/admin/transactions/$id'
 import { Route as vendorPanelVendorTransactionHistoryRouteImport } from './routes/(vendor-panel)/_vendor.transaction-history'
+import { Route as vendorPanelVendorProfileRouteImport } from './routes/(vendor-panel)/_vendor.profile'
 import { Route as vendorPanelVendorPinRouteImport } from './routes/(vendor-panel)/_vendor.pin'
 import { Route as vendorPanelVendorDashboardRouteImport } from './routes/(vendor-panel)/_vendor.dashboard'
 import { Route as vendorPanelVendorContactUsRouteImport } from './routes/(vendor-panel)/_vendor.contact-us'
@@ -150,6 +151,12 @@ const vendorPanelVendorTransactionHistoryRoute =
   vendorPanelVendorTransactionHistoryRouteImport.update({
     id: '/transaction-history',
     path: '/transaction-history',
+    getParentRoute: () => vendorPanelVendorRoute,
+  } as any)
+const vendorPanelVendorProfileRoute =
+  vendorPanelVendorProfileRouteImport.update({
+    id: '/profile',
+    path: '/profile',
     getParentRoute: () => vendorPanelVendorRoute,
   } as any)
 const vendorPanelVendorPinRoute = vendorPanelVendorPinRouteImport.update({
@@ -350,6 +357,7 @@ export interface FileRoutesByFullPath {
   '/contact-us': typeof vendorPanelVendorContactUsRoute
   '/dashboard': typeof vendorPanelVendorDashboardRoute
   '/pin': typeof vendorPanelVendorPinRoute
+  '/profile': typeof vendorPanelVendorProfileRoute
   '/transaction-history': typeof vendorPanelVendorTransactionHistoryRouteWithChildren
   '/admin/transactions/$id': typeof AdminTransactionsIdRoute
   '/admin/cms/': typeof AdminCmsIndexRoute
@@ -395,6 +403,7 @@ export interface FileRoutesByTo {
   '/contact-us': typeof vendorPanelVendorContactUsRoute
   '/dashboard': typeof vendorPanelVendorDashboardRoute
   '/pin': typeof vendorPanelVendorPinRoute
+  '/profile': typeof vendorPanelVendorProfileRoute
   '/admin/transactions/$id': typeof AdminTransactionsIdRoute
   '/admin/cms': typeof AdminCmsIndexRoute
   '/admin/notifications': typeof AdminNotificationsIndexRoute
@@ -440,6 +449,7 @@ export interface FileRoutesById {
   '/(vendor-panel)/_vendor/contact-us': typeof vendorPanelVendorContactUsRoute
   '/(vendor-panel)/_vendor/dashboard': typeof vendorPanelVendorDashboardRoute
   '/(vendor-panel)/_vendor/pin': typeof vendorPanelVendorPinRoute
+  '/(vendor-panel)/_vendor/profile': typeof vendorPanelVendorProfileRoute
   '/(vendor-panel)/_vendor/transaction-history': typeof vendorPanelVendorTransactionHistoryRouteWithChildren
   '/admin/transactions/$id': typeof AdminTransactionsIdRoute
   '/admin/cms/': typeof AdminCmsIndexRoute
@@ -488,6 +498,7 @@ export interface FileRouteTypes {
     | '/contact-us'
     | '/dashboard'
     | '/pin'
+    | '/profile'
     | '/transaction-history'
     | '/admin/transactions/$id'
     | '/admin/cms/'
@@ -533,6 +544,7 @@ export interface FileRouteTypes {
     | '/contact-us'
     | '/dashboard'
     | '/pin'
+    | '/profile'
     | '/admin/transactions/$id'
     | '/admin/cms'
     | '/admin/notifications'
@@ -577,6 +589,7 @@ export interface FileRouteTypes {
     | '/(vendor-panel)/_vendor/contact-us'
     | '/(vendor-panel)/_vendor/dashboard'
     | '/(vendor-panel)/_vendor/pin'
+    | '/(vendor-panel)/_vendor/profile'
     | '/(vendor-panel)/_vendor/transaction-history'
     | '/admin/transactions/$id'
     | '/admin/cms/'
@@ -733,6 +746,13 @@ declare module '@tanstack/react-router' {
       path: '/transaction-history'
       fullPath: '/transaction-history'
       preLoaderRoute: typeof vendorPanelVendorTransactionHistoryRouteImport
+      parentRoute: typeof vendorPanelVendorRoute
+    }
+    '/(vendor-panel)/_vendor/profile': {
+      id: '/(vendor-panel)/_vendor/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof vendorPanelVendorProfileRouteImport
       parentRoute: typeof vendorPanelVendorRoute
     }
     '/(vendor-panel)/_vendor/pin': {
@@ -1074,6 +1094,7 @@ interface vendorPanelVendorRouteChildren {
   vendorPanelVendorContactUsRoute: typeof vendorPanelVendorContactUsRoute
   vendorPanelVendorDashboardRoute: typeof vendorPanelVendorDashboardRoute
   vendorPanelVendorPinRoute: typeof vendorPanelVendorPinRoute
+  vendorPanelVendorProfileRoute: typeof vendorPanelVendorProfileRoute
   vendorPanelVendorTransactionHistoryRoute: typeof vendorPanelVendorTransactionHistoryRouteWithChildren
 }
 
@@ -1082,6 +1103,7 @@ const vendorPanelVendorRouteChildren: vendorPanelVendorRouteChildren = {
   vendorPanelVendorContactUsRoute: vendorPanelVendorContactUsRoute,
   vendorPanelVendorDashboardRoute: vendorPanelVendorDashboardRoute,
   vendorPanelVendorPinRoute: vendorPanelVendorPinRoute,
+  vendorPanelVendorProfileRoute: vendorPanelVendorProfileRoute,
   vendorPanelVendorTransactionHistoryRoute:
     vendorPanelVendorTransactionHistoryRouteWithChildren,
 }
