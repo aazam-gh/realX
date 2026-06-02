@@ -29,7 +29,7 @@ import {
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { db, functions } from '@/firebase/config'
-import { collection, getDocs, query, limit, orderBy, getCountFromServer, startAfter, type DocumentSnapshot } from 'firebase/firestore'
+import { collection, getDocs, query, limit, orderBy, getCountFromServer, startAfter, where, type DocumentSnapshot, type QueryConstraint } from 'firebase/firestore'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { httpsCallable } from 'firebase/functions'
 import { STALE_TIME } from '@/lib/constants'
@@ -53,7 +53,8 @@ interface Student {
 
 function RouteComponent() {
     const queryClient = useQueryClient()
-    const { page, pageSize } = useSearch({ from: '/admin/students/' })
+    const { page, pageSize, search: searchQuery } = useSearch({ from: '/admin/students/' })
+    const trimmedSearch = searchQuery.trim().toLowerCase()
     const cursorMap = useRef<Record<number, DocumentSnapshot>>({})
     const [open, setOpen] = useState(false)
     const [form, setForm] = useState({
@@ -69,11 +70,16 @@ function RouteComponent() {
     const [copied, setCopied] = useState(false)
 
     const { data, isLoading: isQueryLoading } = useQuery({
-        queryKey: ['students', page, pageSize],
+        queryKey: ['students', page, pageSize, trimmedSearch],
         queryFn: async () => {
+            const constraints: QueryConstraint[] = []
+
+                if (trimmedSearch) {
+                constraints.push(where('searchTokens', 'array-contains', trimmedSearch))
+            }
             const collRef = collection(db, 'students')
 
-            const countSnapshot = await getCountFromServer(collRef)
+            const countSnapshot = await getCountFromServer(query(collRef, ...constraints))
             const totalCount = countSnapshot.data().count
 
             // Build query with cursor-based pagination
@@ -81,12 +87,12 @@ function RouteComponent() {
             const cursor = cursorMap.current[page]
 
             if (cursor) {
-                q = query(collRef, orderBy('firstName'), startAfter(cursor), limit(pageSize))
+                q = query(collRef, ...constraints, orderBy('firstName'), startAfter(cursor), limit(pageSize))
             } else if (page === 1) {
-                q = query(collRef, orderBy('firstName'), limit(pageSize))
+                q = query(collRef, ...constraints, orderBy('firstName'), limit(pageSize))
             } else {
                 // Fallback: fetch up to the end of previous page to get cursor
-                const prevQuery = query(collRef, orderBy('firstName'), limit((page - 1) * pageSize))
+                const prevQuery = query(collRef, ...constraints, orderBy('firstName'), limit((page - 1) * pageSize))
                 const prevSnap = await getDocs(prevQuery)
                 if (prevSnap.docs.length > 0) {
                     const lastDoc = prevSnap.docs[prevSnap.docs.length - 1]
@@ -438,7 +444,7 @@ function RouteComponent() {
                                     <TableCell className="font-mono font-medium text-foreground tracking-widest">{student.creatorCode}</TableCell>
                                     <TableCell className="font-medium text-foreground">${student.cashback.toFixed(2)}</TableCell>
                                     <TableCell className="text-right">
-                                        <Link to="/admin/students/$studentId/settings" params={{ studentId: student.id }} search={{ page: 1, pageSize: 10 }}>
+                                        <Link to="/admin/students/$studentId/settings" params={{ studentId: student.id }} search={{ page: 1, pageSize: 10, search: '' }}>
                                             <Button variant="outline" size="sm" className="rounded-full h-8 px-4 gap-1 text-xs font-semibold">
                                                 Manage <ChevronRight className="h-3 w-3" />
                                             </Button>
