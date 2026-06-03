@@ -75,7 +75,8 @@ function RouteComponent() {
             const constraints: QueryConstraint[] = []
 
                 if (trimmedSearch) {
-                constraints.push(where('searchTokens', 'array-contains', trimmedSearch))
+                constraints.push(where('firstName', '>=', trimmedSearch))
+                constraints.push(where('firstName', '<=', trimmedSearch + '\uf8ff'))
             }
             const collRef = collection(db, 'students')
 

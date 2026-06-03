@@ -38,7 +38,8 @@ export async function fetchVendorsPage(search: VendorsSearch, vendorScope: Vendo
     }
 
     if (trimmedSearch) {
-        constraints.push(where('searchTokens', 'array-contains', trimmedSearch))
+        constraints.push(where('name', '>=', trimmedSearch))
+        constraints.push(where('name', '<=', trimmedSearch + '\uf8ff'))
     }
 
     if (search.xcard === 'enabled') {

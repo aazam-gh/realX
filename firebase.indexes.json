@@ -15,19 +15,11 @@
       ]
     },
     {
-      "collectionGroup": "vendors",
+      "collectionGroup": "students",
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "vendorType",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "searchTokens",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "name",
+          "fieldPath": "firstName",
           "order": "ASCENDING"
         }
       ]
