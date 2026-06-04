@@ -58,6 +58,44 @@ interface VendorMapLocation {
   isPrimary: boolean;
 }
 
+interface VendorMapLocationDoc {
+  vendorId: string;
+  locationId: string;
+  name: string | null;
+  nameAr: string | null;
+  vendorName: string | null;
+  vendorNameAr: string | null;
+  branchName: string | null;
+  branchNameAr: string | null;
+  phoneNumber: string | null;
+  latitude: number;
+  longitude: number;
+  geohash: string;
+  geohash4: string;
+  geohash5: string;
+  geohash6: string;
+  address: string | null;
+  addressAr: string | null;
+  mainCategory: string | null;
+  profilePicture: string | null;
+  vendorType: string | null;
+  status: string | null;
+  isActive: boolean;
+  xcard: boolean;
+  offerTypes: string[];
+  hasBuyOneGetOne: boolean;
+  hasStudentDeal: boolean;
+  openingHours: unknown;
+  searchTokens: string[];
+  firstOffer: {
+    titleEn?: string;
+    titleAr?: string;
+    discountType?: string;
+  } | null;
+  isPrimary: boolean;
+  updatedAt: unknown;
+}
+
 /**
  * Build a location entry from vendor data.
  * @param {FirebaseFirestore.DocumentData} data
@@ -162,6 +200,120 @@ function buildMapEntry(
     firstOffer,
     locations,
   };
+}
+
+/**
+ * Build a stable map location document id.
+ * @param {string} vendorId
+ * @param {string} locationId
+ * @return {string}
+ */
+function mapLocationDocId(vendorId: string, locationId: string) {
+  return `${vendorId}_${locationId.replace(/[/\s]+/g, "_")}`;
+}
+
+/**
+ * Decide whether a vendor should appear in the public map index.
+ * @param {FirebaseFirestore.DocumentData} data
+ * @return {boolean}
+ */
+function shouldIndexMapVendor(data: FirebaseFirestore.DocumentData) {
+  const vendorType = typeof data.vendorType === "string" ?
+    data.vendorType :
+    "in_store";
+  const status = typeof data.status === "string" ? data.status : null;
+
+  if (vendorType === "online") return false;
+  if (status && status.toLowerCase() === "inactive") return false;
+
+  return true;
+}
+
+/**
+ * Build per-branch map index documents from a vendor document.
+ * @param {string} vendorId
+ * @param {FirebaseFirestore.DocumentData} data
+ * @return {VendorMapLocationDoc[]}
+ */
+function buildMapLocationDocs(
+  vendorId: string,
+  data: FirebaseFirestore.DocumentData,
+): VendorMapLocationDoc[] {
+  if (!shouldIndexMapVendor(data)) return [];
+
+  const entry = buildMapEntry(data);
+  if (!entry) return [];
+
+  return entry.locations.map((location) => {
+    const fullGeohash = geohashForLocation([
+      location.latitude,
+      location.longitude,
+    ]);
+
+    return {
+      vendorId,
+      locationId: location.id,
+      name: entry.name,
+      nameAr: entry.nameAr,
+      vendorName: entry.vendorName,
+      vendorNameAr: entry.vendorNameAr,
+      branchName: location.name,
+      branchNameAr: location.nameAr,
+      phoneNumber: location.phoneNumber,
+      latitude: location.latitude,
+      longitude: location.longitude,
+      geohash: fullGeohash,
+      geohash4: fullGeohash.slice(0, 4),
+      geohash5: fullGeohash.slice(0, 5),
+      geohash6: fullGeohash.slice(0, 6),
+      address: location.address,
+      addressAr: location.addressAr,
+      mainCategory: entry.mainCategory,
+      profilePicture: entry.profilePicture,
+      vendorType: typeof data.vendorType === "string" ? data.vendorType : null,
+      status: typeof data.status === "string" ? data.status : null,
+      isActive: typeof data.status === "string" ?
+        data.status.toLowerCase() !== "inactive" :
+        true,
+      xcard: entry.xcard,
+      offerTypes: entry.offerTypes,
+      hasBuyOneGetOne: entry.hasBuyOneGetOne,
+      hasStudentDeal: entry.hasStudentDeal,
+      openingHours: entry.openingHours,
+      searchTokens: entry.searchTokens,
+      firstOffer: entry.firstOffer,
+      isPrimary: location.isPrimary,
+      updatedAt: FieldValue.serverTimestamp(),
+    };
+  });
+}
+
+/**
+ * Replace all map index documents for a single vendor.
+ * @param {string} vendorId
+ * @param {VendorMapLocationDoc[]} locations
+ */
+async function replaceVendorMapLocationDocs(
+  vendorId: string,
+  locations: VendorMapLocationDoc[],
+) {
+  const db = getFirestore();
+  const existing = await db.collection("mapLocations")
+    .where("vendorId", "==", vendorId)
+    .get();
+  const batch = db.batch();
+
+  existing.docs.forEach((doc) => batch.delete(doc.ref));
+  locations.forEach((location) => {
+    const ref = db.collection("mapLocations").doc(
+      mapLocationDocId(vendorId, location.locationId),
+    );
+    batch.set(ref, location);
+  });
+
+  if (existing.size > 0 || locations.length > 0) {
+    await batch.commit();
+  }
 }
 
 // Helper: Generate unique 4-char creator code (2 letters + 2 digits)
@@ -761,6 +913,10 @@ export const sendNotification = onCall(
     const allTokens = tokensSnapshot.docs.map(
       (doc) => ({id: doc.id, token: doc.data().token as string})
     );
+    logger.info("Notification push token scan complete", {
+      tokenDocsScanned: tokensSnapshot.size,
+      topic: topic || "all-users",
+    });
 
     if (allTokens.length === 0) {
       logger.info("No push tokens registered, skipping send");
@@ -866,6 +1022,7 @@ export const sendNotification = onCall(
       title,
       sentCount: uniqueEntries.length,
       totalRegistered: allTokens.length,
+      invalidTokenCleanupCount: invalidDocIds.length,
     });
 
     return {
@@ -943,6 +1100,9 @@ export const backfillVendorGeohashes = onCall(
 
     const db = getFirestore();
     const snapshot = await db.collection("vendors").get();
+    logger.info("Geohash backfill vendor scan complete", {
+      vendorsScanned: snapshot.size,
+    });
 
     let updatedCount = 0;
     const BATCH_LIMIT = 500;
@@ -976,7 +1136,10 @@ export const backfillVendorGeohashes = onCall(
       await batch.commit();
     }
 
-    logger.info("Geohash backfill complete", {updatedCount});
+    logger.info("Geohash backfill complete", {
+      vendorsScanned: snapshot.size,
+      updatedCount,
+    });
 
     return {success: true, updatedCount};
   }
@@ -996,31 +1159,37 @@ export const onVendorWrite = onDocumentWritten(
 
     // Vendor was deleted or has no data
     if (!event.data?.after?.exists) {
+      await replaceVendorMapLocationDocs(vendorId, []);
       await locationsRef.set(
         {[vendorId]: FieldValue.delete()},
         {merge: true},
       );
-      logger.info("Removed vendor from locations cache", {vendorId});
+      logger.info("Removed vendor from map indexes", {vendorId});
       return;
     }
 
     const data = event.data.after.data();
     if (!data) return;
     const entry = buildMapEntry(data);
+    const locationDocs = buildMapLocationDocs(vendorId, data);
+    await replaceVendorMapLocationDocs(vendorId, locationDocs);
 
     if (entry) {
       await locationsRef.set(
         {[vendorId]: entry},
         {merge: true},
       );
-      logger.info("Updated vendor in locations cache", {vendorId});
+      logger.info("Updated vendor in map indexes", {
+        vendorId,
+        locationCount: locationDocs.length,
+      });
     } else {
       // Vendor exists but isn't mappable (inactive or no coordinates)
       await locationsRef.set(
         {[vendorId]: FieldValue.delete()},
         {merge: true},
       );
-      logger.info("Removed unmappable vendor from locations cache", {vendorId});
+      logger.info("Removed unmappable vendor from map indexes", {vendorId});
     }
   },
 );
@@ -1043,23 +1212,134 @@ export const rebuildLocationsCache = onCall(
     }
 
     const db = getFirestore();
-    const snapshot = await db.collection("vendors").get();
+    const [snapshot, existingLocationsSnapshot] = await Promise.all([
+      db.collection("vendors").get(),
+      db.collection("mapLocations").get(),
+    ]);
+    logger.info("Locations cache rebuild vendor scan complete", {
+      vendorsScanned: snapshot.size,
+      oldLocationDocsScanned: existingLocationsSnapshot.size,
+    });
 
     const vendors: Record<string, VendorMapEntry> = {};
     let count = 0;
+    let locationCount = 0;
+    let mapLocationBatch = db.batch();
+    let mapLocationBatchCount = 0;
+    const commitMapLocationBatch = async () => {
+      if (mapLocationBatchCount === 0) return;
+      await mapLocationBatch.commit();
+      mapLocationBatch = db.batch();
+      mapLocationBatchCount = 0;
+    };
 
-    snapshot.forEach((doc) => {
+    for (const locationDoc of existingLocationsSnapshot.docs) {
+      mapLocationBatch.delete(locationDoc.ref);
+      mapLocationBatchCount++;
+      if (mapLocationBatchCount >= 450) await commitMapLocationBatch();
+    }
+
+    for (const doc of snapshot.docs) {
       const entry = buildMapEntry(doc.data());
       if (entry) {
         vendors[doc.id] = entry;
         count++;
       }
-    });
+
+      const locationDocs = buildMapLocationDocs(doc.id, doc.data());
+      for (const locationDoc of locationDocs) {
+        const ref = db.collection("mapLocations").doc(
+          mapLocationDocId(doc.id, locationDoc.locationId),
+        );
+        mapLocationBatch.set(ref, locationDoc);
+        mapLocationBatchCount++;
+        locationCount++;
+        if (mapLocationBatchCount >= 450) {
+          await commitMapLocationBatch();
+        }
+      }
+    }
 
     await db.collection("maps").doc("locations").set(vendors);
+    await commitMapLocationBatch();
 
-    logger.info("Locations cache rebuilt", {vendorCount: count});
+    logger.info("Locations cache rebuilt", {
+      vendorsScanned: snapshot.size,
+      vendorCount: count,
+      locationCount,
+    });
 
-    return {success: true, vendorCount: count};
+    return {success: true, vendorCount: count, locationCount};
+  },
+);
+
+/**
+ * Admin callable: rebuild the scalable per-location map index.
+ * Keeps maps/locations untouched; use rebuildLocationsCache to rebuild both.
+ */
+export const rebuildMapLocationIndex = onCall(
+  {region: REGION, cors: true},
+  async (request: CallableRequest) => {
+    const {auth} = request;
+
+    if (!auth) {
+      throw new HttpsError("unauthenticated", "User not authenticated");
+    }
+
+    if (!auth.token.admin) {
+      throw new HttpsError("permission-denied", "Admin access required");
+    }
+
+    const db = getFirestore();
+    const [vendorsSnapshot, existingLocationsSnapshot] = await Promise.all([
+      db.collection("vendors").get(),
+      db.collection("mapLocations").get(),
+    ]);
+    logger.info("Map location index rebuild scans complete", {
+      vendorsScanned: vendorsSnapshot.size,
+      oldLocationDocsScanned: existingLocationsSnapshot.size,
+    });
+
+    let batch = db.batch();
+    let batchCount = 0;
+    let locationCount = 0;
+    const commitBatch = async () => {
+      if (batchCount === 0) return;
+      await batch.commit();
+      batch = db.batch();
+      batchCount = 0;
+    };
+
+    for (const locationDoc of existingLocationsSnapshot.docs) {
+      batch.delete(locationDoc.ref);
+      batchCount++;
+      if (batchCount >= 450) await commitBatch();
+    }
+
+    for (const vendorDoc of vendorsSnapshot.docs) {
+      const locationDocs = buildMapLocationDocs(vendorDoc.id, vendorDoc.data());
+      for (const locationDoc of locationDocs) {
+        const ref = db.collection("mapLocations").doc(
+          mapLocationDocId(vendorDoc.id, locationDoc.locationId),
+        );
+        batch.set(ref, locationDoc);
+        batchCount++;
+        locationCount++;
+        if (batchCount >= 450) await commitBatch();
+      }
+    }
+
+    await commitBatch();
+
+    logger.info("Map location index rebuilt", {
+      vendorsScanned: vendorsSnapshot.size,
+      locationCount,
+    });
+
+    return {
+      success: true,
+      vendorsScanned: vendorsSnapshot.size,
+      locationCount,
+    };
   },
 );

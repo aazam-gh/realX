@@ -74,17 +74,18 @@ Follow these instructions to set up and run the project locally.
 
 ### Environment Variables Setup
 
-1.  **Create `.env` file:**
-    *   In the root of the project, create a new file named `.env`.
-    *   Populate it with the Firebase configuration values obtained in the previous step. Ensure each key is prefixed with `VITE_` as this project uses Vite for environment variables.
+1.  **Create local Firebase env files:**
+    *   Copy `.env.development.local.example` to `.env.development.local` and fill it from the dev Firebase web app.
+    *   Copy `.env.production.local.example` to `.env.production.local` and fill it from the production Firebase web app.
+    *   See `docs/firebase-environments.md` for aliases, deploy safety, sanitized dev refreshes, and cost measurement.
 
     ```
-    VITE_FIREBASE_API_KEY="YOUR_API_KEY"
-    VITE_FIREBASE_AUTH_DOMAIN="YOUR_PROJECT_ID.firebaseapp.com"
-    VITE_FIREBASE_PROJECT_ID="YOUR_PROJECT_ID"
-    VITE_FIREBASE_STORAGE_BUCKET="YOUR_PROJECT_ID.appspot.com"
-    VITE_FIREBASE_MESSAGING_SENDER_ID="YOUR_MESSAGING_SENDER_ID"
-    VITE_FIREBASE_APP_ID="YOUR_APP_ID"
+    VITE_PUBLIC_FIREBASE_API_KEY="YOUR_API_KEY"
+    VITE_PUBLIC_FIREBASE_AUTH_DOMAIN="YOUR_PROJECT_ID.firebaseapp.com"
+    VITE_PUBLIC_FIREBASE_PROJECT_ID="YOUR_PROJECT_ID"
+    VITE_PUBLIC_FIREBASE_STORAGE_BUCKET="YOUR_PROJECT_ID.appspot.com"
+    VITE_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="YOUR_MESSAGING_SENDER_ID"
+    VITE_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID"
     ```
 
 ### Local Development Setup
@@ -98,14 +99,14 @@ Follow these instructions to set up and run the project locally.
     ```bash
     pnpm dev
     ```
-    This will start the Vite development server, usually accessible at `http://localhost:5173`.
+    This starts Vite on port 3000 with the development Firebase config.
 
 ### Building for Production
 
 To create a production-ready build:
 
 ```bash
-pnpm build
+pnpm build:prod
 ```
 
 This command will compile the application into the `dist` directory. You can then deploy the contents of the `dist` folder to your preferred hosting service (e.g., Firebase Hosting, Netlify, Vercel).

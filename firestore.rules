@@ -49,6 +49,7 @@ function isValidSavedMapPlace() {
       'vendorNameAr',
       'branchName',
       'branchNameAr',
+      'phoneNumber',
       'address',
       'addressAr',
       'latitude',
@@ -161,6 +162,12 @@ match /vendorOnlineRedemptionConfigs/{vendorId} {
 
 // ─── maps collection ──────────────────────────────────────────────────
 match /maps/{mapDocId} {
+  allow read: if request.auth != null;
+  allow write: if isAdmin();
+}
+
+// ─── map locations collection ────────────────────────────────────────
+match /mapLocations/{locationId} {
   allow read: if request.auth != null;
   allow write: if isAdmin();
 }

@@ -15,6 +15,7 @@ import {
 } from 'firebase/firestore'
 import { STALE_TIME } from '@/lib/constants'
 import { formatTimestamp } from '@/lib/format-timestamp'
+import { logAdminRead } from '@/lib/admin-read-logging'
 
 export const Route = createFileRoute('/admin/dashboard')({
   component: AdminDashboard,
@@ -77,7 +78,6 @@ async function fetchDashboardStats() {
     getCountFromServer(collection(db, 'students')),
     getCountFromServer(query(collection(db, 'vendors'), where('status', '==', 'Active'))),
     getCountFromServer(collection(db, 'transactions')),
-    // Try reading pre-aggregated offer count (1 read instead of N vendor reads)
     getDocs(query(collection(db, 'vendors'), orderBy('name'))),
   ])
 
@@ -89,6 +89,14 @@ async function fetchDashboardStats() {
     totalOffers += offerCount
     if (offerCount > 0) vendorsWithOffers++
     else vendorsWithoutOffers++
+  })
+
+  logAdminRead('dashboard-vendor-offer-counts', {
+    docsFetched: offerCountSnap.size,
+    docsDisplayed: offerCountSnap.size,
+    totalOffers,
+    vendorsWithOffers,
+    vendorsWithoutOffers,
   })
 
   return {

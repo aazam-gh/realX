@@ -18,7 +18,10 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { Search, Upload, Plus, ChevronRight, Loader2, CheckCircle2, Copy, Check } from 'lucide-react'
+
 import { useState} from 'react'
+
+
 import {
     Dialog,
     DialogContent,
@@ -29,11 +32,15 @@ import {
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { db, functions } from '@/firebase/config'
+
 import { collection, getDocs, query, orderBy } from 'firebase/firestore'
+
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { httpsCallable } from 'firebase/functions'
 import { STALE_TIME } from '@/lib/constants'
 import type { StudentSearch } from './index'
+import { logAdminRead } from '@/lib/admin-read-logging'
+import { getCursorPage, resetFirestorePaginationCursors } from '@/lib/firestore-pagination'
 
 export const Route = createLazyFileRoute('/admin/students/')({
     component: RouteComponent,
@@ -53,9 +60,11 @@ interface Student {
 
 function RouteComponent() {
     const queryClient = useQueryClient()
+
     const { page, pageSize, search: searchQuery } = useSearch({ from: '/admin/students/' })
     const navigate = Route.useNavigate()
     const trimmedSearch = searchQuery.trim().toLowerCase()
+
 
     const [open, setOpen] = useState(false)
     const [form, setForm] = useState({
@@ -76,7 +85,9 @@ function RouteComponent() {
             const collRef = collection(db, 'students')
             const snapshot = await getDocs(query(collRef, orderBy('firstName', 'asc')))
 
+
             const allStudents = snapshot.docs.map((docSnap) => {
+
                 const data = docSnap.data()
                 return {
                     id: docSnap.id,
@@ -94,6 +105,7 @@ function RouteComponent() {
                 } as Student
             })
 
+
             const filteredStudents = trimmedSearch
                 ? allStudents.filter((student) =>
                     (student.name ?? '').toLowerCase().includes(trimmedSearch)
@@ -107,6 +119,7 @@ function RouteComponent() {
                 students: filteredStudents.slice(start, end),
                 totalCount: filteredStudents.length,
             }
+
         },
         staleTime: STALE_TIME.MEDIUM,
     })
@@ -129,6 +142,7 @@ function RouteComponent() {
             return result.data as { uid?: string; creatorCode?: string; success?: boolean }
         },
         onSuccess: (data) => {
+            resetFirestorePaginationCursors('students:')
             queryClient.invalidateQueries({ queryKey: ['students'] })
             if (data?.creatorCode) {
                 setCreatorCodeResult(data.creatorCode)

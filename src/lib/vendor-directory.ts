@@ -7,6 +7,8 @@ import {
     query,
 } from 'firebase/firestore'
 import type { Vendor } from '@/queries'
+import { logAdminRead } from '@/lib/admin-read-logging'
+import { getCursorPage } from '@/lib/firestore-pagination'
 
 export const vendorsSearchSchema = z.object({
     page: z.coerce.number().int().min(1).catch(1),
@@ -33,7 +35,9 @@ export async function fetchVendorsPage(search: VendorsSearch, vendorScope: Vendo
         orderBy('name', search.sort === 'name-desc' ? 'desc' : 'asc')
     ))
 
+
     const allVendors = snapshot.docs.map((docSnap) => {
+
         const data = docSnap.data()
 
         return {
@@ -55,6 +59,7 @@ export async function fetchVendorsPage(search: VendorsSearch, vendorScope: Vendo
         } as Vendor
     })
 
+
     const filteredVendors = allVendors.filter((vendor) => {
         const matchesScope = vendorScope === 'all' || vendor.vendorType === vendorScope
         const matchesSearch =
@@ -66,6 +71,7 @@ export async function fetchVendorsPage(search: VendorsSearch, vendorScope: Vendo
 
     const start = (search.page - 1) * search.pageSize
     const end = search.page * search.pageSize
+
 
     return {
         vendors: filteredVendors.slice(start, end),

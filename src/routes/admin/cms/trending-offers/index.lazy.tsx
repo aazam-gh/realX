@@ -17,15 +17,18 @@ import {
     collection,
     query,
     where,
-    getDocs
+    getDocs,
+    limit,
 } from 'firebase/firestore'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import type { Vendor } from '@/queries'
 import type { TrendingOffersConfig } from '@/types/trending-offers'
+import { logAdminRead } from '@/lib/admin-read-logging'
 
 const MAX_SELECTED = 10
+const MAX_TRENDING_VENDOR_OPTIONS = 100
 
 export const Route = createLazyFileRoute('/admin/cms/trending-offers/')({
     component: TrendingOffersManagement,
@@ -59,11 +62,17 @@ function TrendingOffersManagement() {
 
             // 2. Fetch all vendors marked as trending
             const vendorsRef = collection(db, 'vendors')
-            const q = query(vendorsRef, where('isTrending', '==', true))
+            const q = query(vendorsRef, where('isTrending', '==', true), limit(MAX_TRENDING_VENDOR_OPTIONS))
             const querySnapshot = await getDocs(q)
             const vendors: Vendor[] = []
             querySnapshot.forEach((docSnap) => {
                 vendors.push({ id: docSnap.id, ...docSnap.data() } as Vendor)
+            })
+
+            logAdminRead('cms-trending-vendors', {
+                docsFetched: querySnapshot.size,
+                docsDisplayed: vendors.length,
+                maxOptions: MAX_TRENDING_VENDOR_OPTIONS,
             })
 
             setTrendingVendors(vendors)

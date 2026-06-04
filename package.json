@@ -3,8 +3,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --port 3000",
-    "build": "vite build && tsc --noEmit",
+    "dev": "vite --mode development --port 3000",
+    "dev:prod": "vite --mode production --port 3000",
+    "build": "npm run build:prod",
+    "build:dev": "vite build --mode development && tsc --noEmit",
+    "build:prod": "vite build --mode production && tsc --noEmit",
+    "deploy:dev": "npm run build:dev && firebase deploy --project dev",
+    "deploy:prod": "npm run build:prod && firebase deploy --project prod",
     "preview": "vite preview",
     "start": "vite",
     "check": "tsc --noEmit"

@@ -6,7 +6,11 @@
     "build:watch": "tsc --watch",
     "shell": "npm run build && firebase functions:shell",
     "start": "npm run shell",
-    "deploy": "firebase deploy --only functions",
+    "deploy": "npm run deploy:dev",
+    "deploy:dev": "firebase deploy --only functions --project dev",
+    "deploy:prod": "firebase deploy --only functions --project prod",
+    "refresh:dev:dry-run": "node scripts/sanitized-firestore-refresh.js --dry-run",
+    "refresh:dev": "node scripts/sanitized-firestore-refresh.js",
     "logs": "firebase functions:log"
   },
   "engines": {

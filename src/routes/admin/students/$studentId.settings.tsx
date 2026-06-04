@@ -25,6 +25,9 @@ import {
     DialogFooter,
 } from '@/components/ui/dialog'
 import { useState } from 'react'
+import { STALE_TIME } from '@/lib/constants'
+import { logAdminRead } from '@/lib/admin-read-logging'
+import { getCursorPage, resetFirestorePaginationCursors } from '@/lib/firestore-pagination'
 
 export interface Student {
     id: string
@@ -114,6 +117,8 @@ function StudentSettings() {
 
     const { data: student, isLoading: isStudentLoading, isError: isStudentError } = useQuery({
         queryKey: ['student', studentId],
+        initialData: () => queryClient.getQueryData<Student>(['student', studentId]),
+        staleTime: STALE_TIME.MEDIUM,
         queryFn: async () => {
             const docRef = doc(db, 'students', studentId)
             const snapshot = await getDoc(docRef)
@@ -143,19 +148,26 @@ function StudentSettings() {
             const countSnapshot = await getCountFromServer(qCount)
             const totalCount = countSnapshot.data().count
 
-            const q = query(
+            const pageResult = await getCursorPage(
                 collRef,
-                where('userId', '==', studentId),
-                orderBy('createdAt', 'desc'),
-                limit(page * pageSize)
+                [where('userId', '==', studentId), orderBy('createdAt', 'desc')],
+                page,
+                pageSize,
+                `student-redemptions:${studentId}`,
             )
-            const snapshot = await getDocs(q)
-            const startIdx = (page - 1) * pageSize
-            const endIdx = page * pageSize
-            const transactions = snapshot.docs.slice(startIdx, endIdx).map(doc => ({
+            const transactions = pageResult.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
             })) as Redemption[]
+
+            logAdminRead('student-redemptions-page', {
+                studentId,
+                page,
+                pageSize,
+                docsFetched: pageResult.docsFetched,
+                docsDisplayed: transactions.length,
+                totalCount,
+            })
 
             return { transactions, totalCount }
         }
@@ -184,6 +196,8 @@ function StudentSettings() {
             await deleteStudentUser({ uid: student?.uid || studentId })
         },
         onSuccess: () => {
+            resetFirestorePaginationCursors('students:')
+            resetFirestorePaginationCursors(`student-redemptions:${studentId}`)
             queryClient.invalidateQueries({ queryKey: ['students'] })
             navigate({ to: '/admin/students', search: { page: 1, pageSize: 10, search: '' } })
         },
