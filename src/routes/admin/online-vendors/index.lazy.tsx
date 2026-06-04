@@ -37,6 +37,7 @@ import { Switch } from '@/components/ui/switch'
 import { fetchVendorsPage } from '@/lib/vendor-directory'
 import type { Vendor } from '@/queries'
 import { refreshVendorList } from '@/lib/vendorList'
+import { resetFirestorePaginationCursors } from '@/lib/firestore-pagination'
 
 export const Route = createLazyFileRoute('/admin/online-vendors/')({
     component: RouteComponent,
@@ -92,6 +93,7 @@ function RouteComponent() {
             return result.data
         },
         onSuccess: () => {
+            resetFirestorePaginationCursors('vendors:')
             queryClient.invalidateQueries({ queryKey: ['vendors-page'] })
             setForm({ name: '', email: '', password: '' })
             setOpen(false)
@@ -109,6 +111,7 @@ function RouteComponent() {
             await updateDoc(vendorRef, { xcard })
         },
         onSuccess: () => {
+            resetFirestorePaginationCursors('vendors:')
             queryClient.invalidateQueries({ queryKey: ['vendors-page'] })
             void refreshVendorList()
         }
@@ -120,6 +123,7 @@ function RouteComponent() {
             await deleteVendorUser({ uid: vendorId })
         },
         onSuccess: () => {
+            resetFirestorePaginationCursors('vendors:')
             queryClient.invalidateQueries({ queryKey: ['vendors-page'] })
             setDeleteConfirmOpen(false)
             setVendorToDelete(null)

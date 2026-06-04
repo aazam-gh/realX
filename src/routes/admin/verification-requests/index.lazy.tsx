@@ -30,10 +30,12 @@ import { Label } from '@/components/ui/label'
 import { Eye, Loader2, CheckCircle2, XCircle, Copy, Check, Trash2 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { db, functions, storage } from '@/firebase/config'
-import { collection, getDocs, query, limit, orderBy, getCountFromServer, where } from 'firebase/firestore'
+import { collection, query, orderBy, getCountFromServer, where, type QueryConstraint } from 'firebase/firestore'
 import { ref, getDownloadURL } from 'firebase/storage'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { httpsCallable } from 'firebase/functions'
+import { logAdminRead } from '@/lib/admin-read-logging'
+import { getCursorPage, resetFirestorePaginationCursors } from '@/lib/firestore-pagination'
 
 export const Route = createLazyFileRoute('/admin/verification-requests/')({
     component: RouteComponent,
@@ -81,32 +83,32 @@ function RouteComponent() {
         queryKey: ['verification-requests', page, pageSize, statusFilter],
         queryFn: async () => {
             const collRef = collection(db, 'verification_requests')
-            const countQuery = statusFilter && statusFilter !== 'all'
-                ? query(collRef, where('status', '==', statusFilter))
+            const constraints: QueryConstraint[] = []
+            const countConstraints: QueryConstraint[] = []
+
+            if (statusFilter && statusFilter !== 'all') {
+                const statusConstraint = where('status', '==', statusFilter)
+                constraints.push(statusConstraint)
+                countConstraints.push(statusConstraint)
+            }
+
+            constraints.push(orderBy('submittedAt', 'desc'))
+
+            const countQuery = countConstraints.length
+                ? query(collRef, ...countConstraints)
                 : collRef
             const countSnapshot = await getCountFromServer(countQuery)
             const totalCount = countSnapshot.data().count
 
-            let q
-            if (statusFilter && statusFilter !== 'all') {
-                q = query(
-                    collRef,
-                    where('status', '==', statusFilter),
-                    orderBy('submittedAt', 'desc'),
-                    limit(page * pageSize)
-                )
-            } else {
-                q = query(
-                    collRef,
-                    orderBy('submittedAt', 'desc'),
-                    limit(page * pageSize)
-                )
-            }
+            const pageResult = await getCursorPage(
+                collRef,
+                constraints,
+                page,
+                pageSize,
+                `verification-requests:${statusFilter}`,
+            )
 
-            const snapshot = await getDocs(q)
-            const pageDocs = snapshot.docs.slice((page - 1) * pageSize)
-
-            const requests = pageDocs.map(docSnap => {
+            const requests = pageResult.docs.map(docSnap => {
                 const d = docSnap.data()
                 return {
                     id: docSnap.id,
@@ -121,6 +123,15 @@ function RouteComponent() {
                     status: d.status || 'pending',
                     submittedAt: d.submittedAt || null,
                 } as VerificationRequest
+            })
+
+            logAdminRead('verification-requests-page', {
+                page,
+                pageSize,
+                docsFetched: pageResult.docsFetched,
+                docsDisplayed: requests.length,
+                totalCount,
+                status: statusFilter,
             })
 
             return { requests, totalCount }
@@ -162,6 +173,7 @@ function RouteComponent() {
             return result.data as any
         },
         onSuccess: (data) => {
+            resetFirestorePaginationCursors('verification-requests:')
             queryClient.invalidateQueries({ queryKey: ['verification-requests'] })
             if (data?.creatorCode) {
                 setCreatorCodeResult(data.creatorCode)
@@ -189,6 +201,7 @@ function RouteComponent() {
             return result.data
         },
         onSuccess: () => {
+            resetFirestorePaginationCursors('verification-requests:')
             queryClient.invalidateQueries({ queryKey: ['verification-requests'] })
             setRejectOpen(false)
             setDetailOpen(false)
@@ -209,6 +222,7 @@ function RouteComponent() {
             return result.data
         },
         onSuccess: () => {
+            resetFirestorePaginationCursors('verification-requests:')
             queryClient.invalidateQueries({ queryKey: ['verification-requests'] })
             setDeleteOpen(false)
             setDetailOpen(false)

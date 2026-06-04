@@ -31,6 +31,7 @@ import { toast } from 'sonner'
 import { uploadImage } from '@/lib/upload'
 import { cn } from '@/lib/utils'
 import type { StudentEvent } from '@/types/events'
+import { logAdminRead } from '@/lib/admin-read-logging'
 
 export const Route = createLazyFileRoute('/admin/cms/events/')({
     component: EventsManagement,
@@ -118,6 +119,12 @@ function EventsManagement() {
                 id: docSnap.id,
                 ...docSnap.data(),
             })) as StudentEvent[]
+
+            logAdminRead('cms-events', {
+                docsFetched: snapshot.size,
+                docsDisplayed: nextEvents.length,
+                note: 'expected-small-managed-list',
+            })
 
             setEvents(nextEvents)
             setLastUpdated(nextEvents.reduce((latest, event) => event.updatedAt && event.updatedAt > latest ? event.updatedAt : latest, ''))

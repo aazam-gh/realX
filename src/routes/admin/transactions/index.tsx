@@ -2,11 +2,13 @@ import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
 import { db } from '@/firebase/config'
 import {
-    collection, getDocs, query, limit, orderBy, where,
-    getCountFromServer, startAfter,
+    collection, query, orderBy, where,
+    getCountFromServer,
     type QueryConstraint,
 } from 'firebase/firestore'
 import { formatTimestamp } from '@/lib/format-timestamp'
+import { logAdminRead } from '@/lib/admin-read-logging'
+import { getCursorPage } from '@/lib/firestore-pagination'
 
 const transactionsSearchSchema = z.object({
     pageSize: z.number().catch(10),
@@ -85,21 +87,15 @@ export async function fetchTransactions(page: number, pageSize: number, vendorNa
     const countSnap = await getCountFromServer(query(collRef, ...countConstraints))
     const totalCount = countSnap.data().count
 
-    // Cursor-based pagination
-    if (page > 1) {
-        // Fetch docs up to the end of previous page to get the cursor
-        const cursorConstraints = [...baseConstraints, limit((page - 1) * pageSize)]
-        const cursorSnap = await getDocs(query(collRef, ...cursorConstraints))
-        if (cursorSnap.docs.length > 0) {
-            const lastDoc = cursorSnap.docs[cursorSnap.docs.length - 1]
-            baseConstraints.push(startAfter(lastDoc))
-        }
-    }
+    const pageResult = await getCursorPage(
+        collRef,
+        baseConstraints,
+        page,
+        pageSize,
+        `transactions:${vendorName || 'all'}:${sort || 'date_desc'}`,
+    )
 
-    baseConstraints.push(limit(pageSize))
-    const snapshot = await getDocs(query(collRef, ...baseConstraints))
-
-    const transactions = snapshot.docs.map((docSnap) => {
+    const transactions = pageResult.docs.map((docSnap) => {
         const data = docSnap.data()
         const dateValue = formatTimestamp(data.createdAt)
 
@@ -114,6 +110,16 @@ export async function fetchTransactions(page: number, pageSize: number, vendorNa
             totalAmountNum: data.totalAmount || 0,
             type: data.type || 'N/A',
         } as Transaction
+    })
+
+    logAdminRead('transactions-page', {
+        page,
+        pageSize,
+        docsFetched: pageResult.docsFetched,
+        docsDisplayed: transactions.length,
+        totalCount,
+        vendorName: vendorName || null,
+        sort: sort || 'date_desc',
     })
 
     return { transactions, totalCount }

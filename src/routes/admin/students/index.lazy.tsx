@@ -18,7 +18,7 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { Search, Upload, Plus, ChevronRight, Loader2, CheckCircle2, Copy, Check } from 'lucide-react'
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import {
     Dialog,
     DialogContent,
@@ -29,11 +29,13 @@ import {
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { db, functions } from '@/firebase/config'
-import { collection, getDocs, query, limit, orderBy, getCountFromServer, startAfter, type DocumentSnapshot } from 'firebase/firestore'
+import { collection, orderBy, getCountFromServer } from 'firebase/firestore'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { httpsCallable } from 'firebase/functions'
 import { STALE_TIME } from '@/lib/constants'
 import type { StudentSearch } from './index'
+import { logAdminRead } from '@/lib/admin-read-logging'
+import { getCursorPage, resetFirestorePaginationCursors } from '@/lib/firestore-pagination'
 
 export const Route = createLazyFileRoute('/admin/students/')({
     component: RouteComponent,
@@ -54,7 +56,6 @@ interface Student {
 function RouteComponent() {
     const queryClient = useQueryClient()
     const { page, pageSize } = useSearch({ from: '/admin/students/' })
-    const cursorMap = useRef<Record<number, DocumentSnapshot>>({})
     const [open, setOpen] = useState(false)
     const [form, setForm] = useState({
         firstName: '',
@@ -76,36 +77,15 @@ function RouteComponent() {
             const countSnapshot = await getCountFromServer(collRef)
             const totalCount = countSnapshot.data().count
 
-            // Build query with cursor-based pagination
-            let q
-            const cursor = cursorMap.current[page]
+            const pageResult = await getCursorPage(
+                collRef,
+                [orderBy('firstName')],
+                page,
+                pageSize,
+                'students:firstName',
+            )
 
-            if (cursor) {
-                q = query(collRef, orderBy('firstName'), startAfter(cursor), limit(pageSize))
-            } else if (page === 1) {
-                q = query(collRef, orderBy('firstName'), limit(pageSize))
-            } else {
-                // Fallback: fetch up to the end of previous page to get cursor
-                const prevQuery = query(collRef, orderBy('firstName'), limit((page - 1) * pageSize))
-                const prevSnap = await getDocs(prevQuery)
-                if (prevSnap.docs.length > 0) {
-                    const lastDoc = prevSnap.docs[prevSnap.docs.length - 1]
-                    cursorMap.current[page] = lastDoc
-                    q = query(collRef, orderBy('firstName'), startAfter(lastDoc), limit(pageSize))
-                } else {
-                    q = query(collRef, orderBy('firstName'), limit(pageSize))
-                }
-            }
-
-            const snapshot = await getDocs(q)
-
-            // Store cursor for next page
-            if (snapshot.docs.length === pageSize) {
-                const lastDoc = snapshot.docs[snapshot.docs.length - 1]
-                cursorMap.current[page + 1] = lastDoc
-            }
-
-            const students = snapshot.docs.map((docSnap) => {
+            const students = pageResult.docs.map((docSnap) => {
                 const data = docSnap.data()
                 return {
                     id: docSnap.id,
@@ -119,6 +99,14 @@ function RouteComponent() {
                     profilePicture: data.profilePicture || '',
                     cashback: data.cashback || 0,
                 } as Student
+            })
+
+            logAdminRead('students-page', {
+                page,
+                pageSize,
+                docsFetched: pageResult.docsFetched,
+                docsDisplayed: students.length,
+                totalCount,
             })
 
             return { students, totalCount }
@@ -144,6 +132,7 @@ function RouteComponent() {
             return result.data as { uid?: string; creatorCode?: string; success?: boolean }
         },
         onSuccess: (data) => {
+            resetFirestorePaginationCursors('students:')
             queryClient.invalidateQueries({ queryKey: ['students'] })
             if (data?.creatorCode) {
                 setCreatorCodeResult(data.creatorCode)

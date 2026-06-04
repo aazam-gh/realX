@@ -4,13 +4,14 @@ import {
     collection,
     getCountFromServer,
     getDocs,
-    limit,
     orderBy,
     query,
     where,
     type QueryConstraint,
 } from 'firebase/firestore'
 import type { Vendor } from '@/queries'
+import { logAdminRead } from '@/lib/admin-read-logging'
+import { getCursorPage } from '@/lib/firestore-pagination'
 
 export const vendorsSearchSchema = z.object({
     page: z.coerce.number().int().min(1).catch(1),
@@ -50,17 +51,14 @@ export async function fetchVendorsPage(search: VendorsSearch, vendorScope: Vendo
     constraints.push(orderBy('name', search.sort === 'name-desc' ? 'desc' : 'asc'))
 
     const countQuery = query(collRef, ...constraints)
-    const pageLimit = search.page * search.pageSize
-    const pageQuery = query(collRef, ...constraints, limit(pageLimit))
+    const cursorKey = `vendors:${vendorScope}:${trimmedSearch}:${search.sort}:${search.xcard}`
 
-    const [countSnapshot, snapshot] = await Promise.all([
+    const [countSnapshot, pageResult] = await Promise.all([
         getCountFromServer(countQuery),
-        getDocs(pageQuery),
+        getCursorPage(collRef, constraints, search.page, search.pageSize, cursorKey),
     ])
 
-    const pageDocs = snapshot.docs.slice((search.page - 1) * search.pageSize, search.page * search.pageSize)
-
-    const vendors = pageDocs.map((docSnap) => {
+    const vendors = pageResult.docs.map((docSnap) => {
         const data = docSnap.data()
 
         return {
@@ -80,6 +78,18 @@ export async function fetchVendorsPage(search: VendorsSearch, vendorScope: Vendo
             lng: data.lng,
             offers: data.offers || [],
         } as Vendor
+    })
+
+    logAdminRead('vendors-page', {
+        scope: vendorScope,
+        page: search.page,
+        pageSize: search.pageSize,
+        docsFetched: pageResult.docsFetched,
+        docsDisplayed: vendors.length,
+        totalCount: countSnapshot.data().count,
+        hasSearch: !!trimmedSearch,
+        sort: search.sort,
+        xcard: search.xcard,
     })
 
     return {

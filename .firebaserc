@@ -1,5 +1,7 @@
 {
   "projects": {
-    "default": "reelx-backend"
+    "default": "realx-dev",
+    "dev": "realx-dev",
+    "prod": "reelx-backend"
   }
 }
