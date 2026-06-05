@@ -19,6 +19,7 @@ initializeApp();
 setGlobalOptions({maxInstances: 10});
 
 const REGION = "me-central1";
+const STORAGE_BUCKET = "reelx-backend";
 const WEBP_QUALITY = 80;
 const WEBP_CONVERTED_METADATA_KEY = "convertedToWebp";
 const PUBLIC_IMAGE_PATHS = [
@@ -38,6 +39,7 @@ const PUBLIC_IMAGE_PATHS = [
  */
 export const convertUploadedImageToWebp = onObjectFinalized(
   {
+    bucket: STORAGE_BUCKET,
     region: REGION,
     memory: "1GiB",
     timeoutSeconds: 120,
