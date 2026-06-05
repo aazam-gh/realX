@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/select'
 import { Search, Upload, Plus, ChevronRight, Loader2, CheckCircle2, Copy, Check } from 'lucide-react'
 
+
 import { useState} from 'react'
 
 
@@ -33,12 +34,16 @@ import {
 import { Label } from '@/components/ui/label'
 import { db, functions } from '@/firebase/config'
 
+
 import { collection, getDocs, query, orderBy } from 'firebase/firestore'
+
 
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { httpsCallable } from 'firebase/functions'
 import { STALE_TIME } from '@/lib/constants'
 import type { StudentSearch } from './index'
+import { logAdminRead } from '@/lib/admin-read-logging'
+import { getCursorPage, resetFirestorePaginationCursors } from '@/lib/firestore-pagination'
 
 import { resetFirestorePaginationCursors } from '@/lib/firestore-pagination'
 
@@ -61,9 +66,11 @@ interface Student {
 function RouteComponent() {
     const queryClient = useQueryClient()
 
+
     const { page, pageSize, search: searchQuery } = useSearch({ from: '/admin/students/' })
     const navigate = Route.useNavigate()
     const trimmedSearch = searchQuery.trim().toLowerCase()
+
 
 
     const [open, setOpen] = useState(false)
@@ -86,7 +93,9 @@ function RouteComponent() {
             const snapshot = await getDocs(query(collRef, orderBy('firstName', 'asc')))
 
 
+
             const allStudents = snapshot.docs.map((docSnap) => {
+
 
                 const data = docSnap.data()
                 return {
@@ -106,6 +115,7 @@ function RouteComponent() {
             })
 
 
+
             const filteredStudents = trimmedSearch
                 ? allStudents.filter((student) =>
                     (student.name ?? '').toLowerCase().includes(trimmedSearch)
@@ -119,6 +129,7 @@ function RouteComponent() {
                 students: filteredStudents.slice(start, end),
                 totalCount: filteredStudents.length,
             }
+
 
         },
         staleTime: STALE_TIME.MEDIUM,

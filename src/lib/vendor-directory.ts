@@ -30,6 +30,7 @@ export async function fetchVendorsPage(search: VendorsSearch, vendorScope: Vendo
     const collRef = collection(db, 'vendors')
     const trimmedSearch = search.search.trim().toLowerCase()
 
+
     const snapshot = await getDocs(query(
         collRef,
         orderBy('name', search.sort === 'name-desc' ? 'desc' : 'asc')
@@ -37,6 +38,7 @@ export async function fetchVendorsPage(search: VendorsSearch, vendorScope: Vendo
 
 
     const allVendors = snapshot.docs.map((docSnap) => {
+
 
         const data = docSnap.data()
 
@@ -60,6 +62,7 @@ export async function fetchVendorsPage(search: VendorsSearch, vendorScope: Vendo
     })
 
 
+
     const filteredVendors = allVendors.filter((vendor) => {
         const matchesScope = vendorScope === 'all' || vendor.vendorType === vendorScope
         const matchesSearch =
@@ -71,6 +74,7 @@ export async function fetchVendorsPage(search: VendorsSearch, vendorScope: Vendo
 
     const start = (search.page - 1) * search.pageSize
     const end = search.page * search.pageSize
+
 
 
     return {
