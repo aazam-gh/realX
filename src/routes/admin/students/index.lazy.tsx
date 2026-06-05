@@ -18,7 +18,7 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { Search, Upload, Plus, ChevronRight, Loader2, CheckCircle2, Copy, Check } from 'lucide-react'
-import { useState, useRef } from 'react'
+import { useState} from 'react'
 import {
     Dialog,
     DialogContent,
@@ -29,7 +29,7 @@ import {
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { db, functions } from '@/firebase/config'
-import { collection, getDocs, query, limit, orderBy, getCountFromServer, startAfter, where, type DocumentSnapshot, type QueryConstraint } from 'firebase/firestore'
+import { collection, getDocs, query, orderBy } from 'firebase/firestore'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { httpsCallable } from 'firebase/functions'
 import { STALE_TIME } from '@/lib/constants'
@@ -54,8 +54,9 @@ interface Student {
 function RouteComponent() {
     const queryClient = useQueryClient()
     const { page, pageSize, search: searchQuery } = useSearch({ from: '/admin/students/' })
+    const navigate = Route.useNavigate()
     const trimmedSearch = searchQuery.trim().toLowerCase()
-    const cursorMap = useRef<Record<number, DocumentSnapshot>>({})
+
     const [open, setOpen] = useState(false)
     const [form, setForm] = useState({
         firstName: '',
@@ -72,53 +73,18 @@ function RouteComponent() {
     const { data, isLoading: isQueryLoading } = useQuery({
         queryKey: ['students', page, pageSize, trimmedSearch],
         queryFn: async () => {
-            const constraints: QueryConstraint[] = []
-
-                if (trimmedSearch) {
-                constraints.push(where('firstName', '>=', trimmedSearch))
-                constraints.push(where('firstName', '<=', trimmedSearch + '\uf8ff'))
-            }
             const collRef = collection(db, 'students')
+            const snapshot = await getDocs(query(collRef, orderBy('firstName', 'asc')))
 
-            const countSnapshot = await getCountFromServer(query(collRef, ...constraints))
-            const totalCount = countSnapshot.data().count
-
-            // Build query with cursor-based pagination
-            let q
-            const cursor = cursorMap.current[page]
-
-            if (cursor) {
-                q = query(collRef, ...constraints, orderBy('firstName'), startAfter(cursor), limit(pageSize))
-            } else if (page === 1) {
-                q = query(collRef, ...constraints, orderBy('firstName'), limit(pageSize))
-            } else {
-                // Fallback: fetch up to the end of previous page to get cursor
-                const prevQuery = query(collRef, ...constraints, orderBy('firstName'), limit((page - 1) * pageSize))
-                const prevSnap = await getDocs(prevQuery)
-                if (prevSnap.docs.length > 0) {
-                    const lastDoc = prevSnap.docs[prevSnap.docs.length - 1]
-                    cursorMap.current[page] = lastDoc
-                    q = query(collRef, orderBy('firstName'), startAfter(lastDoc), limit(pageSize))
-                } else {
-                    q = query(collRef, orderBy('firstName'), limit(pageSize))
-                }
-            }
-
-            const snapshot = await getDocs(q)
-
-            // Store cursor for next page
-            if (snapshot.docs.length === pageSize) {
-                const lastDoc = snapshot.docs[snapshot.docs.length - 1]
-                cursorMap.current[page + 1] = lastDoc
-            }
-
-            const students = snapshot.docs.map((docSnap) => {
+            const allStudents = snapshot.docs.map((docSnap) => {
                 const data = docSnap.data()
                 return {
                     id: docSnap.id,
                     firstName: data.firstName || '',
                     lastName: data.lastName || '',
-                    name: (data.firstName || data.lastName) ? `${data.firstName || ''} ${data.lastName || ''}`.trim() : (data.name || 'Unnamed Student'),
+                    name: (data.firstName || data.lastName)
+                        ? `${data.firstName || ''} ${data.lastName || ''}`.trim()
+                        : (data.name || 'Unnamed Student'),
                     contact: data.email || data.phoneNumber || 'No contact',
                     isVerified: !!data.isVerified,
                     role: data.role || 'student',
@@ -128,7 +94,19 @@ function RouteComponent() {
                 } as Student
             })
 
-            return { students, totalCount }
+            const filteredStudents = trimmedSearch
+                ? allStudents.filter((student) =>
+                    (student.name ?? '').toLowerCase().includes(trimmedSearch)
+                )
+                : allStudents
+
+            const start = (page - 1) * pageSize
+            const end = page * pageSize
+
+            return {
+                students: filteredStudents.slice(start, end),
+                totalCount: filteredStudents.length,
+            }
         },
         staleTime: STALE_TIME.MEDIUM,
     })
@@ -195,6 +173,16 @@ function RouteComponent() {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                         placeholder="Search for students"
+                        value={searchQuery}
+                        onChange={(e) => {
+                            navigate({
+                                search: {
+                                    page: 1,
+                                    pageSize,
+                                    search: e.target.value,
+                                },
+                            })
+                        }}
                         className="pl-9 bg-muted/50 border-none h-10"
                     />
                 </div>
