@@ -32,14 +32,15 @@ export function compressImage(file: File, maxWidth: number, quality: number): Pr
 export async function uploadImage(
     path: string,
     file: File,
-    options?: { maxWidth?: number; quality?: number }
+    options?: { maxWidth?: number; quality?: number; cacheControl?: string }
 ): Promise<string> {
-    const { maxWidth = 1920, quality = 0.8 } = options ?? {}
+    const { maxWidth = 1920, quality = 0.8, cacheControl } = options ?? {}
     const compressed = await compressImage(file, maxWidth, quality)
 
     const storageRef = ref(storage, path.replace(/\.[^.]+$/, '.webp'))
     const uploadTask = uploadBytesResumable(storageRef, compressed, {
         contentType: 'image/webp',
+        ...(cacheControl ? { cacheControl } : {}),
     })
 
     return new Promise<string>((resolve, reject) => {

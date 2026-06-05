@@ -81,6 +81,7 @@ export interface SavedItem {
 const studentSettingsSearchSchema = z.object({
     page: z.number().catch(1),
     pageSize: z.number().catch(10),
+    search: z.string().catch(''),
 })
 
 export const Route = createFileRoute('/admin/students/$studentId/settings')({
@@ -198,7 +199,7 @@ function StudentSettings() {
             resetFirestorePaginationCursors('students:')
             resetFirestorePaginationCursors(`student-redemptions:${studentId}`)
             queryClient.invalidateQueries({ queryKey: ['students'] })
-            navigate({ to: '/admin/students', search: { page: 1, pageSize: 10 } })
+            navigate({ to: '/admin/students', search: { page: 1, pageSize: 10, search: '' } })
         },
         onError: (error) => {
             console.error('Error deleting student: ', error)
@@ -225,7 +226,7 @@ function StudentSettings() {
                 <h2 className="text-xl font-bold">Student Not Found</h2>
                 <p className="text-muted-foreground">The student you are looking for does not exist or has been deleted.</p>
                 <button
-                    onClick={() => navigate({ to: '/admin/students', search: { page: 1, pageSize: 10 } })}
+                    onClick={() => navigate({ to: '/admin/students', search: { page: 1, pageSize: 10, search: '' } })}
                     className="mt-4 px-4 py-2 bg-brand-green text-white rounded-md font-medium"
                 >
                     Back to Students
@@ -246,7 +247,7 @@ function StudentSettings() {
             <div className="flex items-center gap-4">
                 <Link
                     to="/admin/students"
-                    search={{ page: 1, pageSize: 10 }}
+                    search={{ page: 1, pageSize: 10, search: '' }}
                     className="p-2 -ml-2 rounded-full hover:bg-muted transition-colors group"
                 >
                     <ArrowLeft className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />

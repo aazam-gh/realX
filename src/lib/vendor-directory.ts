@@ -7,6 +7,8 @@ import {
     orderBy,
     query,
     where,
+    type DocumentData,
+    type QueryDocumentSnapshot,
     type QueryConstraint,
 } from 'firebase/firestore'
 import type { Vendor } from '@/queries'
@@ -29,6 +31,45 @@ export interface VendorsPageResult {
     totalCount: number
 }
 
+function mapVendor(docSnap: QueryDocumentSnapshot<DocumentData>): Vendor {
+    const data = docSnap.data()
+
+    return {
+        id: docSnap.id,
+        name: data.name || 'Unnamed Vendor',
+        contact: data.contact || data.email || '',
+        pin: data.pin || '----',
+        profilePicture: data.profilePicture || '',
+        vendorType: data.vendorType || 'in_store',
+        xcard: !!data.xcard,
+        mainCategory: data.mainCategory,
+        subcategory: data.subcategory,
+        isTrending: data.isTrending,
+        latitude: data.latitude,
+        longitude: data.longitude,
+        lat: data.lat,
+        lng: data.lng,
+        offers: data.offers || [],
+    } as Vendor
+}
+
+function vendorMatchesSearch(docSnap: QueryDocumentSnapshot<DocumentData>, searchTerm: string): boolean {
+    const data = docSnap.data()
+    const searchableValues = [
+        data.name,
+        data.nameAr,
+        data.contact,
+        data.email,
+        data.pin,
+        data.mainCategory,
+        ...(Array.isArray(data.subcategory) ? data.subcategory : []),
+    ]
+
+    return searchableValues.some((value) => (
+        typeof value === 'string' && value.toLowerCase().includes(searchTerm)
+    ))
+}
+
 export async function fetchVendorsPage(search: VendorsSearch, vendorScope: VendorScope): Promise<VendorsPageResult> {
     const collRef = collection(db, 'vendors')
     const trimmedSearch = search.search.trim().toLowerCase()
@@ -36,10 +77,6 @@ export async function fetchVendorsPage(search: VendorsSearch, vendorScope: Vendo
 
     if (vendorScope !== 'all') {
         constraints.push(where('vendorType', '==', vendorScope))
-    }
-
-    if (trimmedSearch) {
-        constraints.push(where('searchTokens', 'array-contains', trimmedSearch))
     }
 
     if (search.xcard === 'enabled') {
@@ -50,6 +87,17 @@ export async function fetchVendorsPage(search: VendorsSearch, vendorScope: Vendo
 
     constraints.push(orderBy('name', search.sort === 'name-desc' ? 'desc' : 'asc'))
 
+    if (trimmedSearch) {
+        const snapshot = await getDocs(query(collRef, ...constraints))
+        const matchedDocs = snapshot.docs.filter((docSnap) => vendorMatchesSearch(docSnap, trimmedSearch))
+        const pageDocs = matchedDocs.slice((search.page - 1) * search.pageSize, search.page * search.pageSize)
+
+        return {
+            vendors: pageDocs.map(mapVendor),
+            totalCount: matchedDocs.length,
+        }
+    }
+
     const countQuery = query(collRef, ...constraints)
     const cursorKey = `vendors:${vendorScope}:${trimmedSearch}:${search.sort}:${search.xcard}`
 
@@ -57,28 +105,7 @@ export async function fetchVendorsPage(search: VendorsSearch, vendorScope: Vendo
         getCountFromServer(countQuery),
         getCursorPage(collRef, constraints, search.page, search.pageSize, cursorKey),
     ])
-
-    const vendors = pageResult.docs.map((docSnap) => {
-        const data = docSnap.data()
-
-        return {
-            id: docSnap.id,
-            name: data.name || 'Unnamed Vendor',
-            contact: data.contact || '',
-            pin: data.pin || '----',
-            profilePicture: data.profilePicture || '',
-            vendorType: data.vendorType || 'in_store',
-            xcard: !!data.xcard,
-            mainCategory: data.mainCategory,
-            subcategory: data.subcategory,
-            isTrending: data.isTrending,
-            latitude: data.latitude,
-            longitude: data.longitude,
-            lat: data.lat,
-            lng: data.lng,
-            offers: data.offers || [],
-        } as Vendor
-    })
+    const vendors = pageResult.docs.map(mapVendor)
 
     logAdminRead('vendors-page', {
         scope: vendorScope,
@@ -103,25 +130,5 @@ export async function fetchAllVendors(): Promise<Vendor[]> {
     const q = query(collRef, orderBy('name', 'asc'))
     const snapshot = await getDocs(q)
 
-    return snapshot.docs.map((docSnap) => {
-        const data = docSnap.data()
-
-        return {
-            id: docSnap.id,
-            name: data.name || 'Unnamed Vendor',
-            contact: data.contact || '',
-            pin: data.pin || '----',
-            profilePicture: data.profilePicture || '',
-            vendorType: data.vendorType || 'in_store',
-            xcard: !!data.xcard,
-            mainCategory: data.mainCategory,
-            subcategory: data.subcategory,
-            isTrending: data.isTrending,
-            latitude: data.latitude,
-            longitude: data.longitude,
-            lat: data.lat,
-            lng: data.lng,
-            offers: data.offers || [],
-        } as Vendor
-    })
+    return snapshot.docs.map(mapVendor)
 }

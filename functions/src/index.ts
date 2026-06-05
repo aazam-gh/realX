@@ -1,6 +1,7 @@
 import {setGlobalOptions} from "firebase-functions";
 import {onCall, HttpsError, CallableRequest} from "firebase-functions/v2/https";
 import {onDocumentWritten} from "firebase-functions/v2/firestore";
+import {onObjectFinalized} from "firebase-functions/v2/storage";
 import * as logger from "firebase-functions/logger";
 
 import {initializeApp} from "firebase-admin/app";
@@ -10,6 +11,7 @@ import {getStorage} from "firebase-admin/storage";
 import {Expo} from "expo-server-sdk";
 import {Resend} from "resend";
 import {geohashForLocation} from "geofire-common";
+import sharp from "sharp";
 
 // Init Admin SDK
 initializeApp();
@@ -17,6 +19,109 @@ initializeApp();
 setGlobalOptions({maxInstances: 10});
 
 const REGION = "me-central1";
+const STORAGE_BUCKET = "reelx-backend";
+const WEBP_QUALITY = 80;
+const WEBP_CONVERTED_METADATA_KEY = "convertedToWebp";
+const PUBLIC_IMAGE_PATHS = [
+  /^banners\//,
+  /^trending-offer-banners\//,
+  /^vendors\/[^/]+\/branding\//,
+  /^vendors\/[^/]+\/gallery\//,
+  /^categories\//,
+  /^brands\//,
+  /^universities\//,
+  /^events\//,
+  /^featured-brand-showcase\//,
+];
+
+/**
+ * Convert newly uploaded public media images to WebP in place.
+ * Existing object paths and Firebase download tokens remain unchanged.
+ */
+export const convertUploadedImageToWebp = onObjectFinalized(
+  {
+    bucket: STORAGE_BUCKET,
+    region: REGION,
+    memory: "1GiB",
+    timeoutSeconds: 120,
+  },
+  async (event) => {
+    const object = event.data;
+    const filePath = object.name;
+    const contentType = object.contentType;
+    const customMetadata = object.metadata || {};
+
+    if (!filePath) {
+      logger.info("Skipping image conversion: object has no path");
+      return;
+    }
+
+    if (!PUBLIC_IMAGE_PATHS.some((pattern) => pattern.test(filePath))) {
+      logger.info("Skipping image conversion: path is not public media", {
+        filePath,
+      });
+      return;
+    }
+
+    if (
+      contentType === "image/webp" ||
+      customMetadata[WEBP_CONVERTED_METADATA_KEY] === "true"
+    ) {
+      logger.info("Skipping image conversion: object is already WebP", {
+        filePath,
+      });
+      return;
+    }
+
+    if (contentType !== "image/jpeg" && contentType !== "image/png") {
+      logger.info("Skipping image conversion: unsupported content type", {
+        filePath,
+        contentType,
+      });
+      return;
+    }
+
+    const bucket = getStorage().bucket(object.bucket);
+    const sourceFile = bucket.file(filePath, {generation: object.generation});
+    const destinationFile = bucket.file(filePath);
+
+    try {
+      const [source] = await sourceFile.download();
+      const converted = await sharp(source)
+        .webp({quality: WEBP_QUALITY})
+        .toBuffer();
+
+      await destinationFile.save(converted, {
+        resumable: false,
+        preconditionOpts: {ifGenerationMatch: object.generation},
+        metadata: {
+          cacheControl: object.cacheControl,
+          contentDisposition: object.contentDisposition,
+          contentEncoding: object.contentEncoding,
+          contentLanguage: object.contentLanguage,
+          contentType: "image/webp",
+          metadata: {
+            ...customMetadata,
+            [WEBP_CONVERTED_METADATA_KEY]: "true",
+          },
+        },
+      });
+
+      logger.info("Converted uploaded image to WebP", {
+        filePath,
+        originalBytes: source.length,
+        convertedBytes: converted.length,
+        savedBytes: source.length - converted.length,
+      });
+    } catch (error) {
+      logger.error("Failed to convert uploaded image to WebP", {
+        filePath,
+        contentType,
+        error,
+      });
+    }
+  },
+);
 
 // Fields to include in the maps/locations cache document
 interface VendorMapEntry {
@@ -524,6 +629,15 @@ export const deleteVendorUser = onCall(
 
     // 5️⃣ Delete vendor Firestore document
     await db.collection("vendors").doc(uid).delete();
+
+    // 6️⃣ Delete vendor gallery images
+    try {
+      await getStorage().bucket().deleteFiles({
+        prefix: `vendors/${uid}/gallery/`,
+      });
+    } catch (error) {
+      logger.error("Error deleting vendor gallery images", {uid, error});
+    }
 
     logger.info("Vendor deleted", {
       vendorId: uid,

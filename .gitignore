@@ -38,3 +38,6 @@ setAdmin.cjs
 package-lock.json
 src/routeTree.gen.ts
 scripts/
+!functions/scripts/
+functions/scripts/*
+!functions/scripts/backfill-webp-images.js

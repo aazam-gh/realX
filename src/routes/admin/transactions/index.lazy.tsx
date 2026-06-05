@@ -242,7 +242,7 @@ function RouteComponent() {
                                                 <Link
                                                     to="/admin/students/$studentId/settings"
                                                     params={{ studentId: tx.userId }}
-                                                    search={{ page: 1, pageSize: 10 }}
+                                                    search={{ page: 1, pageSize: 10, search: '' }}
                                                     className="text-sm font-bold text-blue-600 hover:underline"
                                                     onClick={(e) => e.stopPropagation()}
                                                 >

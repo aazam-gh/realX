@@ -8,6 +8,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Loader2, Save } from 'lucide-react'
 import { refreshVendorList } from '@/lib/vendorList'
+import { deleteGalleryImages, getRemovedGalleryImages } from '@/lib/vendor-gallery'
 import { vendorQueryOptions, type OnlineRedemptionConfig, type Vendor } from '@/queries'
 
 export const Route = createFileRoute('/admin/online-vendors/$vendorId/settings/branding')({
@@ -24,6 +25,7 @@ function OnlineVendorBrandingSettingsComponent() {
     const { vendorId } = Route.useParams()
     const queryClient = useQueryClient()
     const [formData, setFormData] = useState<Vendor | null>(null)
+    const [uploadingImages, setUploadingImages] = useState(false)
     const [onlineConfig, setOnlineConfig] = useState<OnlineRedemptionConfig>({
         discountCode: '',
         purchaseUrl: '',
@@ -112,7 +114,8 @@ function OnlineVendorBrandingSettingsComponent() {
             })
             return { previousVendor }
         },
-        onSuccess: () => {
+        onSuccess: (_data, { vendorData }) => {
+            void deleteGalleryImages(getRemovedGalleryImages(vendor?.galleryImages, vendorData.galleryImages))
             void refreshVendorList()
             toast.success('Settings updated successfully!', {
                 description: 'The vendor information has been synchronized with the database.',
@@ -138,6 +141,12 @@ function OnlineVendorBrandingSettingsComponent() {
         }
     }
 
+    const handleReset = () => {
+        if (!formData || !vendor || uploadingImages) return
+        void deleteGalleryImages(getRemovedGalleryImages(formData.galleryImages, vendor.galleryImages))
+        setFormData(vendor)
+    }
+
     if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
@@ -157,16 +166,18 @@ function OnlineVendorBrandingSettingsComponent() {
                     vendorId={vendorId}
                     onlineConfig={onlineConfig}
                     setOnlineConfig={setOnlineConfig}
+                    savedGalleryImages={vendor.galleryImages}
+                    onUploadingChange={setUploadingImages}
                     showOnlineBrandOfferFields
                 />
             )}
 
             <div className="flex justify-end gap-4 pt-4 border-t">
-                <Button variant="outline" onClick={() => setFormData(vendor)}>Reset Changes</Button>
+                <Button variant="outline" onClick={handleReset} disabled={uploadingImages}>Reset Changes</Button>
                 <Button
                     className="bg-brand-green hover:bg-brand-green/90 text-white gap-2"
                     onClick={handleSave}
-                    disabled={updateMutation.isPending}
+                    disabled={updateMutation.isPending || uploadingImages}
                 >
                     {updateMutation.isPending ? (
                         <>
