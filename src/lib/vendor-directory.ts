@@ -7,7 +7,6 @@ import {
     query,
 } from 'firebase/firestore'
 import type { Vendor } from '@/queries'
-import { logAdminRead } from '@/lib/admin-read-logging'
 
 
 export const vendorsSearchSchema = z.object({
