@@ -57,6 +57,7 @@ function RouteComponent() {
     const queryClient = useQueryClient()
     const navigate = useNavigate({ from: '/admin/students/' })
     const { page, pageSize, search: searchQuery } = useSearch({ from: '/admin/students/' })
+    const navigate = Route.useNavigate()
     const trimmedSearch = searchQuery.trim().toLowerCase()
     const [searchInput, setSearchInput] = useState(searchQuery)
     const [open, setOpen] = useState(false)
@@ -86,7 +87,9 @@ function RouteComponent() {
                     id: docSnap.id,
                     firstName: data.firstName || '',
                     lastName: data.lastName || '',
-                    name: (data.firstName || data.lastName) ? `${data.firstName || ''} ${data.lastName || ''}`.trim() : (data.name || 'Unnamed Student'),
+                    name: (data.firstName || data.lastName)
+                        ? `${data.firstName || ''} ${data.lastName || ''}`.trim()
+                        : (data.name || 'Unnamed Student'),
                     contact: data.email || data.phoneNumber || 'No contact',
                     isVerified: !!data.isVerified,
                     role: data.role || 'student',
@@ -135,7 +138,23 @@ function RouteComponent() {
                 totalCount,
             })
 
-            return { students, totalCount }
+
+
+            const filteredStudents = trimmedSearch
+                ? allStudents.filter((student) =>
+                    (student.name ?? '').toLowerCase().includes(trimmedSearch)
+                )
+                : allStudents
+
+            const start = (page - 1) * pageSize
+            const end = page * pageSize
+
+            return {
+                students: filteredStudents.slice(start, end),
+                totalCount: filteredStudents.length,
+            }
+
+
         },
         staleTime: STALE_TIME.MEDIUM,
     })
@@ -213,6 +232,16 @@ function RouteComponent() {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                         placeholder="Search for students"
+                        value={searchQuery}
+                        onChange={(e) => {
+                            navigate({
+                                search: {
+                                    page: 1,
+                                    pageSize,
+                                    search: e.target.value,
+                                },
+                            })
+                        }}
                         className="pl-9 bg-muted/50 border-none h-10"
                         value={searchInput}
                         onChange={(event) => setSearchInput(event.target.value)}

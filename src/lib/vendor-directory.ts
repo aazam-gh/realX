@@ -2,7 +2,6 @@ import { z } from 'zod'
 import { db } from '@/firebase/config'
 import {
     collection,
-    getCountFromServer,
     getDocs,
     orderBy,
     query,
@@ -85,7 +84,10 @@ export async function fetchVendorsPage(search: VendorsSearch, vendorScope: Vendo
         constraints.push(where('xcard', '==', false))
     }
 
-    constraints.push(orderBy('name', search.sort === 'name-desc' ? 'desc' : 'asc'))
+    const snapshot = await getDocs(query(
+        collRef,
+        orderBy('name', search.sort === 'name-desc' ? 'desc' : 'asc')
+    ))
 
     if (trimmedSearch) {
         const snapshot = await getDocs(query(collRef, ...constraints))
@@ -119,9 +121,25 @@ export async function fetchVendorsPage(search: VendorsSearch, vendorScope: Vendo
         xcard: search.xcard,
     })
 
+
+
+    const filteredVendors = allVendors.filter((vendor) => {
+        const matchesScope = vendorScope === 'all' || vendor.vendorType === vendorScope
+        const matchesSearch =
+            !trimmedSearch ||
+            (vendor.name ?? '').toLowerCase().includes(trimmedSearch)
+
+        return matchesScope && matchesSearch
+    })
+
+    const start = (search.page - 1) * search.pageSize
+    const end = search.page * search.pageSize
+
+
+
     return {
-        vendors,
-        totalCount: countSnapshot.data().count,
+        vendors: filteredVendors.slice(start, end),
+        totalCount: filteredVendors.length,
     }
 }
 
