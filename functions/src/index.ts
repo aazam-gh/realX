@@ -26,6 +26,7 @@ const PUBLIC_IMAGE_PATHS = [
   /^banners\//,
   /^trending-offer-banners\//,
   /^vendors\/[^/]+\/branding\//,
+  /^vendors\/[^/]+\/gallery\//,
   /^categories\//,
   /^brands\//,
   /^universities\//,
@@ -476,6 +477,15 @@ export const deleteVendorUser = onCall(
 
     // 5️⃣ Delete vendor Firestore document
     await db.collection("vendors").doc(uid).delete();
+
+    // 6️⃣ Delete vendor gallery images
+    try {
+      await getStorage().bucket().deleteFiles({
+        prefix: `vendors/${uid}/gallery/`,
+      });
+    } catch (error) {
+      logger.error("Error deleting vendor gallery images", {uid, error});
+    }
 
     logger.info("Vendor deleted", {
       vendorId: uid,

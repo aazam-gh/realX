@@ -3,12 +3,14 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Upload, Loader2, CreditCard, X, Tag, Plus, TrendingUp } from "lucide-react"
+import { Upload, Loader2, CreditCard, X, Tag, Plus, TrendingUp, ArrowLeft, ArrowRight, Trash2 } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
-import { useState, useRef } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useQuery } from "@tanstack/react-query"
+import { toast } from "sonner"
 import { categoriesQueryOptions, type OnlineRedemptionConfig, type Vendor } from "@/queries"
 import { uploadImage } from "@/lib/upload"
+import { deleteGalleryImages, VENDOR_GALLERY_LIMIT } from "@/lib/vendor-gallery"
 
 interface BrandingSettingsProps {
     formData: Vendor
@@ -16,6 +18,8 @@ interface BrandingSettingsProps {
     vendorId: string
     onlineConfig: OnlineRedemptionConfig
     setOnlineConfig: (val: OnlineRedemptionConfig) => void
+    savedGalleryImages?: string[]
+    onUploadingChange?: (uploading: boolean) => void
     showOnlineBrandOfferFields?: boolean
 }
 
@@ -25,15 +29,24 @@ export function BrandingSettings({
     vendorId,
     onlineConfig,
     setOnlineConfig,
+    savedGalleryImages = [],
+    onUploadingChange,
     showOnlineBrandOfferFields = false,
 }: BrandingSettingsProps) {
     const [uploadingProfile, setUploadingProfile] = useState(false)
     const [uploadingCover, setUploadingCover] = useState(false)
+    const [uploadingGallery, setUploadingGallery] = useState(false)
+    const [galleryUploadProgress, setGalleryUploadProgress] = useState({ completed: 0, total: 0 })
     const profileInputRef = useRef<HTMLInputElement>(null)
     const coverInputRef = useRef<HTMLInputElement>(null)
+    const galleryInputRef = useRef<HTMLInputElement>(null)
     const [tokenInput, setTokenInput] = useState("")
 
     const { data: categories = [] } = useQuery(categoriesQueryOptions())
+
+    useEffect(() => {
+        onUploadingChange?.(uploadingProfile || uploadingCover || uploadingGallery)
+    }, [onUploadingChange, uploadingCover, uploadingGallery, uploadingProfile])
 
     const selectedCategory = categories.find(c => c.nameEnglish === formData.mainCategory)
     const availableSubcategories = selectedCategory?.subcategories || []
@@ -60,6 +73,87 @@ export function BrandingSettings({
         } finally {
             if (isProfile) setUploadingProfile(false)
             else setUploadingCover(false)
+        }
+    }
+
+    const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const selectedFiles = Array.from(e.target.files || [])
+        e.target.value = ''
+
+        const galleryImages = formData.galleryImages || []
+        const remainingSlots = VENDOR_GALLERY_LIMIT - galleryImages.length
+        if (remainingSlots <= 0) {
+            toast.error(`A vendor gallery can contain up to ${VENDOR_GALLERY_LIMIT} images.`)
+            return
+        }
+
+        const files = selectedFiles.slice(0, remainingSlots)
+        if (selectedFiles.length > remainingSlots) {
+            toast.warning(`Only ${remainingSlots} image${remainingSlots === 1 ? '' : 's'} uploaded to stay within the ${VENDOR_GALLERY_LIMIT}-image limit.`)
+        }
+        if (files.length === 0) return
+
+        setUploadingGallery(true)
+        setGalleryUploadProgress({ completed: 0, total: files.length })
+        const uploadedImages: string[] = []
+        let failedUploads = 0
+
+        for (const [index, file] of files.entries()) {
+            try {
+                const uniqueName = `${Date.now()}_${index}_${crypto.randomUUID()}_${file.name}`
+                const downloadURL = await uploadImage(
+                    `vendors/${vendorId}/gallery/${uniqueName}`,
+                    file,
+                    {
+                        maxWidth: 1920,
+                        quality: 0.8,
+                        cacheControl: 'public,max-age=31536000,immutable',
+                    },
+                )
+                uploadedImages.push(downloadURL)
+            } catch (error) {
+                failedUploads += 1
+                console.error('Gallery upload failed:', error)
+            } finally {
+                setGalleryUploadProgress((current) => ({
+                    ...current,
+                    completed: current.completed + 1,
+                }))
+            }
+        }
+
+        if (uploadedImages.length > 0) {
+            setFormData({
+                ...formData,
+                galleryImages: [...galleryImages, ...uploadedImages],
+            })
+            toast.success(`${uploadedImages.length} gallery image${uploadedImages.length === 1 ? '' : 's'} uploaded. Save settings to publish.`)
+        }
+        if (failedUploads > 0) {
+            toast.error(`${failedUploads} gallery image${failedUploads === 1 ? '' : 's'} failed to upload.`)
+        }
+        setUploadingGallery(false)
+        setGalleryUploadProgress({ completed: 0, total: 0 })
+    }
+
+    const moveGalleryImage = (index: number, direction: -1 | 1) => {
+        const galleryImages = [...(formData.galleryImages || [])]
+        const targetIndex = index + direction
+        if (targetIndex < 0 || targetIndex >= galleryImages.length) return
+
+        const current = galleryImages[index]
+        galleryImages[index] = galleryImages[targetIndex]
+        galleryImages[targetIndex] = current
+        setFormData({ ...formData, galleryImages })
+    }
+
+    const removeGalleryImage = (imageUrl: string) => {
+        setFormData({
+            ...formData,
+            galleryImages: (formData.galleryImages || []).filter((current) => current !== imageUrl),
+        })
+        if (!savedGalleryImages.includes(imageUrl)) {
+            void deleteGalleryImages([imageUrl])
         }
     }
 
@@ -146,6 +240,99 @@ export function BrandingSettings({
                         </Button>
                     </div>
                 </div>
+            </div>
+
+            <div className="space-y-4 border-t border-slate-100 pt-8">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                        <Label className="text-base font-semibold text-slate-700">Vendor Gallery</Label>
+                        <p className="mt-1 text-sm text-slate-500">
+                            Menu, food, and ambience photos. {(formData.galleryImages || []).length}/{VENDOR_GALLERY_LIMIT} images.
+                        </p>
+                    </div>
+                    <input
+                        type="file"
+                        ref={galleryInputRef}
+                        className="hidden"
+                        accept="image/*"
+                        multiple
+                        onChange={handleGalleryUpload}
+                    />
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        className="gap-2 rounded-xl"
+                        onClick={() => galleryInputRef.current?.click()}
+                        disabled={uploadingGallery || (formData.galleryImages || []).length >= VENDOR_GALLERY_LIMIT}
+                    >
+                        {uploadingGallery ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                        {uploadingGallery
+                            ? `Uploading ${galleryUploadProgress.completed}/${galleryUploadProgress.total}`
+                            : 'Upload Images'}
+                    </Button>
+                </div>
+
+                {(formData.galleryImages || []).length > 0 ? (
+                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                        {(formData.galleryImages || []).map((imageUrl, index) => (
+                            <div key={imageUrl} className="overflow-hidden rounded-2xl border border-slate-100 bg-slate-50">
+                                <img
+                                    src={imageUrl}
+                                    alt={`Vendor gallery ${index + 1}`}
+                                    className="aspect-[4/3] w-full object-cover"
+                                    loading="lazy"
+                                />
+                                <div className="flex items-center justify-between gap-1 p-2">
+                                    <span className="px-1 text-xs font-semibold text-slate-500">{index + 1}</span>
+                                    <div className="flex items-center gap-1">
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8"
+                                            onClick={() => moveGalleryImage(index, -1)}
+                                            disabled={index === 0}
+                                            aria-label="Move image left"
+                                        >
+                                            <ArrowLeft className="h-4 w-4" />
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8"
+                                            onClick={() => moveGalleryImage(index, 1)}
+                                            disabled={index === (formData.galleryImages || []).length - 1}
+                                            aria-label="Move image right"
+                                        >
+                                            <ArrowRight className="h-4 w-4" />
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8 text-red-500 hover:bg-red-50 hover:text-red-600"
+                                            onClick={() => removeGalleryImage(imageUrl)}
+                                            aria-label="Remove image"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <button
+                        type="button"
+                        onClick={() => galleryInputRef.current?.click()}
+                        disabled={uploadingGallery}
+                        className="flex min-h-32 w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-200 bg-slate-50 text-sm text-slate-500 transition-colors hover:border-slate-300 hover:bg-slate-100 disabled:opacity-50"
+                    >
+                        <Upload className="h-6 w-6 text-slate-400" />
+                        Upload vendor gallery images
+                    </button>
+                )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">

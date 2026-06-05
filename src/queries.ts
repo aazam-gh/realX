@@ -45,6 +45,7 @@ export interface Vendor {
     pin?: string
     profilePicture?: string
     coverImage?: string
+    galleryImages?: string[]
     isFeatured?: boolean
     tagsEn?: string[]
     tagsAr?: string[]
