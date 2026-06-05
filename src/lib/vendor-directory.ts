@@ -2,13 +2,9 @@ import { z } from 'zod'
 import { db } from '@/firebase/config'
 import {
     collection,
-    getCountFromServer,
     getDocs,
-    limit,
     orderBy,
     query,
-    where,
-    type QueryConstraint,
 } from 'firebase/firestore'
 import type { Vendor } from '@/queries'
 
@@ -31,48 +27,24 @@ export interface VendorsPageResult {
 export async function fetchVendorsPage(search: VendorsSearch, vendorScope: VendorScope): Promise<VendorsPageResult> {
     const collRef = collection(db, 'vendors')
     const trimmedSearch = search.search.trim().toLowerCase()
-    const constraints: QueryConstraint[] = []
 
-    if (vendorScope !== 'all') {
-        constraints.push(where('vendorType', '==', vendorScope))
-    }
+    const snapshot = await getDocs(query(
+        collRef,
+        orderBy('name', search.sort === 'name-desc' ? 'desc' : 'asc')
+    ))
 
-    if (trimmedSearch) {
-        constraints.push(where('name', '>=', trimmedSearch))
-        constraints.push(where('name', '<=', trimmedSearch + '\uf8ff'))
-    }
-
-    if (search.xcard === 'enabled') {
-        constraints.push(where('xcard', '==', true))
-    } else if (search.xcard === 'disabled') {
-        constraints.push(where('xcard', '==', false))
-    }
-
-    constraints.push(orderBy('name', search.sort === 'name-desc' ? 'desc' : 'asc'))
-
-    const countQuery = query(collRef, ...constraints)
-    const pageLimit = search.page * search.pageSize
-    const pageQuery = query(collRef, ...constraints, limit(pageLimit))
-
-    const [countSnapshot, snapshot] = await Promise.all([
-        getCountFromServer(countQuery),
-        getDocs(pageQuery),
-    ])
-
-    const pageDocs = snapshot.docs.slice((search.page - 1) * search.pageSize, search.page * search.pageSize)
-
-    const vendors = pageDocs.map((docSnap) => {
+    const allVendors = snapshot.docs.map((docSnap) => {
         const data = docSnap.data()
 
         return {
             id: docSnap.id,
             name: data.name || 'Unnamed Vendor',
-            contact: data.contact || '',
+            contact: data.contact || data.email || '',
             pin: data.pin || '----',
             profilePicture: data.profilePicture || '',
             vendorType: data.vendorType || 'in_store',
             xcard: !!data.xcard,
-            mainCategory: data.mainCategory,
+            mainCategory: data.mainCategory || data.category,
             subcategory: data.subcategory,
             isTrending: data.isTrending,
             latitude: data.latitude,
@@ -83,9 +55,21 @@ export async function fetchVendorsPage(search: VendorsSearch, vendorScope: Vendo
         } as Vendor
     })
 
+    const filteredVendors = allVendors.filter((vendor) => {
+        const matchesScope = vendorScope === 'all' || vendor.vendorType === vendorScope
+        const matchesSearch =
+            !trimmedSearch ||
+            (vendor.name ?? '').toLowerCase().includes(trimmedSearch)
+
+        return matchesScope && matchesSearch
+    })
+
+    const start = (search.page - 1) * search.pageSize
+    const end = search.page * search.pageSize
+
     return {
-        vendors,
-        totalCount: countSnapshot.data().count,
+        vendors: filteredVendors.slice(start, end),
+        totalCount: filteredVendors.length,
     }
 }
 
