@@ -8,7 +8,7 @@ import {
 } from 'firebase/firestore'
 import type { Vendor } from '@/queries'
 import { logAdminRead } from '@/lib/admin-read-logging'
-import { getCursorPage } from '@/lib/firestore-pagination'
+
 
 export const vendorsSearchSchema = z.object({
     page: z.coerce.number().int().min(1).catch(1),

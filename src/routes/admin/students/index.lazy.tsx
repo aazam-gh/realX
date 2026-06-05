@@ -39,8 +39,8 @@ import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { httpsCallable } from 'firebase/functions'
 import { STALE_TIME } from '@/lib/constants'
 import type { StudentSearch } from './index'
-import { logAdminRead } from '@/lib/admin-read-logging'
-import { getCursorPage, resetFirestorePaginationCursors } from '@/lib/firestore-pagination'
+
+import { resetFirestorePaginationCursors } from '@/lib/firestore-pagination'
 
 export const Route = createLazyFileRoute('/admin/students/')({
     component: RouteComponent,
