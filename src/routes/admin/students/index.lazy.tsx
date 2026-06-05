@@ -1,4 +1,4 @@
-import { createLazyFileRoute, Link, useSearch } from '@tanstack/react-router'
+import { createLazyFileRoute, Link, useNavigate, useSearch } from '@tanstack/react-router'
 import {
     Table,
     TableBody,
@@ -18,11 +18,7 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { Search, Upload, Plus, ChevronRight, Loader2, CheckCircle2, Copy, Check } from 'lucide-react'
-
-
-import { useState} from 'react'
-
-
+import { useEffect, useState } from 'react'
 import {
     Dialog,
     DialogContent,
@@ -33,19 +29,13 @@ import {
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { db, functions } from '@/firebase/config'
-
-
-import { collection, getDocs, query, orderBy } from 'firebase/firestore'
-
-
+import { collection, getCountFromServer, getDocs, query, orderBy, type DocumentData, type QueryDocumentSnapshot } from 'firebase/firestore'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { httpsCallable } from 'firebase/functions'
 import { STALE_TIME } from '@/lib/constants'
 import type { StudentSearch } from './index'
 import { logAdminRead } from '@/lib/admin-read-logging'
 import { getCursorPage, resetFirestorePaginationCursors } from '@/lib/firestore-pagination'
-
-import { resetFirestorePaginationCursors } from '@/lib/firestore-pagination'
 
 export const Route = createLazyFileRoute('/admin/students/')({
     component: RouteComponent,
@@ -65,14 +55,11 @@ interface Student {
 
 function RouteComponent() {
     const queryClient = useQueryClient()
-
-
+    const navigate = useNavigate({ from: '/admin/students/' })
     const { page, pageSize, search: searchQuery } = useSearch({ from: '/admin/students/' })
     const navigate = Route.useNavigate()
     const trimmedSearch = searchQuery.trim().toLowerCase()
-
-
-
+    const [searchInput, setSearchInput] = useState(searchQuery)
     const [open, setOpen] = useState(false)
     const [form, setForm] = useState({
         firstName: '',
@@ -86,18 +73,16 @@ function RouteComponent() {
     const [creatorCodeResult, setCreatorCodeResult] = useState<string | null>(null)
     const [copied, setCopied] = useState(false)
 
+    useEffect(() => {
+        setSearchInput(searchQuery)
+    }, [searchQuery])
+
     const { data, isLoading: isQueryLoading } = useQuery({
         queryKey: ['students', page, pageSize, trimmedSearch],
         queryFn: async () => {
             const collRef = collection(db, 'students')
-            const snapshot = await getDocs(query(collRef, orderBy('firstName', 'asc')))
-
-
-
-            const allStudents = snapshot.docs.map((docSnap) => {
-
-
-                const data = docSnap.data()
+            const mapStudent = (docSnap: QueryDocumentSnapshot<DocumentData>): Student => {
+                const data = docSnap.data() || {}
                 return {
                     id: docSnap.id,
                     firstName: data.firstName || '',
@@ -112,6 +97,45 @@ function RouteComponent() {
                     profilePicture: data.profilePicture || '',
                     cashback: data.cashback || 0,
                 } as Student
+            }
+
+            if (trimmedSearch) {
+                const snapshot = await getDocs(query(collRef, orderBy('firstName')))
+                const matchedStudents = snapshot.docs
+                    .map(mapStudent)
+                    .filter((student) => [
+                        student.firstName,
+                        student.lastName,
+                        student.name,
+                        student.contact,
+                        student.role,
+                        student.creatorCode,
+                    ].some((value) => value.toLowerCase().includes(trimmedSearch)))
+
+                return {
+                    students: matchedStudents.slice((page - 1) * pageSize, page * pageSize),
+                    totalCount: matchedStudents.length,
+                }
+            }
+
+            const countSnapshot = await getCountFromServer(collRef)
+            const totalCount = countSnapshot.data().count
+
+            const pageResult = await getCursorPage(
+                collRef,
+                [orderBy('firstName')],
+                page,
+                pageSize,
+                'students:firstName',
+            )
+            const students = pageResult.docs.map(mapStudent)
+
+            logAdminRead('students-page', {
+                page,
+                pageSize,
+                docsFetched: pageResult.docsFetched,
+                docsDisplayed: students.length,
+                totalCount,
             })
 
 
@@ -186,6 +210,16 @@ function RouteComponent() {
         addStudentMutation.mutate(form)
     }
 
+    const submitSearch = () => {
+        navigate({
+            search: (prev: StudentSearch) => ({
+                ...prev,
+                search: searchInput.trim(),
+                page: 1,
+            }),
+        })
+    }
+
     const hasNextPage = page * pageSize < totalStudents
     const hasPrevPage = page > 1
 
@@ -209,8 +243,21 @@ function RouteComponent() {
                             })
                         }}
                         className="pl-9 bg-muted/50 border-none h-10"
+                        value={searchInput}
+                        onChange={(event) => setSearchInput(event.target.value)}
+                        onKeyDown={(event) => {
+                            if (event.key === 'Enter') submitSearch()
+                        }}
                     />
                 </div>
+                <Button
+                    type="button"
+                    variant="outline"
+                    className="h-10 w-full sm:w-auto"
+                    onClick={submitSearch}
+                >
+                    Search
+                </Button>
                 <div className="flex items-center gap-2 w-full sm:w-auto">
                     <Button variant="outline" className="gap-2 h-10">
                         Export <Upload className="h-4 w-4" />
@@ -399,6 +446,12 @@ function RouteComponent() {
                     </Select>
                 </div>
             </div>
+
+            {searchQuery && (
+                <p className="text-sm text-muted-foreground">
+                    {totalStudents} result{totalStudents !== 1 ? 's' : ''} found
+                </p>
+            )}
 
             <div className="rounded-md bg-card border border-border">
                 <Table>
