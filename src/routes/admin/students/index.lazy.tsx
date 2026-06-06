@@ -57,7 +57,6 @@ function RouteComponent() {
     const queryClient = useQueryClient()
     const navigate = useNavigate({ from: '/admin/students/' })
     const { page, pageSize, search: searchQuery } = useSearch({ from: '/admin/students/' })
-    const navigate = Route.useNavigate()
     const trimmedSearch = searchQuery.trim().toLowerCase()
     const [searchInput, setSearchInput] = useState(searchQuery)
     const [open, setOpen] = useState(false)
@@ -107,9 +106,6 @@ function RouteComponent() {
                         student.firstName,
                         student.lastName,
                         student.name,
-                        student.contact,
-                        student.role,
-                        student.creatorCode,
                     ].some((value) => value.toLowerCase().includes(trimmedSearch)))
 
                 return {
@@ -138,23 +134,10 @@ function RouteComponent() {
                 totalCount,
             })
 
-
-
-            const filteredStudents = trimmedSearch
-                ? allStudents.filter((student) =>
-                    (student.name ?? '').toLowerCase().includes(trimmedSearch)
-                )
-                : allStudents
-
-            const start = (page - 1) * pageSize
-            const end = page * pageSize
-
             return {
-                students: filteredStudents.slice(start, end),
-                totalCount: filteredStudents.length,
+                students,
+                totalCount,
             }
-
-
         },
         staleTime: STALE_TIME.MEDIUM,
     })
@@ -214,7 +197,7 @@ function RouteComponent() {
         navigate({
             search: (prev: StudentSearch) => ({
                 ...prev,
-                search: searchInput.trim(),
+                search: searchInput.trim().toLowerCase(),
                 page: 1,
             }),
         })
@@ -228,36 +211,28 @@ function RouteComponent() {
             <h1 className="text-3xl font-bold tracking-tight text-foreground font-heading">Student Overview</h1>
 
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="relative w-full sm:max-w-md">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        placeholder="Search for students"
-                        value={searchQuery}
-                        onChange={(e) => {
-                            navigate({
-                                search: {
-                                    page: 1,
-                                    pageSize,
-                                    search: e.target.value,
-                                },
-                            })
-                        }}
-                        className="pl-9 bg-muted/50 border-none h-10"
-                        value={searchInput}
-                        onChange={(event) => setSearchInput(event.target.value)}
-                        onKeyDown={(event) => {
-                            if (event.key === 'Enter') submitSearch()
-                        }}
-                    />
+                <div className="flex items-center gap-2 w-full sm:max-w-lg">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Search by student name"
+                            className="pl-9 bg-muted/50 border-none h-10"
+                            value={searchInput}
+                            onChange={(event) => setSearchInput(event.target.value)}
+                            onKeyDown={(event) => {
+                                if (event.key === 'Enter') submitSearch()
+                            }}
+                        />
+                    </div>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        className="h-10"
+                        onClick={submitSearch}
+                    >
+                        Search
+                    </Button>
                 </div>
-                <Button
-                    type="button"
-                    variant="outline"
-                    className="h-10 w-full sm:w-auto"
-                    onClick={submitSearch}
-                >
-                    Search
-                </Button>
                 <div className="flex items-center gap-2 w-full sm:w-auto">
                     <Button variant="outline" className="gap-2 h-10">
                         Export <Upload className="h-4 w-4" />
