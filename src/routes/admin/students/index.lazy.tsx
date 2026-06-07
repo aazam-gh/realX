@@ -57,7 +57,6 @@ function RouteComponent() {
     const queryClient = useQueryClient()
     const navigate = useNavigate({ from: '/admin/students/' })
     const { page, pageSize, search: searchQuery } = useSearch({ from: '/admin/students/' })
-    const navigate = Route.useNavigate()
     const trimmedSearch = searchQuery.trim().toLowerCase()
     const [searchInput, setSearchInput] = useState(searchQuery)
     const [open, setOpen] = useState(false)
@@ -81,8 +80,10 @@ function RouteComponent() {
         queryKey: ['students', page, pageSize, trimmedSearch],
         queryFn: async () => {
             const collRef = collection(db, 'students')
+
             const mapStudent = (docSnap: QueryDocumentSnapshot<DocumentData>): Student => {
                 const data = docSnap.data() || {}
+
                 return {
                     id: docSnap.id,
                     firstName: data.firstName || '',
@@ -103,14 +104,9 @@ function RouteComponent() {
                 const snapshot = await getDocs(query(collRef, orderBy('firstName')))
                 const matchedStudents = snapshot.docs
                     .map(mapStudent)
-                    .filter((student) => [
-                        student.firstName,
-                        student.lastName,
-                        student.name,
-                        student.contact,
-                        student.role,
-                        student.creatorCode,
-                    ].some((value) => value.toLowerCase().includes(trimmedSearch)))
+                    .filter((student) =>
+                        (student.name ?? '').toLowerCase().includes(trimmedSearch)
+                    )
 
                 return {
                     students: matchedStudents.slice((page - 1) * pageSize, page * pageSize),
@@ -128,6 +124,7 @@ function RouteComponent() {
                 pageSize,
                 'students:firstName',
             )
+
             const students = pageResult.docs.map(mapStudent)
 
             logAdminRead('students-page', {
@@ -138,23 +135,7 @@ function RouteComponent() {
                 totalCount,
             })
 
-
-
-            const filteredStudents = trimmedSearch
-                ? allStudents.filter((student) =>
-                    (student.name ?? '').toLowerCase().includes(trimmedSearch)
-                )
-                : allStudents
-
-            const start = (page - 1) * pageSize
-            const end = page * pageSize
-
-            return {
-                students: filteredStudents.slice(start, end),
-                totalCount: filteredStudents.length,
-            }
-
-
+            return { students, totalCount }
         },
         staleTime: STALE_TIME.MEDIUM,
     })
@@ -232,16 +213,6 @@ function RouteComponent() {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                         placeholder="Search for students"
-                        value={searchQuery}
-                        onChange={(e) => {
-                            navigate({
-                                search: {
-                                    page: 1,
-                                    pageSize,
-                                    search: e.target.value,
-                                },
-                            })
-                        }}
                         className="pl-9 bg-muted/50 border-none h-10"
                         value={searchInput}
                         onChange={(event) => setSearchInput(event.target.value)}
