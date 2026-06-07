@@ -421,7 +421,7 @@ async function replaceVendorMapLocationDocs(
   }
 }
 
-// Helper: Generate unique 4-char creator code (2 letters + 2 digits)
+// Helper: Generate a 4-char creator code candidate (2 letters + 2 digits)
 const generateCreatorCode = () => {
   const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   const digits = "0123456789";
@@ -459,11 +459,6 @@ async function doCreateStudentUser(input: CreateStudentInput) {
   const finalRole = role || "student";
   const finalGender = gender || "Unspecified";
   const finalDob = dob || new Date().toISOString().split("T")[0];
-
-  let creatorCode = "";
-  if (finalRole === "creator") {
-    creatorCode = generateCreatorCode();
-  }
 
   const userConfig: {
     email: string;
@@ -508,23 +503,62 @@ async function doCreateStudentUser(input: CreateStudentInput) {
     updatedAt: new Date(),
   };
 
-  if (finalRole === "creator") {
-    studentData.creatorCode = creatorCode;
-    studentData.savings = 0;
-  }
-
   if (studentId) {
     studentData.studentId = studentId;
   }
 
-  await db.collection("students").doc(user.uid).set(studentData);
+  let creatorCode = "";
+  try {
+    if (finalRole === "creator") {
+      const maxAttempts = 10;
+      const studentRef = db.collection("students").doc(user.uid);
 
-  // If creator, also create a document in creator_codes collection
-  if (finalRole === "creator" && creatorCode) {
-    await db.collection("creator_codes").doc(creatorCode).set({
-      uid: user.uid,
-      createdAt: new Date(),
-    });
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        const candidate = generateCreatorCode();
+        const codeRef = db.collection("creator_codes").doc(candidate);
+        const reserved = await db.runTransaction(async (transaction) => {
+          const codeDoc = await transaction.get(codeRef);
+          if (codeDoc.exists) {
+            return false;
+          }
+
+          transaction.create(studentRef, {
+            ...studentData,
+            creatorCode: candidate,
+            savings: 0,
+          });
+          transaction.create(codeRef, {
+            uid: user.uid,
+            createdAt: new Date(),
+          });
+          return true;
+        });
+
+        if (reserved) {
+          creatorCode = candidate;
+          break;
+        }
+      }
+
+      if (!creatorCode) {
+        throw new HttpsError(
+          "resource-exhausted",
+          "Unable to reserve a unique creator code",
+        );
+      }
+    } else {
+      await db.collection("students").doc(user.uid).create(studentData);
+    }
+  } catch (error) {
+    try {
+      await authAdmin.deleteUser(user.uid);
+    } catch (cleanupError) {
+      logger.error("Failed to clean up Auth user after student write failure", {
+        uid: user.uid,
+        cleanupError,
+      });
+    }
+    throw error;
   }
 
   logger.info("Student created", {
