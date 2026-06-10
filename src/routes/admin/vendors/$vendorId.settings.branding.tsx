@@ -1,8 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { BrandingSettings } from '@/components/admin/vendors/BrandingSettings'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { db } from '@/firebase/config'
+import { db, functions } from '@/firebase/config'
 import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore'
+import { httpsCallable } from 'firebase/functions'
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -91,6 +92,16 @@ function BrandingSettingsComponent() {
 
             const dataToUpdate = { ...vendorData }
             delete dataToUpdate.id
+            delete dataToUpdate.pin
+
+            const pin = vendorData.pin?.trim() || ''
+            if (pin && !/^\d{4}$/.test(pin)) {
+                throw new Error('Vendor security PIN must be exactly 4 digits.')
+            }
+            if (pin) {
+                await httpsCallable(functions, 'setVendorRedemptionPin')({ vendorId, pin })
+            }
+
             const vendorRef = doc(db, 'vendors', vendorId)
             await updateDoc(vendorRef, dataToUpdate)
 
