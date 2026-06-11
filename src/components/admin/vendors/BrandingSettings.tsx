@@ -12,9 +12,13 @@ import { categoriesQueryOptions, type OnlineRedemptionConfig, type Vendor } from
 import { uploadImage } from "@/lib/upload"
 import { deleteGalleryImages, VENDOR_GALLERY_LIMIT } from "@/lib/vendor-gallery"
 
+export type VendorBrandingForm = Vendor & {
+    redemptionPin?: string
+}
+
 interface BrandingSettingsProps {
-    formData: Vendor
-    setFormData: (val: Vendor) => void
+    formData: VendorBrandingForm
+    setFormData: (val: VendorBrandingForm) => void
     vendorId: string
     onlineConfig: OnlineRedemptionConfig
     setOnlineConfig: (val: OnlineRedemptionConfig) => void
@@ -368,10 +372,10 @@ export function BrandingSettings({
                             inputMode="numeric"
                             placeholder="1234"
                             maxLength={4}
-                            value={formData.pin || ""}
+                            value={formData.redemptionPin || ""}
                             onChange={(e) => {
                                 const val = e.target.value.replace(/\D/g, '').slice(0, 4);
-                                setFormData({ ...formData, pin: val });
+                                setFormData({ ...formData, redemptionPin: val });
                             }}
                             className="bg-slate-50 border-none ring-0 focus-visible:ring-1 focus-visible:ring-blue-400 h-14 rounded-2xl px-5 text-sm font-mono tracking-[0.5em]"
                         />

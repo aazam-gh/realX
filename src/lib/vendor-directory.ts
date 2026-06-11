@@ -38,7 +38,6 @@ function mapVendor(docSnap: QueryDocumentSnapshot<DocumentData>): Vendor {
         id: docSnap.id,
         name: data.name || 'Unnamed Vendor',
         contact: data.contact || data.email || '',
-        pin: data.pin || '----',
         profilePicture: data.profilePicture || '',
         vendorType: data.vendorType || 'in_store',
         xcard: !!data.xcard,
@@ -60,7 +59,6 @@ function vendorMatchesSearch(docSnap: QueryDocumentSnapshot<DocumentData>, searc
         data.nameAr,
         data.contact,
         data.email,
-        data.pin,
         data.mainCategory,
         ...(Array.isArray(data.subcategory) ? data.subcategory : []),
     ]

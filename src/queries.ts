@@ -42,7 +42,6 @@ export interface Vendor {
     website?: string
     status?: 'Active' | 'Inactive'
     contact?: string
-    pin?: string
     profilePicture?: string
     coverImage?: string
     galleryImages?: string[]

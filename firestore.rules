@@ -213,6 +213,12 @@ match /verification_requests/{requestId} {
   allow write: if false;
 }
 
+// ─── wakti student verification requests collection ─────────────────
+match /wakti_student_verification_requests/{docId} {
+  allow read: if isAdmin();
+  allow write: if isAdmin();
+}
+
 // ─── Default deny ─────────────────────────────────────────────────────
 match /{document=**} {
   allow read, write: if false;

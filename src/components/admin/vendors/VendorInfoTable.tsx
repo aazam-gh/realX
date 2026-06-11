@@ -57,10 +57,6 @@ export function VendorInfoTable({ vendor, vendorId, brandingPath }: VendorInfoTa
                             <td className="px-6 py-4 font-medium text-foreground">{formatValue(vendor.email)}</td>
                         </tr>
                         <tr>
-                            <th className="px-6 py-4 text-left font-medium text-muted-foreground">Security PIN</th>
-                            <td className="px-6 py-4 font-mono text-base tracking-[0.3em] text-foreground">{formatValue(vendor.pin)}</td>
-                        </tr>
-                        <tr>
                             <th className="px-6 py-4 text-left font-medium text-muted-foreground">Vendor Type</th>
                             <td className="px-6 py-4">
                                 <Badge variant="secondary" className="rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide">

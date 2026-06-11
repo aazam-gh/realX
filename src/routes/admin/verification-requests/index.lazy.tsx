@@ -278,140 +278,142 @@ function RouteComponent() {
     const hasPrevPage = page > 1
 
     return (
-        <div className="p-8 space-y-6 w-full max-w-[1600px] mx-auto">
-            <h1 className="text-3xl font-bold tracking-tight text-foreground font-heading">Verification Requests</h1>
+        <div className="mx-auto w-full max-w-[1600px] p-4 sm:p-6 lg:p-8">
+            <div className="space-y-6">
+                <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground">Verification Requests</h1>
 
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="text-sm text-muted-foreground">
-                    {totalCount} total request{totalCount !== 1 ? 's' : ''}
+                <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
+                    <div className="text-sm text-muted-foreground">
+                        {totalCount} total request{totalCount !== 1 ? 's' : ''}
+                    </div>
+                    <div className="flex w-full items-center gap-2 sm:w-auto">
+                        <Select
+                            value={statusFilter}
+                            onValueChange={(value) => {
+                                navigate({
+                                    to: '/admin/verification-requests' as any,
+                                    search: (prev: any) => ({ ...prev, page: 1, status: value }),
+                                } as any)
+                            }}
+                        >
+                            <SelectTrigger className="h-10 w-[180px] border-none bg-muted/50">
+                                <SelectValue placeholder="Filter by status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Statuses</SelectItem>
+                                <SelectItem value="pending">Pending</SelectItem>
+                                <SelectItem value="approved">Approved</SelectItem>
+                                <SelectItem value="rejected">Rejected</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
-                <div className="flex items-center gap-2 w-full sm:w-auto">
-                    <Select
-                        value={statusFilter}
-                        onValueChange={(value) => {
-                            navigate({
-                                to: '/admin/verification-requests' as any,
-                                search: (prev: any) => ({ ...prev, page: 1, status: value }),
-                            } as any)
-                        }}
-                    >
-                        <SelectTrigger className="w-[180px] h-10 bg-muted/50 border-none">
-                            <SelectValue placeholder="Filter by status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Statuses</SelectItem>
-                            <SelectItem value="pending">Pending</SelectItem>
-                            <SelectItem value="approved">Approved</SelectItem>
-                            <SelectItem value="rejected">Rejected</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-            </div>
 
-            {/* Table */}
-            <div className="rounded-md bg-card border border-border">
-                <Table>
-                    <TableHeader>
-                        <TableRow className="hover:bg-transparent border-b border-border">
-                            <TableHead className="w-12">
-                                <Checkbox />
-                            </TableHead>
-                            <TableHead className="text-foreground font-bold text-base">Email</TableHead>
-                            <TableHead className="text-foreground font-bold text-base">Role</TableHead>
-                            <TableHead className="text-foreground font-bold text-base">Status</TableHead>
-                            <TableHead className="text-foreground font-bold text-base">Submitted At</TableHead>
-                            <TableHead className="text-foreground font-bold text-base text-right pr-8">Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {isLoading ? (
-                            <TableRow>
-                                <TableCell colSpan={6} className="text-center py-10">
-                                    <div className="flex flex-col items-center gap-2">
-                                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-green border-t-transparent" />
-                                        <p className="text-muted-foreground font-medium">Loading requests...</p>
-                                    </div>
-                                </TableCell>
+                {/* Table */}
+                <div className="rounded-md border border-border bg-card">
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="border-b border-border hover:bg-transparent">
+                                <TableHead className="w-12">
+                                    <Checkbox />
+                                </TableHead>
+                                <TableHead className="text-base font-bold text-foreground">Email</TableHead>
+                                <TableHead className="text-base font-bold text-foreground">Role</TableHead>
+                                <TableHead className="text-base font-bold text-foreground">Status</TableHead>
+                                <TableHead className="text-base font-bold text-foreground">Submitted At</TableHead>
+                                <TableHead className="pr-8 text-right text-base font-bold text-foreground">Actions</TableHead>
                             </TableRow>
-                        ) : requestList.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
-                                    No verification requests found.
-                                </TableCell>
-                            </TableRow>
-                        ) : (
-                            requestList.map((request) => (
-                                <TableRow key={request.id} className="h-16 border-b border-border hover:bg-muted/50">
-                                    <TableCell>
-                                        <Checkbox />
-                                    </TableCell>
-                                    <TableCell className="font-medium text-foreground">{request.email}</TableCell>
-                                    <TableCell className="capitalize">{request.role}</TableCell>
-                                    <TableCell>{statusBadge(request.status)}</TableCell>
-                                    <TableCell className="text-muted-foreground">{formatDate(request.submittedAt)}</TableCell>
-                                    <TableCell className="text-right">
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="rounded-full h-8 px-4 gap-1 text-xs font-semibold"
-                                            onClick={() => handleView(request)}
-                                        >
-                                            <Eye className="h-3 w-3" /> View
-                                        </Button>
+                        </TableHeader>
+                        <TableBody>
+                            {isLoading ? (
+                                <TableRow>
+                                    <TableCell colSpan={6} className="py-10 text-center">
+                                        <div className="flex flex-col items-center gap-2">
+                                            <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-green border-t-transparent" />
+                                            <p className="font-medium text-muted-foreground">Loading requests...</p>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
-            </div>
-
-            {/* Pagination */}
-            {(hasPrevPage || hasNextPage) && (
-                <div className="flex items-center justify-center gap-4 pt-4">
-                    <Link
-                        from="/admin/verification-requests/"
-                        search={(prev: any) => ({
-                            ...prev,
-                            page: Math.max(1, page - 1),
-                        })}
-                        disabled={!hasPrevPage}
-                        className={!hasPrevPage ? 'pointer-events-none opacity-50' : ''}
-                    >
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-10 w-auto px-4 gap-2 text-sm font-medium"
-                            disabled={!hasPrevPage}
-                        >
-                            Previous
-                        </Button>
-                    </Link>
-
-                    <div className="text-sm font-medium text-muted-foreground">
-                        Page {page}
-                    </div>
-
-                    <Link
-                        from="/admin/verification-requests/"
-                        search={(prev: any) => ({
-                            ...prev,
-                            page: page + 1,
-                        })}
-                        disabled={!hasNextPage}
-                        className={!hasNextPage ? 'pointer-events-none opacity-50' : ''}
-                    >
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-10 w-auto px-4 gap-2 text-sm font-medium"
-                            disabled={!hasNextPage}
-                        >
-                            Next
-                        </Button>
-                    </Link>
+                            ) : requestList.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
+                                        No verification requests found.
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                requestList.map((request) => (
+                                    <TableRow key={request.id} className="h-16 border-b border-border hover:bg-muted/50">
+                                        <TableCell>
+                                            <Checkbox />
+                                        </TableCell>
+                                        <TableCell className="font-medium text-foreground">{request.email}</TableCell>
+                                        <TableCell className="capitalize">{request.role}</TableCell>
+                                        <TableCell>{statusBadge(request.status)}</TableCell>
+                                        <TableCell className="text-muted-foreground">{formatDate(request.submittedAt)}</TableCell>
+                                        <TableCell className="text-right">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="h-8 gap-1 rounded-full px-4 text-xs font-semibold"
+                                                onClick={() => handleView(request)}
+                                            >
+                                                <Eye className="h-3 w-3" /> View
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
                 </div>
-            )}
+
+                {/* Pagination */}
+                {(hasPrevPage || hasNextPage) && (
+                    <div className="flex items-center justify-center gap-4 pt-4">
+                        <Link
+                            from="/admin/verification-requests/"
+                            search={(prev: any) => ({
+                                ...prev,
+                                page: Math.max(1, page - 1),
+                            })}
+                            disabled={!hasPrevPage}
+                            className={!hasPrevPage ? 'pointer-events-none opacity-50' : ''}
+                        >
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-10 w-auto gap-2 px-4 text-sm font-medium"
+                                disabled={!hasPrevPage}
+                            >
+                                Previous
+                            </Button>
+                        </Link>
+
+                        <div className="text-sm font-medium text-muted-foreground">
+                            Page {page}
+                        </div>
+
+                        <Link
+                            from="/admin/verification-requests/"
+                            search={(prev: any) => ({
+                                ...prev,
+                                page: page + 1,
+                            })}
+                            disabled={!hasNextPage}
+                            className={!hasNextPage ? 'pointer-events-none opacity-50' : ''}
+                        >
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-10 w-auto gap-2 px-4 text-sm font-medium"
+                                disabled={!hasNextPage}
+                            >
+                                Next
+                            </Button>
+                        </Link>
+                    </div>
+                )}
+            </div>
 
             {/* Detail Dialog */}
             <Dialog open={detailOpen} onOpenChange={setDetailOpen}>

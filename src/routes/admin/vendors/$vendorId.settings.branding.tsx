@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { BrandingSettings } from '@/components/admin/vendors/BrandingSettings'
+import { BrandingSettings, type VendorBrandingForm } from '@/components/admin/vendors/BrandingSettings'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { db, functions } from '@/firebase/config'
 import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore'
@@ -22,7 +22,7 @@ export const Route = createFileRoute('/admin/vendors/$vendorId/settings/branding
 function BrandingSettingsComponent() {
     const { vendorId } = Route.useParams()
     const queryClient = useQueryClient()
-    const [formData, setFormData] = useState<Vendor | null>(null)
+    const [formData, setFormData] = useState<VendorBrandingForm | null>(null)
     const [uploadingImages, setUploadingImages] = useState(false)
     const [onlineConfig, setOnlineConfig] = useState<OnlineRedemptionConfig>({
         discountCode: '',
@@ -73,7 +73,7 @@ function BrandingSettingsComponent() {
     }, [vendorId])
 
     const updateMutation = useMutation({
-        mutationFn: async ({ vendorData, configData }: { vendorData: Partial<Vendor>, configData: OnlineRedemptionConfig }) => {
+        mutationFn: async ({ vendorData, configData }: { vendorData: VendorBrandingForm, configData: OnlineRedemptionConfig }) => {
             if (vendorData.vendorType === 'online') {
                 const discountCode = configData.discountCode.trim()
                 const purchaseUrl = configData.purchaseUrl.trim()
@@ -90,11 +90,11 @@ function BrandingSettingsComponent() {
                 }
             }
 
-            const dataToUpdate = { ...vendorData }
+            const dataToUpdate: Partial<VendorBrandingForm> = { ...vendorData }
             delete dataToUpdate.id
-            delete dataToUpdate.pin
+            delete dataToUpdate.redemptionPin
 
-            const pin = vendorData.pin?.trim() || ''
+            const pin = vendorData.redemptionPin?.trim() || ''
             if (pin && !/^\d{4}$/.test(pin)) {
                 throw new Error('Vendor security PIN must be exactly 4 digits.')
             }
@@ -116,13 +116,16 @@ function BrandingSettingsComponent() {
         onMutate: async ({ vendorData }) => {
             await queryClient.cancelQueries({ queryKey: ['vendor', vendorId] })
             const previousVendor = queryClient.getQueryData(['vendor', vendorId])
+            const optimisticVendor = { ...vendorData }
+            delete optimisticVendor.redemptionPin
             queryClient.setQueryData(['vendor', vendorId], (old: Vendor | undefined) => {
                 if (!old) return old
-                return { ...old, ...vendorData }
+                return { ...old, ...optimisticVendor }
             })
             return { previousVendor }
         },
         onSuccess: (_data, { vendorData }) => {
+            setFormData((current) => current ? { ...current, redemptionPin: '' } : current)
             void deleteGalleryImages(getRemovedGalleryImages(vendor?.galleryImages, vendorData.galleryImages))
             void refreshVendorList()
             toast.success('Settings updated successfully!', {

@@ -316,7 +316,6 @@ function RouteComponent() {
                             </TableHead>
                             <TableHead className="text-black font-bold text-base">Brand Name</TableHead>
                             <TableHead className="text-black font-bold text-base">Contact Info</TableHead>
-                            <TableHead className="text-black font-bold text-base">Vendor Pin</TableHead>
                             <TableHead className="text-black font-bold text-base">XCard</TableHead>
                             <TableHead className="text-black font-bold text-base text-right pr-8">Actions:</TableHead>
                         </TableRow>
@@ -324,7 +323,7 @@ function RouteComponent() {
                     <TableBody>
                         {loading ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="text-center py-10">
+                                <TableCell colSpan={5} className="text-center py-10">
                                     <div className="flex flex-col items-center gap-2">
                                         <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-green border-t-transparent" />
                                         <p className="text-muted-foreground font-medium">Loading vendors...</p>
@@ -333,7 +332,7 @@ function RouteComponent() {
                             </TableRow>
                         ) : vendorList.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
+                                <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
                                     {searchQuery || xcardFilter !== 'all'
                                         ? 'No online vendors match your filters.'
                                         : 'No online vendors found.'}
@@ -358,7 +357,6 @@ function RouteComponent() {
                                         </div>
                                     </TableCell>
                                     <TableCell className="font-medium text-gray-900">{vendor.contact}</TableCell>
-                                    <TableCell className="font-mono font-medium text-gray-900 tracking-widest">{vendor.pin}</TableCell>
                                     <TableCell className="font-medium text-gray-900">
                                         <Switch
                                             checked={vendor.xcard}

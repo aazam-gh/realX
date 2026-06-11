@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AdminWaktiRouteImport } from './routes/admin/wakti'
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
 import { Route as vendorPanelVendorRouteImport } from './routes/(vendor-panel)/_vendor'
 import { Route as authUnauthorizedRouteImport } from './routes/(auth)/unauthorized'
@@ -71,6 +72,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminWaktiRoute = AdminWaktiRouteImport.update({
+  id: '/wakti',
+  path: '/wakti',
+  getParentRoute: () => AdminRoute,
+} as any).lazy(() => import('./routes/admin/wakti.lazy').then((d) => d.Route))
 const AdminDashboardRoute = AdminDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -352,6 +358,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof authLoginRoute
   '/unauthorized': typeof authUnauthorizedRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/wakti': typeof AdminWaktiRoute
   '/admin/': typeof AdminIndexRoute
   '/campaign': typeof vendorPanelVendorCampaignRoute
   '/contact-us': typeof vendorPanelVendorContactUsRoute
@@ -398,6 +405,7 @@ export interface FileRoutesByTo {
   '/login': typeof authLoginRoute
   '/unauthorized': typeof authUnauthorizedRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/wakti': typeof AdminWaktiRoute
   '/admin': typeof AdminIndexRoute
   '/campaign': typeof vendorPanelVendorCampaignRoute
   '/contact-us': typeof vendorPanelVendorContactUsRoute
@@ -444,6 +452,7 @@ export interface FileRoutesById {
   '/(auth)/unauthorized': typeof authUnauthorizedRoute
   '/(vendor-panel)/_vendor': typeof vendorPanelVendorRouteWithChildren
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/wakti': typeof AdminWaktiRoute
   '/admin/': typeof AdminIndexRoute
   '/(vendor-panel)/_vendor/campaign': typeof vendorPanelVendorCampaignRoute
   '/(vendor-panel)/_vendor/contact-us': typeof vendorPanelVendorContactUsRoute
@@ -493,6 +502,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/unauthorized'
     | '/admin/dashboard'
+    | '/admin/wakti'
     | '/admin/'
     | '/campaign'
     | '/contact-us'
@@ -539,6 +549,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/unauthorized'
     | '/admin/dashboard'
+    | '/admin/wakti'
     | '/admin'
     | '/campaign'
     | '/contact-us'
@@ -584,6 +595,7 @@ export interface FileRouteTypes {
     | '/(auth)/unauthorized'
     | '/(vendor-panel)/_vendor'
     | '/admin/dashboard'
+    | '/admin/wakti'
     | '/admin/'
     | '/(vendor-panel)/_vendor/campaign'
     | '/(vendor-panel)/_vendor/contact-us'
@@ -655,6 +667,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/wakti': {
+      id: '/admin/wakti'
+      path: '/wakti'
+      fullPath: '/admin/wakti'
+      preLoaderRoute: typeof AdminWaktiRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/dashboard': {
@@ -1011,6 +1030,7 @@ const AdminVendorsVendorIdSettingsRouteWithChildren =
 
 interface AdminRouteChildren {
   AdminDashboardRoute: typeof AdminDashboardRoute
+  AdminWaktiRoute: typeof AdminWaktiRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminTransactionsIdRoute: typeof AdminTransactionsIdRoute
   AdminCmsIndexRoute: typeof AdminCmsIndexRoute
@@ -1039,6 +1059,7 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminDashboardRoute: AdminDashboardRoute,
+  AdminWaktiRoute: AdminWaktiRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminTransactionsIdRoute: AdminTransactionsIdRoute,
   AdminCmsIndexRoute: AdminCmsIndexRoute,

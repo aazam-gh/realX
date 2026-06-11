@@ -5,6 +5,7 @@ import {
   IconHome,
   IconInfoCircle,
   IconReceipt,
+  IconSparkles,
   IconShield,
   IconShoppingBag,
   IconUsers,
@@ -58,6 +59,11 @@ const data = {
       title: "Verification Requests",
       url: "/admin/verification-requests",
       icon: IconClipboardCheck,
+    },
+    {
+      title: "Wakti",
+      url: "/admin/wakti",
+      icon: IconSparkles,
     },
     {
       title: "App CMS",
