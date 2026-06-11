@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { db } from '@/firebase/config'
 import {
     collection,
+    getCountFromServer,
     getDocs,
     orderBy,
     query,
@@ -84,13 +85,10 @@ export async function fetchVendorsPage(search: VendorsSearch, vendorScope: Vendo
         constraints.push(where('xcard', '==', false))
     }
 
-    const snapshot = await getDocs(query(
-        collRef,
-        orderBy('name', search.sort === 'name-desc' ? 'desc' : 'asc')
-    ))
+    const sortConstraint = orderBy('name', search.sort === 'name-desc' ? 'desc' : 'asc')
 
     if (trimmedSearch) {
-        const snapshot = await getDocs(query(collRef, ...constraints))
+        const snapshot = await getDocs(query(collRef, ...constraints, sortConstraint))
         const matchedDocs = snapshot.docs.filter((docSnap) => vendorMatchesSearch(docSnap, trimmedSearch))
         const pageDocs = matchedDocs.slice((search.page - 1) * search.pageSize, search.page * search.pageSize)
 
@@ -105,9 +103,10 @@ export async function fetchVendorsPage(search: VendorsSearch, vendorScope: Vendo
 
     const [countSnapshot, pageResult] = await Promise.all([
         getCountFromServer(countQuery),
-        getCursorPage(collRef, constraints, search.page, search.pageSize, cursorKey),
+        getCursorPage(collRef, [...constraints, sortConstraint], search.page, search.pageSize, cursorKey),
     ])
     const vendors = pageResult.docs.map(mapVendor)
+    const totalCount = countSnapshot.data().count
 
     logAdminRead('vendors-page', {
         scope: vendorScope,
@@ -115,31 +114,15 @@ export async function fetchVendorsPage(search: VendorsSearch, vendorScope: Vendo
         pageSize: search.pageSize,
         docsFetched: pageResult.docsFetched,
         docsDisplayed: vendors.length,
-        totalCount: countSnapshot.data().count,
+        totalCount,
         hasSearch: !!trimmedSearch,
         sort: search.sort,
         xcard: search.xcard,
     })
 
-
-
-    const filteredVendors = allVendors.filter((vendor) => {
-        const matchesScope = vendorScope === 'all' || vendor.vendorType === vendorScope
-        const matchesSearch =
-            !trimmedSearch ||
-            (vendor.name ?? '').toLowerCase().includes(trimmedSearch)
-
-        return matchesScope && matchesSearch
-    })
-
-    const start = (search.page - 1) * search.pageSize
-    const end = search.page * search.pageSize
-
-
-
     return {
-        vendors: filteredVendors.slice(start, end),
-        totalCount: filteredVendors.length,
+        vendors,
+        totalCount,
     }
 }
 

@@ -104,9 +104,11 @@ function RouteComponent() {
                 const snapshot = await getDocs(query(collRef, orderBy('firstName')))
                 const matchedStudents = snapshot.docs
                     .map(mapStudent)
+
                     .filter((student) =>
                         (student.name ?? '').toLowerCase().includes(trimmedSearch)
                     )
+
 
                 return {
                     students: matchedStudents.slice((page - 1) * pageSize, page * pageSize),
@@ -135,7 +137,10 @@ function RouteComponent() {
                 totalCount,
             })
 
+
             return { students, totalCount }
+
+
         },
         staleTime: STALE_TIME.MEDIUM,
     })
@@ -195,7 +200,7 @@ function RouteComponent() {
         navigate({
             search: (prev: StudentSearch) => ({
                 ...prev,
-                search: searchInput.trim(),
+                search: searchInput.trim().toLowerCase(),
                 page: 1,
             }),
         })
@@ -209,6 +214,7 @@ function RouteComponent() {
             <h1 className="text-3xl font-bold tracking-tight text-foreground font-heading">Student Overview</h1>
 
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+
                 <div className="relative w-full sm:max-w-md">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -220,15 +226,8 @@ function RouteComponent() {
                             if (event.key === 'Enter') submitSearch()
                         }}
                     />
+
                 </div>
-                <Button
-                    type="button"
-                    variant="outline"
-                    className="h-10 w-full sm:w-auto"
-                    onClick={submitSearch}
-                >
-                    Search
-                </Button>
                 <div className="flex items-center gap-2 w-full sm:w-auto">
                     <Button variant="outline" className="gap-2 h-10">
                         Export <Upload className="h-4 w-4" />
