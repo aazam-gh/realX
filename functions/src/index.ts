@@ -12,6 +12,9 @@ import {Expo} from "expo-server-sdk";
 import {Resend} from "resend";
 import {geohashForLocation} from "geofire-common";
 import sharp from "sharp";
+import {
+  listAdminBigQueryTransactionsHandler,
+} from "./admin-bigquery-transactions.js";
 
 // Init Admin SDK
 initializeApp();
@@ -33,6 +36,17 @@ const PUBLIC_IMAGE_PATHS = [
   /^events\//,
   /^featured-brand-showcase\//,
 ];
+
+export const listAdminBigQueryTransactions = onCall(
+  {
+    region: REGION,
+    cors: true,
+    timeoutSeconds: 60,
+    serviceAccount:
+      "admin-bigquery-transactions@reelx-backend.iam.gserviceaccount.com",
+  },
+  listAdminBigQueryTransactionsHandler,
+);
 
 /**
  * Convert newly uploaded public media images to WebP in place.

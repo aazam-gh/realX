@@ -2,6 +2,7 @@ import * as React from "react"
 import {
   IconBell,
   IconClipboardCheck,
+  IconDatabase,
   IconHome,
   IconInfoCircle,
   IconReceipt,
@@ -39,6 +40,11 @@ const data = {
       title: "Transactions",
       url: "/admin/transactions",
       icon: IconReceipt,
+    },
+    {
+      title: "BigQuery Transactions",
+      url: "/admin/bigquery-transactions",
+      icon: IconDatabase,
     },
     {
       title: "Vendors",

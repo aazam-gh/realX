@@ -36,7 +36,7 @@ Business Intelligence and Reporting
 
 Project ID:
 
-realx-dev
+reelx-backend
 
 ## Firestore Collection
 
@@ -203,3 +203,108 @@ Potential future improvements include:
 The Firestore to BigQuery integration was successfully configured and validated.
 
 Transaction data can now be exported, queried, aggregated, and analyzed within BigQuery, providing a scalable foundation for reporting, analytics, and future business intelligence features for the RealX platform.
+
+---
+
+# Parallel Admin Transactions Evaluation
+
+## Production architecture
+
+The existing `/admin/transactions` route remains Firestore-backed and is the control panel during evaluation.
+
+The parallel `/admin/bigquery-transactions` route calls the admin-only
+`listAdminBigQueryTransactions` callable Function. The Function queries the typed
+`reelx-backend.firestore_export.transactions_admin_v1` view, which projects fields
+from `transactions_raw_latest`. The extension's latest view excludes deleted
+documents.
+
+Rows in the BigQuery panel continue to open the existing Firestore-backed
+`/admin/transactions/$id` detail route.
+
+## Deploy the typed view
+
+From the repository root:
+
+```sh
+bq query --use_legacy_sql=false < functions/bigquery/transactions_admin_v1.sql
+```
+
+## Initial import and consistency
+
+The Firestore to BigQuery extension is incremental. Installing it starts
+listening for subsequent document changes, but does not automatically export
+documents that already exist in the collection. Run the official import tool
+over the entire collection immediately after installing or reconfiguring the
+extension:
+
+```sh
+npx --yes @firebaseextensions/fs-bq-import-collection \
+  --non-interactive \
+  --project reelx-backend \
+  --big-query-project reelx-backend \
+  --query-collection-group false \
+  --source-collection-path transactions \
+  --dataset firestore_export \
+  --table-name-prefix transactions \
+  --batch-size 300 \
+  --dataset-location us \
+  --multi-threaded false \
+  --use-new-snapshot-query-syntax true \
+  --firestore-instance-id '(default)'
+```
+
+The import is safe to run over the full live collection. Imported snapshots use
+the `IMPORT` operation with an epoch timestamp, so later streamed `CREATE`,
+`UPDATE`, and `DELETE` events remain authoritative.
+
+The import tool can remove clustering metadata while updating the changelog
+schema. Restore the extension's configured clustering afterward:
+
+```sh
+bq update \
+  --project_id=reelx-backend \
+  --clustering_fields=document_id,timestamp,operation \
+  reelx-backend:firestore_export.transactions_raw_changelog
+```
+
+Verify the live Firestore and BigQuery counts manually after import. Re-run the
+full import after extension updates or reconfiguration to cover any writes that
+occurred while event streaming was interrupted.
+
+## Security boundary and IAM
+
+The browser never receives BigQuery credentials or direct BigQuery access.
+The callable requires an authenticated Firebase user with the `admin: true`
+custom claim.
+
+The callable runs as the dedicated
+`admin-bigquery-transactions@reelx-backend.iam.gserviceaccount.com` service
+account. Grant it only:
+
+* `roles/bigquery.jobUser` on project `reelx-backend`
+* `roles/bigquery.dataViewer` on dataset `reelx-backend:firestore_export`
+
+Do not grant BigQuery roles to admin browser users.
+
+## Cost controls and logging
+
+The callable uses fixed SQL, allowlisted sort columns, parameterized values,
+deterministic cursor pagination, and `LIMIT + 1`. It defaults to a 256 MiB
+`maximumBytesBilled` limit per query. Override it with the
+`ADMIN_BIGQUERY_MAX_BYTES_BILLED` Function environment variable when needed.
+
+Each query logs requesting admin UID, filters, sorting, cursor presence,
+duration, result count, bytes processed, bytes billed, cache status, and
+whether a failure was caused by the byte budget.
+
+## Evaluation workflow
+
+1. Open the Firestore and BigQuery transaction panels side by side.
+2. Compare representative records and each vendor/sort combination manually.
+3. Confirm cursor pages contain no duplicate or skipped rows.
+4. Monitor displayed export freshness, query duration, and billed bytes.
+5. Use Cloud Logging to review failures and byte-budget rejections.
+
+The BigQuery panel intentionally does not query Firestore for automatic
+comparison, because doing so would add evaluation reads to the production
+collection.
