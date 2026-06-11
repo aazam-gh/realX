@@ -80,8 +80,10 @@ function RouteComponent() {
         queryKey: ['students', page, pageSize, trimmedSearch],
         queryFn: async () => {
             const collRef = collection(db, 'students')
+
             const mapStudent = (docSnap: QueryDocumentSnapshot<DocumentData>): Student => {
                 const data = docSnap.data() || {}
+
                 return {
                     id: docSnap.id,
                     firstName: data.firstName || '',
@@ -102,11 +104,11 @@ function RouteComponent() {
                 const snapshot = await getDocs(query(collRef, orderBy('firstName')))
                 const matchedStudents = snapshot.docs
                     .map(mapStudent)
-                    .filter((student) => [
-                        student.firstName,
-                        student.lastName,
-                        student.name,
-                    ].some((value) => value.toLowerCase().includes(trimmedSearch)))
+
+                    .filter((student) =>
+                        (student.name ?? '').toLowerCase().includes(trimmedSearch)
+                    )
+
 
                 return {
                     students: matchedStudents.slice((page - 1) * pageSize, page * pageSize),
@@ -124,6 +126,7 @@ function RouteComponent() {
                 pageSize,
                 'students:firstName',
             )
+
             const students = pageResult.docs.map(mapStudent)
 
             logAdminRead('students-page', {
@@ -134,10 +137,10 @@ function RouteComponent() {
                 totalCount,
             })
 
-            return {
-                students,
-                totalCount,
-            }
+
+            return { students, totalCount }
+
+
         },
         staleTime: STALE_TIME.MEDIUM,
     })
@@ -211,27 +214,19 @@ function RouteComponent() {
             <h1 className="text-3xl font-bold tracking-tight text-foreground font-heading">Student Overview</h1>
 
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-2 w-full sm:max-w-lg">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            placeholder="Search by student name"
-                            className="pl-9 bg-muted/50 border-none h-10"
-                            value={searchInput}
-                            onChange={(event) => setSearchInput(event.target.value)}
-                            onKeyDown={(event) => {
-                                if (event.key === 'Enter') submitSearch()
-                            }}
-                        />
-                    </div>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        className="h-10"
-                        onClick={submitSearch}
-                    >
-                        Search
-                    </Button>
+
+                <div className="relative w-full sm:max-w-md">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder="Search for students"
+                        className="pl-9 bg-muted/50 border-none h-10"
+                        value={searchInput}
+                        onChange={(event) => setSearchInput(event.target.value)}
+                        onKeyDown={(event) => {
+                            if (event.key === 'Enter') submitSearch()
+                        }}
+                    />
+
                 </div>
                 <div className="flex items-center gap-2 w-full sm:w-auto">
                     <Button variant="outline" className="gap-2 h-10">
