@@ -4,15 +4,17 @@ import * as logger from "firebase-functions/logger";
 
 /* eslint-disable require-jsdoc, max-len */
 
-const PROJECT_ID = "reelx-backend";
+const PROJECT_ID =
+  process.env.GCLOUD_PROJECT ||
+  process.env.GCP_PROJECT ||
+  "reelx-backend";
 const LOCATION = "US";
-const VIEW = "`reelx-backend.firestore_export.transactions_admin_v1`";
+const VIEW = `\`${PROJECT_ID}.firestore_export.transactions_admin_v1\``;
 const DEFAULT_PAGE_SIZE = 10;
 const MAX_PAGE_SIZE = 100;
 const DEFAULT_MAXIMUM_BYTES_BILLED = 256 * 1024 * 1024;
 
 const bigquery = new BigQuery({projectId: PROJECT_ID});
-
 const SORTS = {
   date_asc: {
     column: "sort_created_at",
@@ -197,7 +199,9 @@ export async function listAdminBigQueryTransactionsHandler(
   const types: Record<string, string> = {
     limit: "INT64",
   };
-  const where = [];
+  const where = [
+    "DATE(sort_created_at) >= DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH)",
+  ];
 
   if (vendorName) {
     where.push("vendor_name = @vendorName");
