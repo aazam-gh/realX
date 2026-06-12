@@ -44,32 +44,47 @@ function SortIcon({ field }: { field: 'date' | 'amount' | 'vendor' }) {
 }
 
 function RouteComponent() {
-    const { page, pageSize, vendorName, sort } = useSearch({ from: '/admin/transactions/' })
+    const { page, pageSize, vendorName, sort, cursor, history } = useSearch({ from: '/admin/transactions/' })
     const navigate = useNavigate()
 
     const { data, isLoading: isQueryLoading } = useQuery({
-        queryKey: ['transactions-list', page, pageSize, vendorName, sort],
-        queryFn: () => fetchTransactions(page, pageSize, vendorName, sort),
+        queryKey: ['transactions-list', pageSize, vendorName, sort, cursor],
+        queryFn: () => fetchTransactions(pageSize, vendorName, sort, cursor),
         staleTime: STALE_TIME.MEDIUM,
     })
 
     const transactionList = data?.transactions || []
-    const totalTransactions = data?.totalCount || 0
     const loading = isQueryLoading
-
-    const hasNextPage = page * pageSize < totalTransactions
+    const hasNextPage = Boolean(data?.nextCursor)
     const hasPrevPage = page > 1
 
     const updateSearch = (updates: Partial<TransactionSearch>) => {
+        const nextSearch: TransactionSearch = {
+            page: 1,
+            pageSize,
+        }
+
+        const nextVendorName = Object.hasOwn(updates, 'vendorName')
+            ? updates.vendorName
+            : vendorName
+
+        const nextSort = Object.hasOwn(updates, 'sort')
+            ? updates.sort
+            : sort
+
+        if (nextVendorName) nextSearch.vendorName = nextVendorName
+        if (nextSort) nextSearch.sort = nextSort
+
         navigate({
             to: '/admin/transactions',
-            search: { page: 1, pageSize, vendorName, sort, ...updates },
+            search: nextSearch,
         })
     }
 
     const toggleSort = (field: 'date' | 'amount' | 'vendor') => {
         const currentSort = sort as SortOption | undefined
         let newSort: SortOption
+
         if (!currentSort || !currentSort.startsWith(field)) {
             newSort = `${field}_desc` as SortOption
         } else if (currentSort.endsWith('desc')) {
@@ -77,8 +92,11 @@ function RouteComponent() {
         } else {
             newSort = `${field}_desc` as SortOption
         }
+
         updateSearch({ sort: newSort })
     }
+
+    // rest of component continues here...
 
     return (
         <div className="p-8 space-y-6 w-full max-w-[1600px] mx-auto">
@@ -348,47 +366,64 @@ function RouteComponent() {
             {/* Pagination */}
             {(hasPrevPage || hasNextPage) && (
                 <div className="flex items-center justify-center gap-4 pt-4">
-                    <Link
-                        from="/admin/transactions/"
-                        search={(prev: TransactionSearch) => ({
-                            ...prev,
-                            page: Math.max(1, page - 1),
-                        })}
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-10 w-auto px-4 gap-2 text-sm font-medium"
                         disabled={!hasPrevPage}
-                        className={!hasPrevPage ? 'pointer-events-none opacity-50' : ''}
+                        onClick={() => {
+                            const cursorHistory = history ? history.split('.') : []
+                            const previous = cursorHistory.pop()
+                            const previousSearch: TransactionSearch = {
+                                page: Math.max(1, page - 1),
+                                pageSize,
+                            }
+
+                            if (vendorName) previousSearch.vendorName = vendorName
+                            if (sort) previousSearch.sort = sort
+                            if (previous && previous !== 'first') previousSearch.cursor = previous
+                            if (cursorHistory.length) previousSearch.history = cursorHistory.join('.')
+
+                            navigate({
+                                to: '/admin/transactions',
+                                search: previousSearch,
+                            })
+                        }}
                     >
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-10 w-auto px-4 gap-2 text-sm font-medium"
-                            disabled={!hasPrevPage}
-                        >
-                            ‹ Previous
-                        </Button>
-                    </Link>
+                        ‹ Previous
+                    </Button>
 
                     <div className="text-sm font-medium text-muted-foreground">
                         Page {page}
                     </div>
 
-                    <Link
-                        from="/admin/transactions/"
-                        search={(prev: TransactionSearch) => ({
-                            ...prev,
-                            page: page + 1,
-                        })}
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-10 w-auto px-4 gap-2 text-sm font-medium"
                         disabled={!hasNextPage}
-                        className={!hasNextPage ? 'pointer-events-none opacity-50' : ''}
+                        onClick={() => {
+                            if (!data?.nextCursor) return
+
+                            const cursorHistory = history ? history.split('.') : []
+                            const nextSearch: TransactionSearch = {
+                                page: page + 1,
+                                pageSize,
+                                cursor: data.nextCursor,
+                                history: [...cursorHistory, cursor || 'first'].join('.'),
+                            }
+
+                            if (vendorName) nextSearch.vendorName = vendorName
+                            if (sort) nextSearch.sort = sort
+
+                            navigate({
+                                to: '/admin/transactions',
+                                search: nextSearch,
+                            })
+                        }}
                     >
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-10 w-auto px-4 gap-2 text-sm font-medium"
-                            disabled={!hasNextPage}
-                        >
-                            Next ›
-                        </Button>
-                    </Link>
+                        Next ›
+                    </Button>
                 </div>
             )}
         </div>
