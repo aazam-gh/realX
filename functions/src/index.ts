@@ -22,7 +22,14 @@ initializeApp();
 setGlobalOptions({maxInstances: 10});
 
 const REGION = "me-central1";
-const STORAGE_BUCKET = "reelx-backend";
+const PROJECT_ID =
+  process.env.GCLOUD_PROJECT ||
+  process.env.GCP_PROJECT ||
+  "reelx-backend";
+const STORAGE_BUCKET =
+  PROJECT_ID === "realx-dev" ?
+    "realx-dev.firebasestorage.app" :
+    "reelx-backend";
 const WEBP_QUALITY = 80;
 const WEBP_CONVERTED_METADATA_KEY = "convertedToWebp";
 const PUBLIC_IMAGE_PATHS = [
@@ -43,11 +50,10 @@ export const listAdminBigQueryTransactions = onCall(
     cors: true,
     timeoutSeconds: 60,
     serviceAccount:
-      "admin-bigquery-transactions@reelx-backend.iam.gserviceaccount.com",
+      "admin-bigquery-transactions@realx-dev.iam.gserviceaccount.com",
   },
   listAdminBigQueryTransactionsHandler,
 );
-
 /**
  * Convert newly uploaded public media images to WebP in place.
  * Existing object paths and Firebase download tokens remain unchanged.
