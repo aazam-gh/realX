@@ -160,6 +160,12 @@ match /vendorOnlineRedemptionConfigs/{vendorId} {
   allow read, write: if isAdmin();
 }
 
+// Plaintext PIN mirror for authenticated admins; writes remain server-only.
+match /vendor_pins/{vendorId} {
+  allow read: if isAdmin();
+  allow write: if false;
+}
+
 // ─── maps collection ──────────────────────────────────────────────────
 match /maps/{mapDocId} {
   allow read: if request.auth != null;

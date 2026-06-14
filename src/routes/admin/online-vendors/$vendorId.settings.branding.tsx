@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Loader2, Save } from 'lucide-react'
 import { refreshVendorList } from '@/lib/vendorList'
 import { deleteGalleryImages, getRemovedGalleryImages } from '@/lib/vendor-gallery'
-import { vendorQueryOptions, type OnlineRedemptionConfig, type Vendor } from '@/queries'
+import { vendorPinQueryOptions, vendorQueryOptions, type OnlineRedemptionConfig, type Vendor } from '@/queries'
 
 export const Route = createFileRoute('/admin/online-vendors/$vendorId/settings/branding')({
     component: OnlineVendorBrandingSettingsComponent,
@@ -35,12 +35,13 @@ function OnlineVendorBrandingSettingsComponent() {
     })
 
     const { data: vendor, isLoading } = useQuery(vendorQueryOptions(vendorId))
+    const { data: vendorPin = '', isLoading: isPinLoading } = useQuery(vendorPinQueryOptions(vendorId))
 
     useEffect(() => {
         if (vendor) {
-            setFormData(vendor)
+            setFormData({ ...vendor, redemptionPin: vendorPin })
         }
-    }, [vendor])
+    }, [vendor, vendorPin])
 
     useEffect(() => {
         let active = true
@@ -101,7 +102,7 @@ function OnlineVendorBrandingSettingsComponent() {
             if (pin && !/^\d{4}$/.test(pin)) {
                 throw new Error('Vendor security PIN must be exactly 4 digits.')
             }
-            if (pin) {
+            if (pin && pin !== vendorPin) {
                 await httpsCallable(functions, 'setVendorRedemptionPin')({ vendorId, pin })
             }
 
@@ -115,6 +116,8 @@ function OnlineVendorBrandingSettingsComponent() {
                 enabled: configData.enabled === true,
                 updatedAt: serverTimestamp(),
             }, { merge: true })
+
+            return { savedPin: pin || vendorPin }
         },
         onMutate: async ({ vendorData }) => {
             await queryClient.cancelQueries({ queryKey: ['vendor', vendorId] })
@@ -127,8 +130,9 @@ function OnlineVendorBrandingSettingsComponent() {
             })
             return { previousVendor }
         },
-        onSuccess: (_data, { vendorData }) => {
-            setFormData((current) => current ? { ...current, redemptionPin: '' } : current)
+        onSuccess: ({ savedPin }, { vendorData }) => {
+            queryClient.setQueryData(['vendor-pin', vendorId], savedPin)
+            setFormData((current) => current ? { ...current, redemptionPin: savedPin } : current)
             void deleteGalleryImages(getRemovedGalleryImages(vendor?.galleryImages, vendorData.galleryImages))
             void refreshVendorList()
             toast.success('Settings updated successfully!', {
@@ -146,6 +150,7 @@ function OnlineVendorBrandingSettingsComponent() {
         },
         onSettled: () => {
             queryClient.invalidateQueries({ queryKey: ['vendor', vendorId] })
+            queryClient.invalidateQueries({ queryKey: ['vendor-pin', vendorId] })
         },
     })
 
@@ -158,10 +163,10 @@ function OnlineVendorBrandingSettingsComponent() {
     const handleReset = () => {
         if (!formData || !vendor || uploadingImages) return
         void deleteGalleryImages(getRemovedGalleryImages(formData.galleryImages, vendor.galleryImages))
-        setFormData(vendor)
+        setFormData({ ...vendor, redemptionPin: vendorPin })
     }
 
-    if (isLoading) {
+    if (isLoading || isPinLoading) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-green border-t-transparent" />

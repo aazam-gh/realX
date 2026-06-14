@@ -8,13 +8,13 @@ import {initializeApp} from "firebase-admin/app";
 import {getAuth} from "firebase-admin/auth";
 import {getFirestore, FieldValue} from "firebase-admin/firestore";
 import {getStorage} from "firebase-admin/storage";
-import {Expo} from "expo-server-sdk";
 import {Resend} from "resend";
 import {geohashForLocation} from "geofire-common";
 import sharp from "sharp";
 import {
   listAdminBigQueryTransactionsHandler,
 } from "./admin-bigquery-transactions.js";
+import {createNotificationFunctions} from "./notifications.js";
 
 // Init Admin SDK
 initializeApp();
@@ -36,6 +36,21 @@ const PUBLIC_IMAGE_PATHS = [
   /^events\//,
   /^featured-brand-showcase\//,
 ];
+
+const {
+  processNotificationBroadcast,
+  processNotificationReceipts,
+  registerPushToken,
+  sendNotification,
+  unregisterPushToken,
+} = createNotificationFunctions(getFirestore());
+export {
+  processNotificationBroadcast,
+  processNotificationReceipts,
+  registerPushToken,
+  sendNotification,
+  unregisterPushToken,
+};
 
 export const listAdminBigQueryTransactions = onCall(
   {
@@ -1042,208 +1057,6 @@ export const deleteVerificationRequest = onCall(
     logger.info("Verification request deleted", {verificationRequestId});
 
     return {success: true};
-  }
-);
-
-export const sendNotification = onCall(
-  {region: REGION, cors: true},
-  async (request: CallableRequest) => {
-    const {auth, data} = request;
-
-    if (!auth) {
-      throw new HttpsError("unauthenticated", "User not authenticated");
-    }
-
-    if (!auth.token.admin) {
-      throw new HttpsError("permission-denied", "Admin access required");
-    }
-
-    const {title, body, imageUrl, topic} = data;
-
-    if (!title || !body) {
-      throw new HttpsError(
-        "invalid-argument",
-        "title and body are required"
-      );
-    }
-
-    const db = getFirestore();
-    const expo = new Expo();
-
-    // Fetch all registered Expo push tokens
-    const tokensSnapshot = await db.collection("pushTokens").get();
-    const allTokens = tokensSnapshot.docs.map(
-      (doc) => ({id: doc.id, token: doc.data().token as string})
-    );
-    logger.info("Notification push token scan complete", {
-      tokenDocsScanned: tokensSnapshot.size,
-      topic: topic || "all-users",
-    });
-
-    if (allTokens.length === 0) {
-      logger.info("No push tokens registered, skipping send");
-
-      // Store notification record even if no tokens
-      await db.collection("notifications").add({
-        title,
-        body,
-        imageUrl: imageUrl || null,
-        topic: topic || "all-users",
-        sentBy: auth.uid,
-        sentAt: new Date(),
-        sentCount: 0,
-        totalRegistered: 0,
-      });
-
-      return {success: true, sentCount: 0};
-    }
-
-    // Filter to valid Expo push tokens
-    const validEntries = allTokens.filter((entry) =>
-      Expo.isExpoPushToken(entry.token)
-    );
-
-    if (validEntries.length === 0) {
-      logger.warn("No valid Expo push tokens found");
-      return {success: true, sentCount: 0};
-    }
-
-    // Deduplicate by token so stale duplicate docs do not send
-    // duplicate pushes.
-    const uniqueEntries = Array.from(
-      new Map(validEntries.map((entry) => [entry.token, entry])).values()
-    );
-
-    // Build push messages
-    const messages = uniqueEntries.map((entry) => ({
-      to: entry.token,
-      title,
-      body,
-      sound: "sound.wav" as const,
-      data: {imageUrl: imageUrl || null},
-    }));
-
-    // Send in batches (SDK handles chunking automatically)
-    const tickets = await expo.sendPushNotificationsAsync(messages);
-
-    // Map token to Firestore doc ID for cleanup
-    const tokenToDocId = new Map<string, string>();
-    validEntries.forEach((entry) => {
-      tokenToDocId.set(entry.token, entry.id);
-    });
-
-    // Handle errors and collect receipt IDs
-    const invalidDocIds: string[] = [];
-    const receiptIds: string[] = [];
-
-    tickets.forEach((ticket, index) => {
-      if (ticket.status === "error") {
-        const details = ticket.details as {error?: string} | undefined;
-        if (
-          details?.error === "DeviceNotRegistered" ||
-          details?.error === "InvalidCredentials"
-        ) {
-          const docId = tokenToDocId.get(uniqueEntries[index].token);
-          if (docId) invalidDocIds.push(docId);
-        }
-        logger.warn("Push ticket error", {
-          token: uniqueEntries[index].token,
-          error: details,
-        });
-      } else if (ticket.id) {
-        receiptIds.push(ticket.id);
-      }
-    });
-
-    // Delete invalid tokens from Firestore
-    if (invalidDocIds.length > 0) {
-      const batch = db.batch();
-      invalidDocIds.forEach((docId) => {
-        batch.delete(db.collection("pushTokens").doc(docId));
-      });
-      await batch.commit();
-      logger.info("Deleted invalid push tokens", {
-        count: invalidDocIds.length,
-      });
-    }
-
-    // Store notification record
-    await db.collection("notifications").add({
-      title,
-      body,
-      imageUrl: imageUrl || null,
-      topic: topic || "all-users",
-      sentBy: auth.uid,
-      sentAt: new Date(),
-      sentCount: uniqueEntries.length,
-      totalRegistered: allTokens.length,
-      receiptIds,
-    });
-
-    logger.info("Notification sent", {
-      title,
-      sentCount: uniqueEntries.length,
-      totalRegistered: allTokens.length,
-      invalidTokenCleanupCount: invalidDocIds.length,
-    });
-
-    return {
-      success: true,
-      sentCount: uniqueEntries.length,
-    };
-  }
-);
-
-export const registerPushToken = onCall(
-  {region: REGION, cors: true},
-  async (request: CallableRequest) => {
-    const {auth, data} = request;
-
-    if (!auth) {
-      throw new HttpsError("unauthenticated", "User not authenticated");
-    }
-
-    const {token, platform} = data;
-
-    if (!token || typeof token !== "string") {
-      throw new HttpsError("invalid-argument", "token is required");
-    }
-
-    if (!Expo.isExpoPushToken(token)) {
-      throw new HttpsError("invalid-argument", "Invalid Expo push token");
-    }
-
-    const db = getFirestore();
-    const pushTokensRef = db.collection("pushTokens");
-
-    // Check if this token already exists (deduplication)
-    const existing = await pushTokensRef
-      .where("token", "==", token)
-      .limit(1)
-      .get();
-
-    if (!existing.empty) {
-      // Update existing record with latest userId and platform
-      await existing.docs[0].ref.update({
-        userId: auth.uid,
-        platform: platform || null,
-        updatedAt: new Date(),
-      });
-      return {success: true, action: "updated"};
-    }
-
-    // Create new token record
-    await pushTokensRef.add({
-      token,
-      userId: auth.uid,
-      platform: platform || null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-
-    logger.info("Push token registered", {userId: auth.uid});
-
-    return {success: true, action: "created"};
   }
 );
 

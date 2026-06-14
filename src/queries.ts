@@ -133,6 +133,16 @@ export const vendorQueryOptions = (vendorId: string) => queryOptions({
     staleTime: STALE_TIME.EXTENDED,
 })
 
+export const vendorPinQueryOptions = (vendorId: string) => queryOptions({
+    queryKey: ['vendor-pin', vendorId],
+    queryFn: async () => {
+        if (!vendorId) throw new Error('No vendor ID provided')
+        const snapshot = await getDoc(doc(db, 'vendor_pins', vendorId))
+        const pin = snapshot.data()?.pin
+        return typeof pin === 'string' && /^\d{4}$/.test(pin) ? pin : ''
+    },
+})
+
 export const vendorTransactionsQueryOptions = (vendorId: string) => queryOptions({
     queryKey: ['vendor-transactions', vendorId],
     queryFn: async () => {

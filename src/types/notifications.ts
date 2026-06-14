@@ -5,9 +5,12 @@ export interface NotificationRecord {
     imageUrl?: string | null
     topic: string
     sentBy: string
-    sentAt: { seconds: number; nanoseconds: number }
+    queuedAt?: { seconds: number; nanoseconds: number }
+    sentAt?: { seconds: number; nanoseconds: number }
+    status?: 'queued' | 'processing' | 'sent' | 'failed'
     messageId?: string
     sentCount?: number
+    failedCount?: number
+    invalidTokenCount?: number
     totalRegistered?: number
-    receiptIds?: string[]
 }

@@ -49,6 +49,7 @@ function NotificationsPage() {
             })) as NotificationRecord[]
         },
         staleTime: 1000 * 60 * 2,
+        refetchInterval: 30_000,
     })
 
     // Send notification mutation
@@ -58,12 +59,13 @@ function NotificationsPage() {
             const result = await sendNotification(data)
             return result.data as {
                 success: boolean
-                messageId: string
+                campaignId: string
+                status: 'queued'
             }
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['notifications'] })
-            toast.success(`Notification sent (topic: ${form.topic})`)
+            toast.success('Notification queued for delivery')
             setForm({ title: '', body: '', imageUrl: iconUrl as string, topic: 'all-users' })
         },
         onError: (error) => {
@@ -100,7 +102,7 @@ function NotificationsPage() {
                     <CardHeader>
                         <CardTitle>Compose Notification</CardTitle>
                         <CardDescription>
-                            Send a push notification to all student app users
+                            Queue a push notification to all student app users. Maximum 2 per Qatar day.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -140,16 +142,7 @@ function NotificationsPage() {
 
                         <div className="space-y-2">
                             <Label>Target Audience</Label>
-                            <select
-                                value={form.topic}
-                                onChange={(e) => setForm({ ...form, topic: e.target.value })}
-                                disabled={sendMutation.isPending}
-                                className="w-full border rounded-md p-2 bg-background"
-                            >
-                                <option value="all-users">All Users</option>
-                                <option value="premium-users">Premium Users</option>
-                                <option value="inactive-users">Inactive Users</option>
-                            </select>
+                            <Input value="All Users" disabled />
                         </div>
 
                         <Button
@@ -165,7 +158,7 @@ function NotificationsPage() {
                             ) : (
                                 <>
                                     <Send className="h-4 w-4" />
-                                    Send Notification
+                                    Queue Notification
                                 </>
                             )}
                         </Button>
@@ -222,13 +215,15 @@ function NotificationsPage() {
                                     <TableHead className="font-bold">Title</TableHead>
                                     <TableHead className="font-bold">Body</TableHead>
                                     <TableHead className="font-bold">Topic</TableHead>
-                                    <TableHead className="font-bold">Sent At</TableHead>
+                                    <TableHead className="font-bold">Status</TableHead>
+                                    <TableHead className="font-bold">Delivered</TableHead>
+                                    <TableHead className="font-bold">Queued At</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {isLoading ? (
                                     <TableRow>
-                                        <TableCell colSpan={4} className="text-center py-10">
+                                        <TableCell colSpan={7} className="text-center py-10">
                                             <div className="flex flex-col items-center gap-2">
                                                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
                                                 <p className="text-muted-foreground">Loading notifications...</p>
@@ -237,7 +232,7 @@ function NotificationsPage() {
                                     </TableRow>
                                 ) : !notifications || notifications.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={4} className="text-center py-10 text-muted-foreground">
+                                        <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
                                             No notifications sent yet.
                                         </TableCell>
                                     </TableRow>
@@ -253,9 +248,21 @@ function NotificationsPage() {
                                                     {notification.topic || 'all-users'}
                                                 </span>
                                             </TableCell>
+                                            <TableCell className="capitalize">
+                                                {notification.status || 'sent'}
+                                            </TableCell>
                                             <TableCell className="text-muted-foreground">
-                                                {notification.sentAt?.seconds
-                                                    ? format(new Date(notification.sentAt.seconds * 1000), 'MMM d, yyyy h:mm a')
+                                                {notification.sentCount ?? 0}
+                                                {notification.totalRegistered !== undefined
+                                                    ? ` / ${notification.totalRegistered}`
+                                                    : ''}
+                                            </TableCell>
+                                            <TableCell className="text-muted-foreground">
+                                                {(notification.queuedAt || notification.sentAt)?.seconds
+                                                    ? format(
+                                                        new Date((notification.queuedAt || notification.sentAt)!.seconds * 1000),
+                                                        'MMM d, yyyy h:mm a',
+                                                    )
                                                     : '—'
                                                 }
                                             </TableCell>
