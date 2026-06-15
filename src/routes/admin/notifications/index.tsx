@@ -35,7 +35,13 @@ export const Route = createFileRoute('/admin/notifications/')({
 
 function NotificationsPage() {
     const queryClient = useQueryClient()
-    const [form, setForm] = useState({ title: '', body: '', imageUrl: iconUrl as string, topic: 'all-users' })
+    const defaultNotificationImageUrl = new URL(iconUrl, window.location.origin).toString()
+    const [form, setForm] = useState({
+        title: '',
+        body: '',
+        imageUrl: defaultNotificationImageUrl,
+        topic: 'all-users',
+    })
 
     // Fetch notification history
     const { data: notifications, isLoading } = useQuery({
@@ -66,7 +72,7 @@ function NotificationsPage() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['notifications'] })
             toast.success('Notification queued for delivery')
-            setForm({ title: '', body: '', imageUrl: iconUrl as string, topic: 'all-users' })
+            setForm({ title: '', body: '', imageUrl: defaultNotificationImageUrl, topic: 'all-users' })
         },
         onError: (error) => {
             toast.error('Failed to send notification: ' + (error instanceof Error ? error.message : 'Unknown error'))

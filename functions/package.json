@@ -7,9 +7,7 @@
     "backfill:webp": "node scripts/backfill-webp-images.js",
     "shell": "npm run build && firebase functions:shell",
     "start": "npm run shell",
-    "deploy": "npm run deploy:dev",
-    "deploy:dev": "firebase deploy --only functions --project dev",
-    "deploy:prod": "firebase deploy --only functions --project prod",
+    "deploy:dev": "firebase deploy --config ../firebase.dev.json --only functions --project dev",
     "refresh:dev:dry-run": "node scripts/sanitized-firestore-refresh.js --dry-run",
     "refresh:dev": "node scripts/sanitized-firestore-refresh.js",
     "logs": "firebase functions:log"
