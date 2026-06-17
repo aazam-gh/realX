@@ -166,6 +166,17 @@ match /vendors/{vendorId} {
   allow write: if isAdmin();
 }
 
+// ─── holding groups ──────────────────────────────────────────────────
+match /holdingGroups/{groupId} {
+  allow read, write: if isAdmin();
+}
+
+match /holdingGroupUsers/{userId} {
+  allow read: if request.auth != null
+    && (request.auth.uid == userId || isAdmin());
+  allow write: if isAdmin();
+}
+
 // ─── online vendor redemption config ─────────────────────────────────
 match /vendorOnlineRedemptionConfigs/{vendorId} {
   allow read, write: if isAdmin();

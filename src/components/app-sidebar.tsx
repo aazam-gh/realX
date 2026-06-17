@@ -71,11 +71,13 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
     avatar: string
   }
   onLogout?: () => void
+  navMain?: typeof data.navMain
 }
 
 export function AppSidebar({
   user,
   onLogout,
+  navMain,
   ...props
 }: AppSidebarProps) {
   return (
@@ -95,7 +97,7 @@ export function AppSidebar({
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={navMain || data.navMain} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>

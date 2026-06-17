@@ -33,7 +33,13 @@ export function LoginForm({
     try {
       await loginWithEmail(email, password)
       await router.invalidate()
-      await navigate({ to: search.redirect || '/dashboard' })
+      const token = await import('@/firebase/config').then(({ auth }) => auth.currentUser?.getIdTokenResult(true))
+      const fallback = token?.claims.admin === true
+        ? '/admin/dashboard'
+        : token?.claims.accountType === 'holding_group'
+          ? '/holding/dashboard'
+          : '/dashboard'
+      await navigate({ to: search.redirect || fallback })
     } catch (err) {
       console.error("Login error:", err)
       setError(err instanceof Error ? err.message : "Failed to sign in. Please check your credentials.")

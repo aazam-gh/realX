@@ -9,9 +9,13 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as HoldingRouteImport } from './routes/holding'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as HoldingIndexRouteImport } from './routes/holding/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as HoldingTransactionsRouteImport } from './routes/holding/transactions'
+import { Route as HoldingDashboardRouteImport } from './routes/holding/dashboard'
 import { Route as AdminWaktiRouteImport } from './routes/admin/wakti'
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
 import { Route as vendorPanelVendorRouteImport } from './routes/(vendor-panel)/_vendor'
@@ -23,8 +27,10 @@ import { Route as AdminTransactionsIndexRouteImport } from './routes/admin/trans
 import { Route as AdminStudentsIndexRouteImport } from './routes/admin/students/index'
 import { Route as AdminOnlineVendorsIndexRouteImport } from './routes/admin/online-vendors/index'
 import { Route as AdminNotificationsIndexRouteImport } from './routes/admin/notifications/index'
+import { Route as AdminHoldingGroupsIndexRouteImport } from './routes/admin/holding-groups/index'
 import { Route as AdminCmsIndexRouteImport } from './routes/admin/cms/index'
 import { Route as AdminBigqueryTransactionsIndexRouteImport } from './routes/admin/bigquery-transactions/index'
+import { Route as HoldingTransactionsTransactionIdRouteImport } from './routes/holding/transactions.$transactionId'
 import { Route as AdminTransactionsIdRouteImport } from './routes/admin/transactions/$id'
 import { Route as vendorPanelVendorTransactionHistoryRouteImport } from './routes/(vendor-panel)/_vendor.transaction-history'
 import { Route as vendorPanelVendorProfileRouteImport } from './routes/(vendor-panel)/_vendor.profile'
@@ -58,6 +64,11 @@ import { Route as AdminVendorsVendorIdSettingsBrandingRouteImport } from './rout
 import { Route as AdminOnlineVendorsVendorIdSettingsInfoRouteImport } from './routes/admin/online-vendors/$vendorId.settings.info'
 import { Route as AdminOnlineVendorsVendorIdSettingsBrandingRouteImport } from './routes/admin/online-vendors/$vendorId.settings.branding'
 
+const HoldingRoute = HoldingRouteImport.update({
+  id: '/holding',
+  path: '/holding',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -68,10 +79,25 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HoldingIndexRoute = HoldingIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => HoldingRoute,
+} as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminRoute,
+} as any)
+const HoldingTransactionsRoute = HoldingTransactionsRouteImport.update({
+  id: '/transactions',
+  path: '/transactions',
+  getParentRoute: () => HoldingRoute,
+} as any)
+const HoldingDashboardRoute = HoldingDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => HoldingRoute,
 } as any)
 const AdminWaktiRoute = AdminWaktiRouteImport.update({
   id: '/wakti',
@@ -142,6 +168,11 @@ const AdminNotificationsIndexRoute = AdminNotificationsIndexRouteImport.update({
   path: '/notifications/',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminHoldingGroupsIndexRoute = AdminHoldingGroupsIndexRouteImport.update({
+  id: '/holding-groups/',
+  path: '/holding-groups/',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminCmsIndexRoute = AdminCmsIndexRouteImport.update({
   id: '/cms/',
   path: '/cms/',
@@ -157,6 +188,12 @@ const AdminBigqueryTransactionsIndexRoute =
       (d) => d.Route,
     ),
   )
+const HoldingTransactionsTransactionIdRoute =
+  HoldingTransactionsTransactionIdRouteImport.update({
+    id: '/$transactionId',
+    path: '/$transactionId',
+    getParentRoute: () => HoldingTransactionsRoute,
+  } as any)
 const AdminTransactionsIdRoute = AdminTransactionsIdRouteImport.update({
   id: '/transactions/$id',
   path: '/transactions/$id',
@@ -366,11 +403,15 @@ const AdminOnlineVendorsVendorIdSettingsBrandingRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/holding': typeof HoldingRouteWithChildren
   '/login': typeof authLoginRoute
   '/unauthorized': typeof authUnauthorizedRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/wakti': typeof AdminWaktiRoute
+  '/holding/dashboard': typeof HoldingDashboardRoute
+  '/holding/transactions': typeof HoldingTransactionsRouteWithChildren
   '/admin/': typeof AdminIndexRoute
+  '/holding/': typeof HoldingIndexRoute
   '/campaign': typeof vendorPanelVendorCampaignRoute
   '/contact-us': typeof vendorPanelVendorContactUsRoute
   '/dashboard': typeof vendorPanelVendorDashboardRoute
@@ -378,8 +419,10 @@ export interface FileRoutesByFullPath {
   '/profile': typeof vendorPanelVendorProfileRoute
   '/transaction-history': typeof vendorPanelVendorTransactionHistoryRouteWithChildren
   '/admin/transactions/$id': typeof AdminTransactionsIdRoute
+  '/holding/transactions/$transactionId': typeof HoldingTransactionsTransactionIdRoute
   '/admin/bigquery-transactions/': typeof AdminBigqueryTransactionsIndexRoute
   '/admin/cms/': typeof AdminCmsIndexRoute
+  '/admin/holding-groups/': typeof AdminHoldingGroupsIndexRoute
   '/admin/notifications/': typeof AdminNotificationsIndexRoute
   '/admin/online-vendors/': typeof AdminOnlineVendorsIndexRoute
   '/admin/students/': typeof AdminStudentsIndexRoute
@@ -418,15 +461,20 @@ export interface FileRoutesByTo {
   '/unauthorized': typeof authUnauthorizedRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/wakti': typeof AdminWaktiRoute
+  '/holding/dashboard': typeof HoldingDashboardRoute
+  '/holding/transactions': typeof HoldingTransactionsRouteWithChildren
   '/admin': typeof AdminIndexRoute
+  '/holding': typeof HoldingIndexRoute
   '/campaign': typeof vendorPanelVendorCampaignRoute
   '/contact-us': typeof vendorPanelVendorContactUsRoute
   '/dashboard': typeof vendorPanelVendorDashboardRoute
   '/pin': typeof vendorPanelVendorPinRoute
   '/profile': typeof vendorPanelVendorProfileRoute
   '/admin/transactions/$id': typeof AdminTransactionsIdRoute
+  '/holding/transactions/$transactionId': typeof HoldingTransactionsTransactionIdRoute
   '/admin/bigquery-transactions': typeof AdminBigqueryTransactionsIndexRoute
   '/admin/cms': typeof AdminCmsIndexRoute
+  '/admin/holding-groups': typeof AdminHoldingGroupsIndexRoute
   '/admin/notifications': typeof AdminNotificationsIndexRoute
   '/admin/online-vendors': typeof AdminOnlineVendorsIndexRoute
   '/admin/students': typeof AdminStudentsIndexRoute
@@ -461,12 +509,16 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/holding': typeof HoldingRouteWithChildren
   '/(auth)/login': typeof authLoginRoute
   '/(auth)/unauthorized': typeof authUnauthorizedRoute
   '/(vendor-panel)/_vendor': typeof vendorPanelVendorRouteWithChildren
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/wakti': typeof AdminWaktiRoute
+  '/holding/dashboard': typeof HoldingDashboardRoute
+  '/holding/transactions': typeof HoldingTransactionsRouteWithChildren
   '/admin/': typeof AdminIndexRoute
+  '/holding/': typeof HoldingIndexRoute
   '/(vendor-panel)/_vendor/campaign': typeof vendorPanelVendorCampaignRoute
   '/(vendor-panel)/_vendor/contact-us': typeof vendorPanelVendorContactUsRoute
   '/(vendor-panel)/_vendor/dashboard': typeof vendorPanelVendorDashboardRoute
@@ -474,8 +526,10 @@ export interface FileRoutesById {
   '/(vendor-panel)/_vendor/profile': typeof vendorPanelVendorProfileRoute
   '/(vendor-panel)/_vendor/transaction-history': typeof vendorPanelVendorTransactionHistoryRouteWithChildren
   '/admin/transactions/$id': typeof AdminTransactionsIdRoute
+  '/holding/transactions/$transactionId': typeof HoldingTransactionsTransactionIdRoute
   '/admin/bigquery-transactions/': typeof AdminBigqueryTransactionsIndexRoute
   '/admin/cms/': typeof AdminCmsIndexRoute
+  '/admin/holding-groups/': typeof AdminHoldingGroupsIndexRoute
   '/admin/notifications/': typeof AdminNotificationsIndexRoute
   '/admin/online-vendors/': typeof AdminOnlineVendorsIndexRoute
   '/admin/students/': typeof AdminStudentsIndexRoute
@@ -513,11 +567,15 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/holding'
     | '/login'
     | '/unauthorized'
     | '/admin/dashboard'
     | '/admin/wakti'
+    | '/holding/dashboard'
+    | '/holding/transactions'
     | '/admin/'
+    | '/holding/'
     | '/campaign'
     | '/contact-us'
     | '/dashboard'
@@ -525,8 +583,10 @@ export interface FileRouteTypes {
     | '/profile'
     | '/transaction-history'
     | '/admin/transactions/$id'
+    | '/holding/transactions/$transactionId'
     | '/admin/bigquery-transactions/'
     | '/admin/cms/'
+    | '/admin/holding-groups/'
     | '/admin/notifications/'
     | '/admin/online-vendors/'
     | '/admin/students/'
@@ -565,15 +625,20 @@ export interface FileRouteTypes {
     | '/unauthorized'
     | '/admin/dashboard'
     | '/admin/wakti'
+    | '/holding/dashboard'
+    | '/holding/transactions'
     | '/admin'
+    | '/holding'
     | '/campaign'
     | '/contact-us'
     | '/dashboard'
     | '/pin'
     | '/profile'
     | '/admin/transactions/$id'
+    | '/holding/transactions/$transactionId'
     | '/admin/bigquery-transactions'
     | '/admin/cms'
+    | '/admin/holding-groups'
     | '/admin/notifications'
     | '/admin/online-vendors'
     | '/admin/students'
@@ -607,12 +672,16 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/holding'
     | '/(auth)/login'
     | '/(auth)/unauthorized'
     | '/(vendor-panel)/_vendor'
     | '/admin/dashboard'
     | '/admin/wakti'
+    | '/holding/dashboard'
+    | '/holding/transactions'
     | '/admin/'
+    | '/holding/'
     | '/(vendor-panel)/_vendor/campaign'
     | '/(vendor-panel)/_vendor/contact-us'
     | '/(vendor-panel)/_vendor/dashboard'
@@ -620,8 +689,10 @@ export interface FileRouteTypes {
     | '/(vendor-panel)/_vendor/profile'
     | '/(vendor-panel)/_vendor/transaction-history'
     | '/admin/transactions/$id'
+    | '/holding/transactions/$transactionId'
     | '/admin/bigquery-transactions/'
     | '/admin/cms/'
+    | '/admin/holding-groups/'
     | '/admin/notifications/'
     | '/admin/online-vendors/'
     | '/admin/students/'
@@ -658,6 +729,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
+  HoldingRoute: typeof HoldingRouteWithChildren
   authLoginRoute: typeof authLoginRoute
   authUnauthorizedRoute: typeof authUnauthorizedRoute
   vendorPanelVendorRoute: typeof vendorPanelVendorRouteWithChildren
@@ -665,6 +737,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/holding': {
+      id: '/holding'
+      path: '/holding'
+      fullPath: '/holding'
+      preLoaderRoute: typeof HoldingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin': {
       id: '/admin'
       path: '/admin'
@@ -679,12 +758,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/holding/': {
+      id: '/holding/'
+      path: '/'
+      fullPath: '/holding/'
+      preLoaderRoute: typeof HoldingIndexRouteImport
+      parentRoute: typeof HoldingRoute
+    }
     '/admin/': {
       id: '/admin/'
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/holding/transactions': {
+      id: '/holding/transactions'
+      path: '/transactions'
+      fullPath: '/holding/transactions'
+      preLoaderRoute: typeof HoldingTransactionsRouteImport
+      parentRoute: typeof HoldingRoute
+    }
+    '/holding/dashboard': {
+      id: '/holding/dashboard'
+      path: '/dashboard'
+      fullPath: '/holding/dashboard'
+      preLoaderRoute: typeof HoldingDashboardRouteImport
+      parentRoute: typeof HoldingRoute
     }
     '/admin/wakti': {
       id: '/admin/wakti'
@@ -763,6 +863,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminNotificationsIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/holding-groups/': {
+      id: '/admin/holding-groups/'
+      path: '/holding-groups'
+      fullPath: '/admin/holding-groups/'
+      preLoaderRoute: typeof AdminHoldingGroupsIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/cms/': {
       id: '/admin/cms/'
       path: '/cms'
@@ -776,6 +883,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/bigquery-transactions/'
       preLoaderRoute: typeof AdminBigqueryTransactionsIndexRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/holding/transactions/$transactionId': {
+      id: '/holding/transactions/$transactionId'
+      path: '/$transactionId'
+      fullPath: '/holding/transactions/$transactionId'
+      preLoaderRoute: typeof HoldingTransactionsTransactionIdRouteImport
+      parentRoute: typeof HoldingTransactionsRoute
     }
     '/admin/transactions/$id': {
       id: '/admin/transactions/$id'
@@ -1059,6 +1173,7 @@ interface AdminRouteChildren {
   AdminTransactionsIdRoute: typeof AdminTransactionsIdRoute
   AdminBigqueryTransactionsIndexRoute: typeof AdminBigqueryTransactionsIndexRoute
   AdminCmsIndexRoute: typeof AdminCmsIndexRoute
+  AdminHoldingGroupsIndexRoute: typeof AdminHoldingGroupsIndexRoute
   AdminNotificationsIndexRoute: typeof AdminNotificationsIndexRoute
   AdminOnlineVendorsIndexRoute: typeof AdminOnlineVendorsIndexRoute
   AdminStudentsIndexRoute: typeof AdminStudentsIndexRoute
@@ -1089,6 +1204,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminTransactionsIdRoute: AdminTransactionsIdRoute,
   AdminBigqueryTransactionsIndexRoute: AdminBigqueryTransactionsIndexRoute,
   AdminCmsIndexRoute: AdminCmsIndexRoute,
+  AdminHoldingGroupsIndexRoute: AdminHoldingGroupsIndexRoute,
   AdminNotificationsIndexRoute: AdminNotificationsIndexRoute,
   AdminOnlineVendorsIndexRoute: AdminOnlineVendorsIndexRoute,
   AdminStudentsIndexRoute: AdminStudentsIndexRoute,
@@ -1117,6 +1233,32 @@ const AdminRouteChildren: AdminRouteChildren = {
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
+interface HoldingTransactionsRouteChildren {
+  HoldingTransactionsTransactionIdRoute: typeof HoldingTransactionsTransactionIdRoute
+}
+
+const HoldingTransactionsRouteChildren: HoldingTransactionsRouteChildren = {
+  HoldingTransactionsTransactionIdRoute: HoldingTransactionsTransactionIdRoute,
+}
+
+const HoldingTransactionsRouteWithChildren =
+  HoldingTransactionsRoute._addFileChildren(HoldingTransactionsRouteChildren)
+
+interface HoldingRouteChildren {
+  HoldingDashboardRoute: typeof HoldingDashboardRoute
+  HoldingTransactionsRoute: typeof HoldingTransactionsRouteWithChildren
+  HoldingIndexRoute: typeof HoldingIndexRoute
+}
+
+const HoldingRouteChildren: HoldingRouteChildren = {
+  HoldingDashboardRoute: HoldingDashboardRoute,
+  HoldingTransactionsRoute: HoldingTransactionsRouteWithChildren,
+  HoldingIndexRoute: HoldingIndexRoute,
+}
+
+const HoldingRouteWithChildren =
+  HoldingRoute._addFileChildren(HoldingRouteChildren)
 
 interface vendorPanelVendorTransactionHistoryRouteChildren {
   vendorPanelVendorTransactionHistoryTransactionIdRoute: typeof vendorPanelVendorTransactionHistoryTransactionIdRoute
@@ -1161,6 +1303,7 @@ const vendorPanelVendorRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
+  HoldingRoute: HoldingRouteWithChildren,
   authLoginRoute: authLoginRoute,
   authUnauthorizedRoute: authUnauthorizedRoute,
   vendorPanelVendorRoute: vendorPanelVendorRouteWithChildren,

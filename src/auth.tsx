@@ -13,6 +13,7 @@ export type AuthContextType = {
   isAuthenticated: boolean
   isInitialLoading: boolean
   isAdmin: boolean
+  isHoldingAccount: boolean
   loginWithEmail: (email: string, password: string) => Promise<void>
   logout: () => Promise<void>
   user: User | null
@@ -31,12 +32,14 @@ export function AuthContextProvider({
   const [isInitialLoading, setIsInitialLoading] = React.useState(true)
   const isAuthenticated = !!user
   const [isAdmin, setIsAdmin] = React.useState(false)
+  const [isHoldingAccount, setIsHoldingAccount] = React.useState(false)
 
   React.useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user) {
         setUser(null)
         setIsAdmin(false)
+        setIsHoldingAccount(false)
         setIsInitialLoading(false)
         return
       }
@@ -46,6 +49,7 @@ export function AuthContextProvider({
 
       setUser(user)
       setIsAdmin(tokenResult.claims.admin === true)
+      setIsHoldingAccount(tokenResult.claims.accountType === 'holding_group')
       setIsInitialLoading(false)
     })
     return () => unsubscribe()
@@ -55,13 +59,18 @@ export function AuthContextProvider({
   const logout = React.useCallback(async () => {
     await signOut(auth)
     setUser(null)
+    setIsAdmin(false)
+    setIsHoldingAccount(false)
     setIsInitialLoading(false)
   }, [])
 
 
   const loginWithEmail = React.useCallback(async (email: string, password: string) => {
     const result = await signInWithEmailAndPassword(auth, email, password)
+    const tokenResult = await result.user.getIdTokenResult(true)
     setUser(result.user)
+    setIsAdmin(tokenResult.claims.admin === true)
+    setIsHoldingAccount(tokenResult.claims.accountType === 'holding_group')
     setIsInitialLoading(false)
   }, [])
 
@@ -70,6 +79,7 @@ export function AuthContextProvider({
       isAuthenticated,
       isInitialLoading,
       isAdmin,
+      isHoldingAccount,
       user,
       loginWithEmail,
       logout,
@@ -78,6 +88,7 @@ export function AuthContextProvider({
       isAuthenticated,
       isInitialLoading,
       isAdmin,
+      isHoldingAccount,
       user,
       loginWithEmail,
       logout,
