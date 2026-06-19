@@ -18,12 +18,25 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import {
-    Search, Upload, Eye, ArrowUpDown, ArrowUp, ArrowDown,
+    Search, Upload, Eye, ArrowUpDown, ArrowUp, ArrowDown, Loader2, Trash2,
 } from 'lucide-react'
-import { useQuery } from '@tanstack/react-query'
+import { useEffect, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { fetchTransactions, type Transaction, type TransactionSearch } from './index'
 import { Badge } from '@/components/ui/badge'
 import { STALE_TIME } from '@/lib/constants'
+import { functions } from '@/firebase/config'
+import { httpsCallable } from 'firebase/functions'
+import { toast } from 'sonner'
+import { resetFirestorePaginationCursors } from '@/lib/firestore-pagination'
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog'
 
 export const Route = createLazyFileRoute('/admin/transactions/')({
     component: RouteComponent,
@@ -45,7 +58,10 @@ function SortIcon({ field }: { field: 'date' | 'amount' | 'vendor' }) {
 
 function RouteComponent() {
     const { page, pageSize, vendorName, sort } = useSearch({ from: '/admin/transactions/' })
-    const navigate = useNavigate()
+    const navigate = useNavigate({ from: '/admin/transactions/' })
+    const queryClient = useQueryClient()
+    const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null)
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
 
     const { data, isLoading: isQueryLoading } = useQuery({
         queryKey: ['transactions-list', page, pageSize, vendorName, sort],
@@ -59,6 +75,8 @@ function RouteComponent() {
 
     const hasNextPage = page * pageSize < totalTransactions
     const hasPrevPage = page > 1
+    const selectedTransaction = transactionList.find((tx) => tx.id === selectedTransactionId) ?? null
+    const selectedTransactionLabel = selectedTransaction?.pin || selectedTransaction?.transactionId || selectedTransaction?.id || ''
 
     const updateSearch = (updates: Partial<TransactionSearch>) => {
         navigate({
@@ -78,6 +96,55 @@ function RouteComponent() {
             newSort = `${field}_desc` as SortOption
         }
         updateSearch({ sort: newSort })
+    }
+
+    useEffect(() => {
+        if (selectedTransactionId && !transactionList.some((tx) => tx.id === selectedTransactionId)) {
+            setSelectedTransactionId(null)
+        }
+    }, [selectedTransactionId, transactionList])
+
+    const deleteTransactionMutation = useMutation({
+        mutationFn: async (transactionId: string) => {
+            const callable = httpsCallable<{ transactionId: string }, { success: true }>(functions, 'deleteTransaction')
+            return callable({ transactionId })
+        },
+        onSuccess: async () => {
+            const shouldStepBack = page > 1 && transactionList.length === 1
+
+            setSelectedTransactionId(null)
+            setDeleteDialogOpen(false)
+            resetFirestorePaginationCursors('transactions:')
+
+            if (shouldStepBack) {
+                await navigate({
+                    to: '/admin/transactions',
+                    search: {
+                        page: page - 1,
+                        pageSize,
+                        vendorName,
+                        sort,
+                    },
+                })
+            }
+
+            await queryClient.invalidateQueries({ queryKey: ['transactions-list'] })
+            toast.success('Transaction deleted successfully.')
+        },
+        onError: (error) => {
+            const message = error instanceof Error ? error.message : 'Failed to delete transaction.'
+            toast.error(message)
+        },
+    })
+
+    const handleCheckboxChange = (transactionId: string, checked: boolean) => {
+        if (deleteTransactionMutation.isPending) return
+        setSelectedTransactionId(checked ? transactionId : null)
+    }
+
+    const handleDeleteConfirm = () => {
+        if (!selectedTransactionId) return
+        deleteTransactionMutation.mutate(selectedTransactionId)
     }
 
     return (
@@ -110,6 +177,42 @@ function RouteComponent() {
                 <h1 className="text-3xl font-bold tracking-tight">Transactions</h1>
             </div>
 
+            <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <DialogContent className="sm:max-w-[460px]">
+                    <DialogHeader>
+                        <DialogTitle>Delete Transaction</DialogTitle>
+                        <DialogDescription>
+                            {selectedTransaction
+                                ? `Delete transaction ${selectedTransactionLabel}? This only removes the Firestore transaction document and cannot be undone.`
+                                : 'Select a transaction to delete.'}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2 sm:gap-0">
+                        <Button
+                            variant="outline"
+                            onClick={() => setDeleteDialogOpen(false)}
+                            disabled={deleteTransactionMutation.isPending}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={handleDeleteConfirm}
+                            disabled={!selectedTransaction || deleteTransactionMutation.isPending}
+                        >
+                            {deleteTransactionMutation.isPending ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Deleting...
+                                </>
+                            ) : (
+                                'Delete Transaction'
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="relative w-full sm:max-w-md">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -121,6 +224,21 @@ function RouteComponent() {
                     />
                 </div>
                 <div className="flex items-center gap-2 w-full sm:w-auto">
+                    {selectedTransaction && (
+                        <Button
+                            variant="destructive"
+                            className="gap-2 h-10"
+                            onClick={() => setDeleteDialogOpen(true)}
+                            disabled={deleteTransactionMutation.isPending}
+                        >
+                            {deleteTransactionMutation.isPending ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                                <Trash2 className="h-4 w-4" />
+                            )}
+                            Delete Selected
+                        </Button>
+                    )}
                     <Button variant="outline" className="gap-2 h-10">
                         Export <Upload className="h-4 w-4" />
                     </Button>
@@ -147,9 +265,7 @@ function RouteComponent() {
                 <Table>
                     <TableHeader>
                         <TableRow className="hover:bg-transparent border-none">
-                            <TableHead className="w-12">
-                                <Checkbox />
-                            </TableHead>
+                            <TableHead className="w-16 text-black font-bold text-base">Select</TableHead>
                             <TableHead
                                 className="text-black font-bold text-base cursor-pointer select-none"
                                 onClick={() => toggleSort('date')}
@@ -204,7 +320,13 @@ function RouteComponent() {
                                     onClick={() => navigate({ to: '/admin/transactions/$id', params: { id: tx.id } })}
                                 >
                                     <TableCell onClick={(e) => e.stopPropagation()}>
-                                        <Checkbox />
+                                        <Checkbox
+                                            checked={selectedTransactionId === tx.id}
+                                            disabled={deleteTransactionMutation.isPending}
+                                            aria-label={`Select transaction ${tx.pin || tx.transactionId || tx.id}`}
+                                            onCheckedChange={(checked) => handleCheckboxChange(tx.id, checked === true)}
+                                            onClick={(e) => e.stopPropagation()}
+                                        />
                                     </TableCell>
                                     <TableCell className="font-medium text-gray-900">
                                         <div className="flex flex-col">
