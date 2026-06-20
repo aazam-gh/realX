@@ -40,14 +40,6 @@ const CMS_ITEMS = [
         href: '/admin/cms/brands' as const,
     },
     {
-        title: 'Trending Offers',
-        description: 'Arrange trending vendor display order',
-        icon: Flame,
-        color: 'bg-orange-100 text-orange-600',
-        hoverBorder: 'hover:border-orange-200',
-        href: '/admin/cms/trending-offers' as const,
-    },
-    {
         title: 'Trending Offer Banners',
         description: 'Manage custom trending banners for the next app version',
         icon: Flame,
