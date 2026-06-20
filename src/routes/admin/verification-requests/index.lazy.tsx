@@ -45,8 +45,7 @@ interface VerificationRequest {
     id: string
     authUid: string | null
     email: string
-    idFrontPath: string
-    idBackPath: string
+    idImagePath: string
     rejectionReason: string | null
     reviewedAt: any
     reviewedBy: string | null
@@ -64,8 +63,7 @@ function RouteComponent() {
     const [approveOpen, setApproveOpen] = useState(false)
     const [rejectOpen, setRejectOpen] = useState(false)
     const [selectedRequest, setSelectedRequest] = useState<VerificationRequest | null>(null)
-    const [frontImageUrl, setFrontImageUrl] = useState<string | null>(null)
-    const [backImageUrl, setBackImageUrl] = useState<string | null>(null)
+    const [idImageUrl, setIdImageUrl] = useState<string | null>(null)
     const [rejectionReason, setRejectionReason] = useState('')
     const [approveForm, setApproveForm] = useState({
         firstName: '',
@@ -114,8 +112,7 @@ function RouteComponent() {
                     id: docSnap.id,
                     authUid: d.authUid || null,
                     email: d.email || '',
-                    idFrontPath: d.idFrontPath || '',
-                    idBackPath: d.idBackPath || '',
+                    idImagePath: d.idImagePath || '',
                     rejectionReason: d.rejectionReason || null,
                     reviewedAt: d.reviewedAt || null,
                     reviewedBy: d.reviewedBy || null,
@@ -142,17 +139,11 @@ function RouteComponent() {
     // Fetch ID images when detail dialog opens
     useEffect(() => {
         if (detailOpen && selectedRequest) {
-            setFrontImageUrl(null)
-            setBackImageUrl(null)
-            if (selectedRequest.idFrontPath) {
-                getDownloadURL(ref(storage, selectedRequest.idFrontPath))
-                    .then(setFrontImageUrl)
-                    .catch(() => setFrontImageUrl(null))
-            }
-            if (selectedRequest.idBackPath) {
-                getDownloadURL(ref(storage, selectedRequest.idBackPath))
-                    .then(setBackImageUrl)
-                    .catch(() => setBackImageUrl(null))
+            setIdImageUrl(null)
+            if (selectedRequest.idImagePath) {
+                getDownloadURL(ref(storage, selectedRequest.idImagePath))
+                    .then(setIdImageUrl)
+                    .catch(() => setIdImageUrl(null))
             }
         }
     }, [detailOpen, selectedRequest])
@@ -457,27 +448,15 @@ function RouteComponent() {
                             {/* ID Images */}
                             <div>
                                 <p className="text-sm text-muted-foreground mb-2">ID Documents</p>
-                                <div className="grid gap-3 sm:grid-cols-2">
-                                    <div className="rounded-lg border bg-muted/30 overflow-hidden">
-                                        <p className="text-xs text-muted-foreground p-2 border-b">Front</p>
-                                        {frontImageUrl ? (
-                                            <img src={frontImageUrl} alt="ID Front" className="w-full h-48 object-cover" />
-                                        ) : (
-                                            <div className="w-full h-48 flex items-center justify-center">
-                                                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="rounded-lg border bg-muted/30 overflow-hidden">
-                                        <p className="text-xs text-muted-foreground p-2 border-b">Back</p>
-                                        {backImageUrl ? (
-                                            <img src={backImageUrl} alt="ID Back" className="w-full h-48 object-cover" />
-                                        ) : (
-                                            <div className="w-full h-48 flex items-center justify-center">
-                                                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                                            </div>
-                                        )}
-                                    </div>
+                                <div className="rounded-lg border bg-muted/30 overflow-hidden">
+                                    <p className="text-xs text-muted-foreground p-2 border-b">Uploaded ID</p>
+                                    {idImageUrl ? (
+                                        <img src={idImageUrl} alt="Uploaded ID" className="w-full h-64 object-cover" />
+                                    ) : (
+                                        <div className="w-full h-64 flex items-center justify-center">
+                                            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -487,7 +466,7 @@ function RouteComponent() {
                                     <div>
                                         <p className="text-sm font-medium">Account Details</p>
                                         <p className="text-sm text-muted-foreground">
-                                            Review the ID images above, then enter the account details before approving.
+                                            Review the uploaded ID above, then enter the account details before approving.
                                         </p>
                                     </div>
                                     <div className="grid gap-3 sm:grid-cols-2">

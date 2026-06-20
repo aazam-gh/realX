@@ -1573,10 +1573,7 @@ export const approveVerificationRequest = onCall(
         }
       }
     };
-    await Promise.all([
-      deleteFile(requestData?.idFrontPath),
-      deleteFile(requestData?.idBackPath),
-    ]);
+    await deleteFile(requestData?.idImagePath);
 
     // Send welcome email via Resend
     try {
@@ -1685,10 +1682,7 @@ export const rejectVerificationRequest = onCall(
         }
       }
     };
-    await Promise.all([
-      deleteFile(requestData?.idFrontPath),
-      deleteFile(requestData?.idBackPath),
-    ]);
+    await deleteFile(requestData?.idImagePath);
 
     logger.info("Verification request rejected", {verificationRequestId});
 
@@ -1742,10 +1736,7 @@ export const deleteVerificationRequest = onCall(
       }
     };
 
-    await Promise.all([
-      deleteFile(requestData?.idFrontPath),
-      deleteFile(requestData?.idBackPath),
-    ]);
+    await deleteFile(requestData?.idImagePath);
 
     // Delete the Firestore document
     await reqDoc.delete();
