@@ -43,6 +43,16 @@ const data = {
       icon: IconReceipt,
     },
     {
+      title: "BigQuery Vendors",
+      url: "/admin/bigquery-vendors",
+      icon: IconDatabase,
+    },
+    {
+      title: "BigQuery Students",
+      url: "/admin/bigquery-students",
+      icon: IconDatabase,
+    },
+        {
       title: "BigQuery Transactions",
       url: "/admin/bigquery-transactions",
       icon: IconDatabase,
