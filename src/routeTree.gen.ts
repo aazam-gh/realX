@@ -31,6 +31,7 @@ import { Route as AdminHoldingGroupsIndexRouteImport } from './routes/admin/hold
 import { Route as AdminCmsIndexRouteImport } from './routes/admin/cms/index'
 import { Route as AdminBigqueryVendorsIndexRouteImport } from './routes/admin/bigquery-vendors/index'
 import { Route as AdminBigqueryTransactionsIndexRouteImport } from './routes/admin/bigquery-transactions/index'
+import { Route as AdminBigqueryStudentsIndexRouteImport } from './routes/admin/bigquery-students/index'
 import { Route as HoldingTransactionsTransactionIdRouteImport } from './routes/holding/transactions.$transactionId'
 import { Route as AdminTransactionsIdRouteImport } from './routes/admin/transactions/$id'
 import { Route as vendorPanelVendorTransactionHistoryRouteImport } from './routes/(vendor-panel)/_vendor.transaction-history'
@@ -195,6 +196,14 @@ const AdminBigqueryTransactionsIndexRoute =
     import('./routes/admin/bigquery-transactions/index.lazy').then(
       (d) => d.Route,
     ),
+  )
+const AdminBigqueryStudentsIndexRoute =
+  AdminBigqueryStudentsIndexRouteImport.update({
+    id: '/bigquery-students/',
+    path: '/bigquery-students/',
+    getParentRoute: () => AdminRoute,
+  } as any).lazy(() =>
+    import('./routes/admin/bigquery-students/index.lazy').then((d) => d.Route),
   )
 const HoldingTransactionsTransactionIdRoute =
   HoldingTransactionsTransactionIdRouteImport.update({
@@ -418,6 +427,7 @@ export interface FileRoutesByFullPath {
   '/transaction-history': typeof vendorPanelVendorTransactionHistoryRouteWithChildren
   '/admin/transactions/$id': typeof AdminTransactionsIdRoute
   '/holding/transactions/$transactionId': typeof HoldingTransactionsTransactionIdRoute
+  '/admin/bigquery-students/': typeof AdminBigqueryStudentsIndexRoute
   '/admin/bigquery-transactions/': typeof AdminBigqueryTransactionsIndexRoute
   '/admin/bigquery-vendors/': typeof AdminBigqueryVendorsIndexRoute
   '/admin/cms/': typeof AdminCmsIndexRoute
@@ -470,6 +480,7 @@ export interface FileRoutesByTo {
   '/profile': typeof vendorPanelVendorProfileRoute
   '/admin/transactions/$id': typeof AdminTransactionsIdRoute
   '/holding/transactions/$transactionId': typeof HoldingTransactionsTransactionIdRoute
+  '/admin/bigquery-students': typeof AdminBigqueryStudentsIndexRoute
   '/admin/bigquery-transactions': typeof AdminBigqueryTransactionsIndexRoute
   '/admin/bigquery-vendors': typeof AdminBigqueryVendorsIndexRoute
   '/admin/cms': typeof AdminCmsIndexRoute
@@ -525,6 +536,7 @@ export interface FileRoutesById {
   '/(vendor-panel)/_vendor/transaction-history': typeof vendorPanelVendorTransactionHistoryRouteWithChildren
   '/admin/transactions/$id': typeof AdminTransactionsIdRoute
   '/holding/transactions/$transactionId': typeof HoldingTransactionsTransactionIdRoute
+  '/admin/bigquery-students/': typeof AdminBigqueryStudentsIndexRoute
   '/admin/bigquery-transactions/': typeof AdminBigqueryTransactionsIndexRoute
   '/admin/bigquery-vendors/': typeof AdminBigqueryVendorsIndexRoute
   '/admin/cms/': typeof AdminCmsIndexRoute
@@ -582,6 +594,7 @@ export interface FileRouteTypes {
     | '/transaction-history'
     | '/admin/transactions/$id'
     | '/holding/transactions/$transactionId'
+    | '/admin/bigquery-students/'
     | '/admin/bigquery-transactions/'
     | '/admin/bigquery-vendors/'
     | '/admin/cms/'
@@ -634,6 +647,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/admin/transactions/$id'
     | '/holding/transactions/$transactionId'
+    | '/admin/bigquery-students'
     | '/admin/bigquery-transactions'
     | '/admin/bigquery-vendors'
     | '/admin/cms'
@@ -688,6 +702,7 @@ export interface FileRouteTypes {
     | '/(vendor-panel)/_vendor/transaction-history'
     | '/admin/transactions/$id'
     | '/holding/transactions/$transactionId'
+    | '/admin/bigquery-students/'
     | '/admin/bigquery-transactions/'
     | '/admin/bigquery-vendors/'
     | '/admin/cms/'
@@ -887,6 +902,13 @@ declare module '@tanstack/react-router' {
       path: '/bigquery-transactions'
       fullPath: '/admin/bigquery-transactions/'
       preLoaderRoute: typeof AdminBigqueryTransactionsIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/bigquery-students/': {
+      id: '/admin/bigquery-students/'
+      path: '/bigquery-students'
+      fullPath: '/admin/bigquery-students/'
+      preLoaderRoute: typeof AdminBigqueryStudentsIndexRouteImport
       parentRoute: typeof AdminRoute
     }
     '/holding/transactions/$transactionId': {
@@ -1169,6 +1191,7 @@ interface AdminRouteChildren {
   AdminWaktiRoute: typeof AdminWaktiRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminTransactionsIdRoute: typeof AdminTransactionsIdRoute
+  AdminBigqueryStudentsIndexRoute: typeof AdminBigqueryStudentsIndexRoute
   AdminBigqueryTransactionsIndexRoute: typeof AdminBigqueryTransactionsIndexRoute
   AdminBigqueryVendorsIndexRoute: typeof AdminBigqueryVendorsIndexRoute
   AdminCmsIndexRoute: typeof AdminCmsIndexRoute
@@ -1200,6 +1223,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminWaktiRoute: AdminWaktiRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminTransactionsIdRoute: AdminTransactionsIdRoute,
+  AdminBigqueryStudentsIndexRoute: AdminBigqueryStudentsIndexRoute,
   AdminBigqueryTransactionsIndexRoute: AdminBigqueryTransactionsIndexRoute,
   AdminBigqueryVendorsIndexRoute: AdminBigqueryVendorsIndexRoute,
   AdminCmsIndexRoute: AdminCmsIndexRoute,

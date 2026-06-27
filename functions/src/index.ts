@@ -20,8 +20,8 @@ import {
   listAdminBigQueryTransactionsHandler,
 } from "./admin-bigquery-transactions.js";
 import {
-  listAdminBigQueryVendorsHandler,
-} from "./admin-bigquery-vendors.js";
+  listAdminBigQueryStudentsHandler,
+} from "./admin-bigquery-students.js";
 import {createNotificationFunctions} from "./notifications.js";
 
 /* eslint-disable require-jsdoc, max-len */
@@ -74,15 +74,15 @@ export const listAdminBigQueryTransactions = onCall(
   },
   listAdminBigQueryTransactionsHandler,
 );
-export const listAdminBigQueryVendors = onCall(
+export const listAdminBigQueryStudents = onCall(
   {
     region: REGION,
     cors: true,
     timeoutSeconds: 60,
     serviceAccount:
-      "admin-bigquery-transactions@reelx-backend.iam.gserviceaccount.com",
+      "admin-bigquery-students@reelx-backend.iam.gserviceaccount.com",
   },
-  listAdminBigQueryVendorsHandler,
+  listAdminBigQueryStudentsHandler,
 );
 
 /**

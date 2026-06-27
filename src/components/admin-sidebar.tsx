@@ -48,6 +48,11 @@ const data = {
       icon: IconDatabase,
     },
     {
+      title: "BigQuery Students",
+      url: "/admin/bigquery-students",
+      icon: IconDatabase,
+    },
+        {
       title: "BigQuery Transactions",
       url: "/admin/bigquery-transactions",
       icon: IconDatabase,
