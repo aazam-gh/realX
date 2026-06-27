@@ -29,6 +29,7 @@ import { Route as AdminOnlineVendorsIndexRouteImport } from './routes/admin/onli
 import { Route as AdminNotificationsIndexRouteImport } from './routes/admin/notifications/index'
 import { Route as AdminHoldingGroupsIndexRouteImport } from './routes/admin/holding-groups/index'
 import { Route as AdminCmsIndexRouteImport } from './routes/admin/cms/index'
+import { Route as AdminBigqueryVendorsIndexRouteImport } from './routes/admin/bigquery-vendors/index'
 import { Route as AdminBigqueryTransactionsIndexRouteImport } from './routes/admin/bigquery-transactions/index'
 import { Route as HoldingTransactionsTransactionIdRouteImport } from './routes/holding/transactions.$transactionId'
 import { Route as AdminTransactionsIdRouteImport } from './routes/admin/transactions/$id'
@@ -177,6 +178,14 @@ const AdminCmsIndexRoute = AdminCmsIndexRouteImport.update({
   path: '/cms/',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminBigqueryVendorsIndexRoute =
+  AdminBigqueryVendorsIndexRouteImport.update({
+    id: '/bigquery-vendors/',
+    path: '/bigquery-vendors/',
+    getParentRoute: () => AdminRoute,
+  } as any).lazy(() =>
+    import('./routes/admin/bigquery-vendors/index.lazy').then((d) => d.Route),
+  )
 const AdminBigqueryTransactionsIndexRoute =
   AdminBigqueryTransactionsIndexRouteImport.update({
     id: '/bigquery-transactions/',
@@ -410,6 +419,7 @@ export interface FileRoutesByFullPath {
   '/admin/transactions/$id': typeof AdminTransactionsIdRoute
   '/holding/transactions/$transactionId': typeof HoldingTransactionsTransactionIdRoute
   '/admin/bigquery-transactions/': typeof AdminBigqueryTransactionsIndexRoute
+  '/admin/bigquery-vendors/': typeof AdminBigqueryVendorsIndexRoute
   '/admin/cms/': typeof AdminCmsIndexRoute
   '/admin/holding-groups/': typeof AdminHoldingGroupsIndexRoute
   '/admin/notifications/': typeof AdminNotificationsIndexRoute
@@ -461,6 +471,7 @@ export interface FileRoutesByTo {
   '/admin/transactions/$id': typeof AdminTransactionsIdRoute
   '/holding/transactions/$transactionId': typeof HoldingTransactionsTransactionIdRoute
   '/admin/bigquery-transactions': typeof AdminBigqueryTransactionsIndexRoute
+  '/admin/bigquery-vendors': typeof AdminBigqueryVendorsIndexRoute
   '/admin/cms': typeof AdminCmsIndexRoute
   '/admin/holding-groups': typeof AdminHoldingGroupsIndexRoute
   '/admin/notifications': typeof AdminNotificationsIndexRoute
@@ -515,6 +526,7 @@ export interface FileRoutesById {
   '/admin/transactions/$id': typeof AdminTransactionsIdRoute
   '/holding/transactions/$transactionId': typeof HoldingTransactionsTransactionIdRoute
   '/admin/bigquery-transactions/': typeof AdminBigqueryTransactionsIndexRoute
+  '/admin/bigquery-vendors/': typeof AdminBigqueryVendorsIndexRoute
   '/admin/cms/': typeof AdminCmsIndexRoute
   '/admin/holding-groups/': typeof AdminHoldingGroupsIndexRoute
   '/admin/notifications/': typeof AdminNotificationsIndexRoute
@@ -571,6 +583,7 @@ export interface FileRouteTypes {
     | '/admin/transactions/$id'
     | '/holding/transactions/$transactionId'
     | '/admin/bigquery-transactions/'
+    | '/admin/bigquery-vendors/'
     | '/admin/cms/'
     | '/admin/holding-groups/'
     | '/admin/notifications/'
@@ -622,6 +635,7 @@ export interface FileRouteTypes {
     | '/admin/transactions/$id'
     | '/holding/transactions/$transactionId'
     | '/admin/bigquery-transactions'
+    | '/admin/bigquery-vendors'
     | '/admin/cms'
     | '/admin/holding-groups'
     | '/admin/notifications'
@@ -675,6 +689,7 @@ export interface FileRouteTypes {
     | '/admin/transactions/$id'
     | '/holding/transactions/$transactionId'
     | '/admin/bigquery-transactions/'
+    | '/admin/bigquery-vendors/'
     | '/admin/cms/'
     | '/admin/holding-groups/'
     | '/admin/notifications/'
@@ -858,6 +873,13 @@ declare module '@tanstack/react-router' {
       path: '/cms'
       fullPath: '/admin/cms/'
       preLoaderRoute: typeof AdminCmsIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/bigquery-vendors/': {
+      id: '/admin/bigquery-vendors/'
+      path: '/bigquery-vendors'
+      fullPath: '/admin/bigquery-vendors/'
+      preLoaderRoute: typeof AdminBigqueryVendorsIndexRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/bigquery-transactions/': {
@@ -1148,6 +1170,7 @@ interface AdminRouteChildren {
   AdminIndexRoute: typeof AdminIndexRoute
   AdminTransactionsIdRoute: typeof AdminTransactionsIdRoute
   AdminBigqueryTransactionsIndexRoute: typeof AdminBigqueryTransactionsIndexRoute
+  AdminBigqueryVendorsIndexRoute: typeof AdminBigqueryVendorsIndexRoute
   AdminCmsIndexRoute: typeof AdminCmsIndexRoute
   AdminHoldingGroupsIndexRoute: typeof AdminHoldingGroupsIndexRoute
   AdminNotificationsIndexRoute: typeof AdminNotificationsIndexRoute
@@ -1178,6 +1201,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminIndexRoute: AdminIndexRoute,
   AdminTransactionsIdRoute: AdminTransactionsIdRoute,
   AdminBigqueryTransactionsIndexRoute: AdminBigqueryTransactionsIndexRoute,
+  AdminBigqueryVendorsIndexRoute: AdminBigqueryVendorsIndexRoute,
   AdminCmsIndexRoute: AdminCmsIndexRoute,
   AdminHoldingGroupsIndexRoute: AdminHoldingGroupsIndexRoute,
   AdminNotificationsIndexRoute: AdminNotificationsIndexRoute,

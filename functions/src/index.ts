@@ -19,6 +19,9 @@ import sharp from "sharp";
 import {
   listAdminBigQueryTransactionsHandler,
 } from "./admin-bigquery-transactions.js";
+import {
+  listAdminBigQueryVendorsHandler,
+} from "./admin-bigquery-vendors.js";
 import {createNotificationFunctions} from "./notifications.js";
 
 /* eslint-disable require-jsdoc, max-len */
@@ -70,6 +73,16 @@ export const listAdminBigQueryTransactions = onCall(
       "admin-bigquery-transactions@reelx-backend.iam.gserviceaccount.com",
   },
   listAdminBigQueryTransactionsHandler,
+);
+export const listAdminBigQueryVendors = onCall(
+  {
+    region: REGION,
+    cors: true,
+    timeoutSeconds: 60,
+    serviceAccount:
+      "admin-bigquery-transactions@reelx-backend.iam.gserviceaccount.com",
+  },
+  listAdminBigQueryVendorsHandler,
 );
 
 /**
