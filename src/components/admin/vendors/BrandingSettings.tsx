@@ -606,16 +606,19 @@ export function BrandingSettings({
                             />
                         </div>
 
-                        <div className="space-y-4">
-                            <Label className="text-sm font-medium text-slate-600 ml-1">Redemptions Per User Per Day</Label>
-                            <Input
-                                type="number"
-                                min={1}
-                                placeholder="1"
-                                value={onlineConfig.dailyLimitPerUser || 1}
-                                onChange={(e) => setOnlineConfig({ ...onlineConfig, dailyLimitPerUser: parseInt(e.target.value, 10) || 1 })}
-                                className="bg-slate-50 border-none ring-0 focus-visible:ring-1 focus-visible:ring-blue-400 h-14 rounded-2xl px-5 text-sm"
+                        <div className="flex items-center space-x-3 bg-slate-50/50 p-4 rounded-2xl border border-slate-100/50">
+                            <Checkbox
+                                id="onlineVendorEnabled"
+                                checked={onlineConfig.enabled}
+                                onCheckedChange={(checked) => setOnlineConfig({ ...onlineConfig, enabled: checked === true })}
+                                className="h-5 w-5 rounded-md border-slate-300 data-[state=checked]:bg-brand-green data-[state=checked]:border-brand-green"
                             />
+                            <div>
+                                <Label htmlFor="onlineVendorEnabled" className="text-base font-semibold text-slate-700 cursor-pointer">
+                                    Online offer enabled
+                                </Label>
+                                <p className="text-xs text-slate-500 mt-1">Controls whether eligible users can view the code and visit the store.</p>
+                            </div>
                         </div>
                     </div>
                 )}

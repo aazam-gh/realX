@@ -201,6 +201,7 @@ export async function listAdminBigQueryTransactionsHandler(
   };
   const where = [
     "DATE(sort_created_at) >= DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH)",
+    "type != 'online_redemption'",
   ];
 
   if (vendorName) {

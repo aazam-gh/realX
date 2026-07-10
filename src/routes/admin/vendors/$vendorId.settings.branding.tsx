@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { BrandingSettings, type VendorBrandingForm } from '@/components/admin/vendors/BrandingSettings'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { db, functions } from '@/firebase/config'
-import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore'
+import { deleteField, doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore'
 import { httpsCallable } from 'firebase/functions'
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
@@ -27,7 +27,6 @@ function BrandingSettingsComponent() {
     const [onlineConfig, setOnlineConfig] = useState<OnlineRedemptionConfig>({
         discountCode: '',
         purchaseUrl: '',
-        dailyLimitPerUser: 1,
         enabled: false,
     })
 
@@ -51,7 +50,6 @@ function BrandingSettingsComponent() {
                 setOnlineConfig({
                     discountCode: '',
                     purchaseUrl: '',
-                    dailyLimitPerUser: 1,
                     enabled: false,
                 })
                 return
@@ -61,7 +59,6 @@ function BrandingSettingsComponent() {
             setOnlineConfig({
                 discountCode: data.discountCode || '',
                 purchaseUrl: data.purchaseUrl || '',
-                dailyLimitPerUser: Number(data.dailyLimitPerUser || 1),
                 enabled: data.enabled === true,
             })
         }
@@ -78,16 +75,18 @@ function BrandingSettingsComponent() {
             if (vendorData.vendorType === 'online') {
                 const discountCode = configData.discountCode.trim()
                 const purchaseUrl = configData.purchaseUrl.trim()
-                const dailyLimitPerUser = Number(configData.dailyLimitPerUser)
 
-                if (!discountCode || !purchaseUrl || !Number.isFinite(dailyLimitPerUser) || dailyLimitPerUser < 1) {
-                    throw new Error('Online vendors require a discount code, purchase URL, and daily limit of at least 1.')
+                if (!discountCode || !purchaseUrl) {
+                    throw new Error('Online vendors require a discount code and purchase URL.')
                 }
 
                 try {
-                    new URL(purchaseUrl)
+                    const parsed = new URL(purchaseUrl)
+                    if (parsed.protocol !== 'https:' || !parsed.hostname || parsed.username || parsed.password) {
+                        throw new Error('Unsafe URL')
+                    }
                 } catch {
-                    throw new Error('Purchase URL must be a valid URL.')
+                    throw new Error('Purchase URL must be a valid HTTPS URL without embedded credentials.')
                 }
             }
 
@@ -109,7 +108,7 @@ function BrandingSettingsComponent() {
             await setDoc(doc(db, 'vendorOnlineRedemptionConfigs', vendorId), {
                 discountCode: configData.discountCode.trim(),
                 purchaseUrl: configData.purchaseUrl.trim(),
-                dailyLimitPerUser: Math.max(1, Math.floor(Number(configData.dailyLimitPerUser) || 1)),
+                dailyLimitPerUser: deleteField(),
                 enabled: configData.enabled === true,
                 updatedAt: serverTimestamp(),
             }, { merge: true })

@@ -16,7 +16,6 @@ export interface EmbeddedOffer {
 export interface OnlineRedemptionConfig {
     discountCode: string
     purchaseUrl: string
-    dailyLimitPerUser: number
     enabled: boolean
 }
 

@@ -62,6 +62,7 @@ import { Route as AdminVendorsVendorIdSettingsInvoicesRouteImport } from './rout
 import { Route as AdminVendorsVendorIdSettingsBrandingRouteImport } from './routes/admin/vendors/$vendorId.settings.branding'
 import { Route as AdminOnlineVendorsVendorIdSettingsInfoRouteImport } from './routes/admin/online-vendors/$vendorId.settings.info'
 import { Route as AdminOnlineVendorsVendorIdSettingsBrandingRouteImport } from './routes/admin/online-vendors/$vendorId.settings.branding'
+import { Route as AdminOnlineVendorsVendorIdSettingsAnalyticsRouteImport } from './routes/admin/online-vendors/$vendorId.settings.analytics'
 
 const HoldingRoute = HoldingRouteImport.update({
   id: '/holding',
@@ -388,6 +389,12 @@ const AdminOnlineVendorsVendorIdSettingsBrandingRoute =
     path: '/branding',
     getParentRoute: () => AdminOnlineVendorsVendorIdSettingsRoute,
   } as any)
+const AdminOnlineVendorsVendorIdSettingsAnalyticsRoute =
+  AdminOnlineVendorsVendorIdSettingsAnalyticsRouteImport.update({
+    id: '/analytics',
+    path: '/analytics',
+    getParentRoute: () => AdminOnlineVendorsVendorIdSettingsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -434,6 +441,7 @@ export interface FileRoutesByFullPath {
   '/admin/cms/featured-brand-showcase/': typeof AdminCmsFeaturedBrandShowcaseIndexRoute
   '/admin/cms/trending-offer-banners/': typeof AdminCmsTrendingOfferBannersIndexRoute
   '/admin/cms/universities/': typeof AdminCmsUniversitiesIndexRoute
+  '/admin/online-vendors/$vendorId/settings/analytics': typeof AdminOnlineVendorsVendorIdSettingsAnalyticsRoute
   '/admin/online-vendors/$vendorId/settings/branding': typeof AdminOnlineVendorsVendorIdSettingsBrandingRoute
   '/admin/online-vendors/$vendorId/settings/info': typeof AdminOnlineVendorsVendorIdSettingsInfoRoute
   '/admin/vendors/$vendorId/settings/branding': typeof AdminVendorsVendorIdSettingsBrandingRoute
@@ -483,6 +491,7 @@ export interface FileRoutesByTo {
   '/admin/cms/featured-brand-showcase': typeof AdminCmsFeaturedBrandShowcaseIndexRoute
   '/admin/cms/trending-offer-banners': typeof AdminCmsTrendingOfferBannersIndexRoute
   '/admin/cms/universities': typeof AdminCmsUniversitiesIndexRoute
+  '/admin/online-vendors/$vendorId/settings/analytics': typeof AdminOnlineVendorsVendorIdSettingsAnalyticsRoute
   '/admin/online-vendors/$vendorId/settings/branding': typeof AdminOnlineVendorsVendorIdSettingsBrandingRoute
   '/admin/online-vendors/$vendorId/settings/info': typeof AdminOnlineVendorsVendorIdSettingsInfoRoute
   '/admin/vendors/$vendorId/settings/branding': typeof AdminVendorsVendorIdSettingsBrandingRoute
@@ -539,6 +548,7 @@ export interface FileRoutesById {
   '/admin/cms/featured-brand-showcase/': typeof AdminCmsFeaturedBrandShowcaseIndexRoute
   '/admin/cms/trending-offer-banners/': typeof AdminCmsTrendingOfferBannersIndexRoute
   '/admin/cms/universities/': typeof AdminCmsUniversitiesIndexRoute
+  '/admin/online-vendors/$vendorId/settings/analytics': typeof AdminOnlineVendorsVendorIdSettingsAnalyticsRoute
   '/admin/online-vendors/$vendorId/settings/branding': typeof AdminOnlineVendorsVendorIdSettingsBrandingRoute
   '/admin/online-vendors/$vendorId/settings/info': typeof AdminOnlineVendorsVendorIdSettingsInfoRoute
   '/admin/vendors/$vendorId/settings/branding': typeof AdminVendorsVendorIdSettingsBrandingRoute
@@ -595,6 +605,7 @@ export interface FileRouteTypes {
     | '/admin/cms/featured-brand-showcase/'
     | '/admin/cms/trending-offer-banners/'
     | '/admin/cms/universities/'
+    | '/admin/online-vendors/$vendorId/settings/analytics'
     | '/admin/online-vendors/$vendorId/settings/branding'
     | '/admin/online-vendors/$vendorId/settings/info'
     | '/admin/vendors/$vendorId/settings/branding'
@@ -644,6 +655,7 @@ export interface FileRouteTypes {
     | '/admin/cms/featured-brand-showcase'
     | '/admin/cms/trending-offer-banners'
     | '/admin/cms/universities'
+    | '/admin/online-vendors/$vendorId/settings/analytics'
     | '/admin/online-vendors/$vendorId/settings/branding'
     | '/admin/online-vendors/$vendorId/settings/info'
     | '/admin/vendors/$vendorId/settings/branding'
@@ -699,6 +711,7 @@ export interface FileRouteTypes {
     | '/admin/cms/featured-brand-showcase/'
     | '/admin/cms/trending-offer-banners/'
     | '/admin/cms/universities/'
+    | '/admin/online-vendors/$vendorId/settings/analytics'
     | '/admin/online-vendors/$vendorId/settings/branding'
     | '/admin/online-vendors/$vendorId/settings/info'
     | '/admin/vendors/$vendorId/settings/branding'
@@ -1091,10 +1104,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminOnlineVendorsVendorIdSettingsBrandingRouteImport
       parentRoute: typeof AdminOnlineVendorsVendorIdSettingsRoute
     }
+    '/admin/online-vendors/$vendorId/settings/analytics': {
+      id: '/admin/online-vendors/$vendorId/settings/analytics'
+      path: '/analytics'
+      fullPath: '/admin/online-vendors/$vendorId/settings/analytics'
+      preLoaderRoute: typeof AdminOnlineVendorsVendorIdSettingsAnalyticsRouteImport
+      parentRoute: typeof AdminOnlineVendorsVendorIdSettingsRoute
+    }
   }
 }
 
 interface AdminOnlineVendorsVendorIdSettingsRouteChildren {
+  AdminOnlineVendorsVendorIdSettingsAnalyticsRoute: typeof AdminOnlineVendorsVendorIdSettingsAnalyticsRoute
   AdminOnlineVendorsVendorIdSettingsBrandingRoute: typeof AdminOnlineVendorsVendorIdSettingsBrandingRoute
   AdminOnlineVendorsVendorIdSettingsInfoRoute: typeof AdminOnlineVendorsVendorIdSettingsInfoRoute
   AdminOnlineVendorsVendorIdSettingsIndexRoute: typeof AdminOnlineVendorsVendorIdSettingsIndexRoute
@@ -1102,6 +1123,8 @@ interface AdminOnlineVendorsVendorIdSettingsRouteChildren {
 
 const AdminOnlineVendorsVendorIdSettingsRouteChildren: AdminOnlineVendorsVendorIdSettingsRouteChildren =
   {
+    AdminOnlineVendorsVendorIdSettingsAnalyticsRoute:
+      AdminOnlineVendorsVendorIdSettingsAnalyticsRoute,
     AdminOnlineVendorsVendorIdSettingsBrandingRoute:
       AdminOnlineVendorsVendorIdSettingsBrandingRoute,
     AdminOnlineVendorsVendorIdSettingsInfoRoute:
