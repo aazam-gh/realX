@@ -22,6 +22,36 @@ function isValidOwnerProfileUpdate() {
   && request.resource.data.updatedAt is timestamp;
 }
 
+function isValidVendorDashboardTheme() {
+  return request.resource.data.keys().hasOnly([
+    'primaryColor',
+    'accentColor',
+    'backgroundColor',
+    'cardColor',
+    'chartColor',
+    'updatedAt'
+  ])
+  && request.resource.data.keys().hasAll([
+    'primaryColor',
+    'accentColor',
+    'backgroundColor',
+    'cardColor',
+    'chartColor',
+    'updatedAt'
+  ])
+  && request.resource.data.primaryColor is string
+  && request.resource.data.primaryColor.matches('^#[0-9A-Fa-f]{6}$')
+  && request.resource.data.accentColor is string
+  && request.resource.data.accentColor.matches('^#[0-9A-Fa-f]{6}$')
+  && request.resource.data.backgroundColor is string
+  && request.resource.data.backgroundColor.matches('^#[0-9A-Fa-f]{6}$')
+  && request.resource.data.cardColor is string
+  && request.resource.data.cardColor.matches('^#[0-9A-Fa-f]{6}$')
+  && request.resource.data.chartColor is string
+  && request.resource.data.chartColor.matches('^#[0-9A-Fa-f]{6}$')
+  && request.resource.data.updatedAt is timestamp;
+}
+
 function isValidSavedOffer() {
   return request.resource.data.keys().hasOnly([
       'type',
@@ -164,6 +194,18 @@ match /events/{eventId} {
 match /vendors/{vendorId} {
   allow read: if true;
   allow write: if isAdmin();
+}
+
+// ─── vendor dashboard customization ──────────────────────────────────
+match /vendorDashboardThemes/{vendorId} {
+  allow read: if request.auth != null
+    && (request.auth.uid == vendorId || isAdmin());
+
+  allow create, update: if request.auth != null
+    && ((request.auth.uid == vendorId && isValidVendorDashboardTheme()) || isAdmin());
+
+  allow delete: if request.auth != null
+    && (request.auth.uid == vendorId || isAdmin());
 }
 
 // ─── holding groups ──────────────────────────────────────────────────
