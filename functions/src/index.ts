@@ -620,7 +620,7 @@ function shouldIndexMapVendor(data: FirebaseFirestore.DocumentData) {
   const status = typeof data.status === "string" ? data.status : null;
 
   if (vendorType === "online") return false;
-  if (status && status.toLowerCase() === "inactive") return false;
+  if (status && status.toLowerCase() !== "active") return false;
 
   return true;
 }
@@ -669,7 +669,7 @@ function buildMapLocationDocs(
       vendorType: typeof data.vendorType === "string" ? data.vendorType : null,
       status: typeof data.status === "string" ? data.status : null,
       isActive: typeof data.status === "string" ?
-        data.status.toLowerCase() !== "inactive" :
+        data.status.toLowerCase() === "active" :
         true,
       xcard: entry.xcard,
       offerTypes: entry.offerTypes,
@@ -876,7 +876,7 @@ export const createVendorUser = onCall(
       throw new HttpsError("permission-denied", "Admin access required");
     }
 
-    const {name, email, password} = data;
+    const {name, email, password, isDraft = false} = data;
 
     // 3️⃣ Validate input
     if (!name || !email || !password) {
@@ -901,7 +901,8 @@ export const createVendorUser = onCall(
     await db.collection("vendors").doc(user.uid).set({
       name,
       email,
-      status: "Active",
+      status: isDraft === true ? "Draft" : "Active",
+      isActive: isDraft !== true,
       createdAt: new Date(),
     });
 
@@ -1838,7 +1839,7 @@ export const onVendorWrite = onDocumentWritten(
 
     const data = event.data.after.data();
     if (!data) return;
-    const entry = buildMapEntry(data);
+    const entry = shouldIndexMapVendor(data) ? buildMapEntry(data) : null;
     const locationDocs = buildMapLocationDocs(vendorId, data);
     await replaceVendorMapLocationDocs(vendorId, locationDocs);
 
@@ -1908,7 +1909,7 @@ export const rebuildLocationsCache = onCall(
     }
 
     for (const doc of snapshot.docs) {
-      const entry = buildMapEntry(doc.data());
+      const entry = shouldIndexMapVendor(doc.data()) ? buildMapEntry(doc.data()) : null;
       if (entry) {
         vendors[doc.id] = entry;
         count++;

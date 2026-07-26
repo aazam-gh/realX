@@ -49,7 +49,7 @@ function RouteComponent() {
     const { page, pageSize, search: searchQuery, sort, xcard: xcardFilter } = useSearch({ from: '/admin/vendors/' })
     const [searchInput, setSearchInput] = useState(searchQuery)
     const [open, setOpen] = useState(false)
-    const [form, setForm] = useState({ name: '', email: '', password: '' })
+    const [form, setForm] = useState({ name: '', email: '', password: '', isDraft: false })
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
     const [vendorToDelete, setVendorToDelete] = useState<Vendor | null>(null)
 
@@ -85,6 +85,7 @@ function RouteComponent() {
                 name: formData.name,
                 email: formData.email,
                 password: formData.password,
+                isDraft: formData.isDraft,
             })
             const dataResult = result.data as { uid: string }
             if (dataResult?.uid) {
@@ -95,7 +96,7 @@ function RouteComponent() {
         onSuccess: () => {
             resetFirestorePaginationCursors('vendors:')
             queryClient.invalidateQueries({ queryKey: ['vendors-page'] })
-            setForm({ name: '', email: '', password: '' })
+            setForm({ name: '', email: '', password: '', isDraft: false })
             setOpen(false)
             void refreshVendorList()
         },
@@ -246,6 +247,18 @@ function RouteComponent() {
                                         disabled={addVendorMutation.isPending}
                                     />
                                 </div>
+                                <div className="flex items-start space-x-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                    <Checkbox
+                                        id="draft"
+                                        checked={form.isDraft}
+                                        onCheckedChange={(checked) => setForm({ ...form, isDraft: checked === true })}
+                                        disabled={addVendorMutation.isPending}
+                                    />
+                                    <div className="grid gap-1">
+                                        <Label htmlFor="draft" className="cursor-pointer font-medium">Save as draft</Label>
+                                        <p className="text-xs text-muted-foreground">Draft vendors can be edited in admin but are hidden from the live app.</p>
+                                    </div>
+                                </div>
                                 <div className="grid gap-2">
                                     <Label htmlFor="email">Email Address</Label>
                                     <Input
@@ -318,6 +331,7 @@ function RouteComponent() {
                             </TableHead>
                             <TableHead className="text-black font-bold text-base">Brand Name</TableHead>
                             <TableHead className="text-black font-bold text-base">Contact Info</TableHead>
+                            <TableHead className="text-black font-bold text-base">Status</TableHead>
                             <TableHead className="text-black font-bold text-base">XCard</TableHead>
                             <TableHead className="text-black font-bold text-base text-right pr-8">Actions:</TableHead>
                         </TableRow>
@@ -325,7 +339,7 @@ function RouteComponent() {
                     <TableBody>
                         {loading ? (
                             <TableRow>
-                                <TableCell colSpan={5} className="text-center py-10">
+                                <TableCell colSpan={6} className="text-center py-10">
                                     <div className="flex flex-col items-center gap-2">
                                         <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-green border-t-transparent" />
                                         <p className="text-muted-foreground font-medium">Loading vendors...</p>
@@ -334,7 +348,7 @@ function RouteComponent() {
                             </TableRow>
                         ) : vendorList.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
+                                <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
                                     {searchQuery || xcardFilter !== 'all'
                                         ? 'No vendors match your filters.'
                                         : 'No vendors found.'}
@@ -359,6 +373,11 @@ function RouteComponent() {
                                         </div>
                                     </TableCell>
                                     <TableCell className="font-medium text-gray-900">{vendor.contact}</TableCell>
+                                    <TableCell>
+                                        <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${vendor.status === 'Draft' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}`}>
+                                            {vendor.status === 'Draft' ? 'Draft' : 'Live'}
+                                        </span>
+                                    </TableCell>
                                     <TableCell className="font-medium text-gray-900">
                                         <Switch
                                             checked={vendor.xcard}

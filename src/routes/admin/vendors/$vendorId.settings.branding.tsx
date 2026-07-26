@@ -90,9 +90,10 @@ function BrandingSettingsComponent() {
                 }
             }
 
-            const dataToUpdate: Partial<VendorBrandingForm> = { ...vendorData }
+            const dataToUpdate: Partial<VendorBrandingForm> & { isActive?: boolean } = { ...vendorData }
             delete dataToUpdate.id
             delete dataToUpdate.redemptionPin
+            dataToUpdate.isActive = vendorData.status === 'Active' || vendorData.status === undefined
 
             const pin = vendorData.redemptionPin?.trim() || ''
             if (pin && !/^\d{4}$/.test(pin)) {

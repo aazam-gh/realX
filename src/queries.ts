@@ -39,7 +39,7 @@ export interface Vendor {
     email?: string
     phoneNumber?: string
     website?: string
-    status?: 'Active' | 'Inactive'
+    status?: 'Active' | 'Inactive' | 'Draft'
     contact?: string
     profilePicture?: string
     coverImage?: string

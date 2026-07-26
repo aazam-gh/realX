@@ -628,6 +628,24 @@ export function BrandingSettings({
             <div className="space-y-6 pt-8 border-t border-slate-100">
                 <div className="flex items-center space-x-3 bg-slate-50/50 p-4 rounded-2xl border border-slate-100/50">
                     <Checkbox
+                        id="vendorLive"
+                        checked={formData.status === 'Active' || formData.status === undefined}
+                        onCheckedChange={(checked) => setFormData({
+                            ...formData,
+                            status: checked ? 'Active' : 'Draft',
+                        })}
+                        className="h-5 w-5 rounded-md border-slate-300 data-[state=checked]:bg-brand-green data-[state=checked]:border-brand-green"
+                    />
+                    <div>
+                        <Label htmlFor="vendorLive" className="text-base font-semibold text-slate-700 cursor-pointer">
+                            Publish vendor
+                        </Label>
+                        <p className="text-xs text-slate-500 mt-1">Draft vendors stay editable in the admin panel and are hidden from the live app.</p>
+                    </div>
+                </div>
+
+                <div className="flex items-center space-x-3 bg-slate-50/50 p-4 rounded-2xl border border-slate-100/50">
+                    <Checkbox
                         id="isTrending"
                         checked={formData.isTrending || false}
                         onCheckedChange={(checked) => setFormData({ ...formData, isTrending: !!checked })}

@@ -40,6 +40,7 @@ function mapVendor(docSnap: QueryDocumentSnapshot<DocumentData>): Vendor {
         contact: data.contact || data.email || '',
         profilePicture: data.profilePicture || '',
         vendorType: data.vendorType || 'in_store',
+        status: data.status || 'Active',
         xcard: !!data.xcard,
         mainCategory: data.mainCategory,
         subcategory: data.subcategory,
