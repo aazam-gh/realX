@@ -1,21 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { httpsCallable } from 'firebase/functions'
-import { z } from 'zod'
-import { functions } from '@/firebase/config'
-
-const sortSchema = z.enum(['date_asc', 'date_desc', 'amount_asc', 'amount_desc', 'vendor_asc', 'vendor_desc'])
-
-const transactionsSearchSchema = z.object({
-    pageSize: z.number().catch(10),
-    page: z.number().catch(1),
-    vendorName: z.string().optional().catch(undefined),
-    sort: sortSchema.optional().catch(undefined),
-    cursor: z.string().optional().catch(undefined),
-    history: z.string().optional().catch(undefined),
-})
-
-export type TransactionSearch = z.infer<typeof transactionsSearchSchema>
-type SortOption = z.infer<typeof sortSchema>
+import {
+    collection,
+    getDocs,
+    orderBy,
+    query,
+    Timestamp,
+    type DocumentData,
+    type QueryDocumentSnapshot,
+    where,
+} from 'firebase/firestore'
+import { db } from '@/firebase/config'
+import { formatTimestamp } from '@/lib/format-timestamp'
 
 export interface Transaction {
     id: string
@@ -45,71 +40,63 @@ export interface Transaction {
     remainingAmount?: number
 }
 
-interface BigQueryTransactionResult {
-    transactions: Transaction[]
-    nextCursor: string | null
-    query: {
-        durationMs: number
-        bytesProcessed: number
-        bytesBilled: number
-        cacheHit: boolean
-    }
-    freshness: string | null
-}
+export const DAILY_TRANSACTIONS_QUERY_KEY = ['daily-transactions'] as const
+const QATAR_TIME_ZONE = 'Asia/Qatar'
+const QATAR_UTC_OFFSET_MS = 3 * 60 * 60 * 1000
 
-export async function fetchTransactions(
-    pageSize: number,
-    vendorName?: string,
-    sort?: SortOption,
-    cursor?: string,
-) {
-    const request: {
-        pageSize: number
-        vendorName?: string
-        sort?: SortOption
-        cursor?: string
-    } = { pageSize }
-
-    if (vendorName) request.vendorName = vendorName
-    if (sort) request.sort = sort
-    if (cursor) request.cursor = cursor
-
-    const callable = httpsCallable<
-        { pageSize: number; vendorName?: string; sort?: SortOption; cursor?: string },
-        BigQueryTransactionResult
-    >(functions, 'listAdminBigQueryTransactions')
-
-    const result = await callable(request)
+export function getQatarDayBounds(now = new Date()) {
+    const dateParts = new Intl.DateTimeFormat('en-CA', {
+        timeZone: QATAR_TIME_ZONE,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    }).formatToParts(now)
+    const part = (type: Intl.DateTimeFormatPartTypes) =>
+        Number(dateParts.find((datePart) => datePart.type === type)?.value)
+    const year = part('year')
+    const month = part('month')
+    const day = part('day')
+    const startMs = Date.UTC(year, month - 1, day) - QATAR_UTC_OFFSET_MS
 
     return {
-        ...result.data,
-        transactions: result.data.transactions.map((transaction) => {
-            const date = transaction.rawDate ? new Date(transaction.rawDate) : null
-            const totalAmountNum = transaction.totalAmountNum || 0
-
-            return {
-                ...transaction,
-                date: date && !Number.isNaN(date.getTime()) ? date.toLocaleString() : 'Unknown Date',
-                totalAmount: `QAR ${totalAmountNum}`,
-                cashbackAmount: transaction.cashbackAmount ?? undefined,
-                creatorCashbackAmount: transaction.creatorCashbackAmount ?? undefined,
-                discountAmount: transaction.discountAmount ?? undefined,
-                discountValue: transaction.discountValue ?? undefined,
-                finalAmount: transaction.finalAmount ?? undefined,
-                redemptionCardAmount: transaction.redemptionCardAmount ?? undefined,
-                remainingAmount: transaction.remainingAmount ?? undefined,
-            }
-        }),
+        dayKey: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+        start: new Date(startMs),
+        end: new Date(startMs + 24 * 60 * 60 * 1000),
     }
 }
 
-export const Route = createFileRoute('/admin/transactions/')({
-    validateSearch: (search) => transactionsSearchSchema.parse(search),
-    loaderDeps: ({ search: { pageSize, vendorName, sort, cursor } }) => ({ pageSize, vendorName, sort, cursor }),
-    loader: async ({ context: { queryClient }, deps: { pageSize, vendorName, sort, cursor } }) => {
-        await queryClient.ensureQueryData({
-            queryKey: ['transactions-list', pageSize, vendorName, sort, cursor],
-            queryFn: () => fetchTransactions(pageSize, vendorName, sort, cursor),
-        })
-    },
-})
+export function dailyTransactionsQuery(start: Date, end: Date) {
+    return query(
+        collection(db, 'transactions'),
+        where('createdAt', '>=', Timestamp.fromDate(start)),
+        where('createdAt', '<', Timestamp.fromDate(end)),
+        orderBy('createdAt', 'desc'),
+    )
+}
+
+export function mapTransactionSnapshot(
+    snapshot: QueryDocumentSnapshot<DocumentData>,
+): Transaction {
+    const data = snapshot.data()
+    const createdAt = formatTimestamp(data.createdAt)
+    const totalAmount = typeof data.totalAmount === 'number' ? data.totalAmount : 0
+
+    return {
+        id: snapshot.id,
+        ...data,
+        date: createdAt.toLocaleString(),
+        rawDate: createdAt.toISOString(),
+        transactionId: data.pin || snapshot.id,
+        vendorName: data.vendorName || 'Unknown Vendor',
+        totalAmountNum: totalAmount,
+        totalAmount: `QAR ${totalAmount}`,
+        type: data.type || 'N/A',
+    } as Transaction
+}
+
+export async function fetchDailyTransactions(start: Date, end: Date) {
+    const snapshot = await getDocs(dailyTransactionsQuery(start, end))
+    return snapshot.docs.map(mapTransactionSnapshot)
+}
+
+export const Route = createFileRoute('/admin/transactions/')({})

@@ -69,11 +69,4 @@ export async function fetchBigQueryTransactions(
 
 export const Route = createFileRoute('/admin/bigquery-transactions/')({
     validateSearch: (search) => searchSchema.parse(search),
-    loaderDeps: ({ search: { pageSize, vendorName, sort, cursor } }) => ({ pageSize, vendorName, sort, cursor }),
-    loader: async ({ context: { queryClient }, deps: { pageSize, vendorName, sort, cursor } }) => {
-        await queryClient.ensureQueryData({
-            queryKey: ['bigquery-transactions-list', pageSize, vendorName, sort, cursor],
-            queryFn: () => fetchBigQueryTransactions(pageSize, vendorName, sort, cursor),
-        })
-    },
 })
