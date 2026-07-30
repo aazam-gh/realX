@@ -64,6 +64,7 @@ function RouteComponent() {
     const [rejectOpen, setRejectOpen] = useState(false)
     const [selectedRequest, setSelectedRequest] = useState<VerificationRequest | null>(null)
     const [idImageUrl, setIdImageUrl] = useState<string | null>(null)
+    const [imagePreviewOpen, setImagePreviewOpen] = useState(false)
     const [rejectionReason, setRejectionReason] = useState('')
     const [approveForm, setApproveForm] = useState({
         firstName: '',
@@ -451,7 +452,18 @@ function RouteComponent() {
                                 <div className="rounded-lg border bg-muted/30 overflow-hidden">
                                     <p className="text-xs text-muted-foreground p-2 border-b">Uploaded ID</p>
                                     {idImageUrl ? (
-                                        <img src={idImageUrl} alt="Uploaded ID" className="w-full h-64 object-cover" />
+                                        <button
+                                            type="button"
+                                            className="block w-full cursor-zoom-in focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+                                            onClick={() => setImagePreviewOpen(true)}
+                                            aria-label="View uploaded ID at full size"
+                                        >
+                                            <img
+                                                src={idImageUrl}
+                                                alt="Uploaded ID"
+                                                className="h-64 w-full object-contain"
+                                            />
+                                        </button>
                                     ) : (
                                         <div className="w-full h-64 flex items-center justify-center">
                                             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -603,6 +615,22 @@ function RouteComponent() {
                                 </div>
                             )}
                         </div>
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            {/* Full-size ID image viewer */}
+            <Dialog open={imagePreviewOpen} onOpenChange={setImagePreviewOpen}>
+                <DialogContent className="max-h-[95vh] w-[calc(100vw-2rem)] overflow-y-auto p-4 sm:max-w-5xl">
+                    <DialogHeader className="pr-8">
+                        <DialogTitle>Uploaded ID</DialogTitle>
+                    </DialogHeader>
+                    {idImageUrl && (
+                        <img
+                            src={idImageUrl}
+                            alt="Uploaded ID at full size"
+                            className="max-h-[calc(100vh-8rem)] w-full object-contain"
+                        />
                     )}
                 </DialogContent>
             </Dialog>
