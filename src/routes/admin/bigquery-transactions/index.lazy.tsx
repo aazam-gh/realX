@@ -1,6 +1,7 @@
 import { createLazyFileRoute, Link, useNavigate, useSearch } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowDown, ArrowUp, ArrowUpDown, Database, Eye, Search } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { ArrowDown, ArrowUp, ArrowUpDown, Database, Eye, Receipt, Search } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -48,11 +49,37 @@ function BigQueryTransactionsRoute() {
     const search = useSearch({ from: '/admin/bigquery-transactions/' })
     const { page, pageSize, vendorName, sort, cursor, history } = search
     const navigate = useNavigate()
-    const { data, isLoading, error } = useQuery({
+    const [vendorInput, setVendorInput] = useState(vendorName || '')
+    const { data, isLoading, isFetching, error } = useQuery({
         queryKey: ['bigquery-transactions-list', pageSize, vendorName, sort, cursor],
         queryFn: () => fetchBigQueryTransactions(pageSize, vendorName, sort, cursor),
         staleTime: STALE_TIME.MEDIUM,
     })
+
+    useEffect(() => {
+        setVendorInput(vendorName || '')
+    }, [vendorName])
+
+    useEffect(() => {
+        const nextVendorName = vendorInput.trim()
+        if (nextVendorName === (vendorName || '')) return
+
+        const timeout = window.setTimeout(() => {
+            const nextSearch: BigQueryTransactionSearch = {
+                page: 1,
+                pageSize,
+            }
+            if (nextVendorName) nextSearch.vendorName = nextVendorName
+            if (sort) nextSearch.sort = sort
+
+            void navigate({
+                to: '/admin/bigquery-transactions',
+                search: nextSearch,
+            })
+        }, 500)
+
+        return () => window.clearTimeout(timeout)
+    }, [navigate, pageSize, sort, vendorInput, vendorName])
 
     const updateSearch = (updates: Partial<BigQueryTransactionSearch>) => {
         const nextSearch: BigQueryTransactionSearch = {
@@ -115,12 +142,22 @@ function BigQueryTransactionsRoute() {
 
     return (
         <div className="mx-auto w-full max-w-[1600px] space-y-6 p-8">
-            <div className="flex items-center gap-3">
-                <div className="rounded bg-blue-50 p-2"><Database className="h-5 w-5 text-blue-600" /></div>
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">BigQuery Transactions</h1>
-                    <p className="text-sm text-muted-foreground">Evaluation panel. Transaction details remain Firestore-backed.</p>
+            <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+                <div className="flex items-center gap-3">
+                    <div className="rounded bg-blue-50 p-2"><Database className="h-5 w-5 text-blue-600" /></div>
+                    <div>
+                        <h1 className="text-3xl font-bold tracking-tight">Transactions</h1>
+                        <p className="text-sm text-muted-foreground">
+                            Complete transaction archive from BigQuery. Recent changes may take a moment to sync.
+                        </p>
+                    </div>
                 </div>
+                <Button asChild variant="outline" className="gap-2">
+                    <Link to="/admin/transactions">
+                        <Receipt className="h-4 w-4" />
+                        Daily Transactions
+                    </Link>
+                </Button>
             </div>
 
             {data && (
@@ -132,6 +169,9 @@ function BigQueryTransactionsRoute() {
                     <Badge variant="outline">
                         Freshness: {data.freshness ? new Date(data.freshness).toLocaleString() : 'No exported rows'}
                     </Badge>
+                    {isFetching && !isLoading && (
+                        <Badge variant="outline">Refreshing archive...</Badge>
+                    )}
                 </div>
             )}
 
@@ -141,8 +181,8 @@ function BigQueryTransactionsRoute() {
                     <Input
                         placeholder="Filter by exact vendor name..."
                         className="h-10 border-none bg-muted/50 pl-9"
-                        value={vendorName || ''}
-                        onChange={(event) => updateSearch({ vendorName: event.target.value || undefined })}
+                        value={vendorInput}
+                        onChange={(event) => setVendorInput(event.target.value)}
                     />
                 </div>
                 <Select value={sort || 'date_desc'} onValueChange={(value) => updateSearch({ sort: value as BigQueryTransactionSort })}>
@@ -179,7 +219,7 @@ function BigQueryTransactionsRoute() {
                     </TableHeader>
                     <TableBody>
                         {isLoading ? (
-                            <TableRow><TableCell colSpan={7} className="py-10 text-center">Loading BigQuery transactions...</TableCell></TableRow>
+                            <TableRow><TableCell colSpan={7} className="py-10 text-center">Loading the transaction archive...</TableCell></TableRow>
                         ) : error ? (
                             <TableRow><TableCell colSpan={7} className="py-10 text-center text-red-600">{error.message}</TableCell></TableRow>
                         ) : !data?.transactions.length ? (

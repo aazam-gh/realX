@@ -1,34 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { z } from 'zod'
-import { db } from '@/firebase/config'
 import {
-    collection, query, orderBy, where,
-    getCountFromServer,
-    type QueryConstraint,
+    collection,
+    getDocs,
+    orderBy,
+    query,
+    Timestamp,
+    type DocumentData,
+    type QueryDocumentSnapshot,
+    where,
 } from 'firebase/firestore'
+import { db } from '@/firebase/config'
 import { formatTimestamp } from '@/lib/format-timestamp'
-import { logAdminRead } from '@/lib/admin-read-logging'
-import { getCursorPage } from '@/lib/firestore-pagination'
-
-const transactionsSearchSchema = z.object({
-    pageSize: z.number().catch(10),
-    page: z.number().catch(1),
-    vendorName: z.string().optional().catch(undefined),
-    sort: z.enum(['date_asc', 'date_desc', 'amount_asc', 'amount_desc', 'vendor_asc', 'vendor_desc']).optional().catch(undefined),
-})
-
-export type TransactionSearch = z.infer<typeof transactionsSearchSchema>
-
-export const Route = createFileRoute('/admin/transactions/')({
-    validateSearch: (search) => transactionsSearchSchema.parse(search),
-    loaderDeps: ({ search: { page, pageSize, vendorName, sort } }) => ({ page, pageSize, vendorName, sort }),
-    loader: async ({ context: { queryClient }, deps: { page, pageSize, vendorName, sort } }) => {
-        await queryClient.ensureQueryData({
-            queryKey: ['transactions-list', page, pageSize, vendorName, sort],
-            queryFn: () => fetchTransactions(page, pageSize, vendorName, sort),
-        })
-    },
-})
 
 export interface Transaction {
     id: string
@@ -45,82 +27,76 @@ export interface Transaction {
     creatorCodeOwnerId?: string | null
     creatorUid?: string | null
     discountAmount?: number
-    discountCode?: string
-    discountType?: string
+    discountCode?: string | null
+    discountType?: string | null
     discountValue?: number
     finalAmount?: number
-    purchaseUrl?: string
-    offerId?: string
-    pin?: string
-    userId?: string
-    vendorId?: string
+    purchaseUrl?: string | null
+    offerId?: string | null
+    pin?: string | null
+    userId?: string | null
+    vendorId?: string | null
     redemptionCardAmount?: number
     remainingAmount?: number
 }
 
-type SortOption = 'date_asc' | 'date_desc' | 'amount_asc' | 'amount_desc' | 'vendor_asc' | 'vendor_desc'
+export const DAILY_TRANSACTIONS_QUERY_KEY = ['daily-transactions'] as const
+const QATAR_TIME_ZONE = 'Asia/Qatar'
+const QATAR_UTC_OFFSET_MS = 3 * 60 * 60 * 1000
 
-function getOrderBy(sort?: SortOption): { field: string; dir: 'asc' | 'desc' } {
-    switch (sort) {
-        case 'date_asc': return { field: 'createdAt', dir: 'asc' }
-        case 'amount_asc': return { field: 'totalAmount', dir: 'asc' }
-        case 'amount_desc': return { field: 'totalAmount', dir: 'desc' }
-        case 'vendor_asc': return { field: 'vendorName', dir: 'asc' }
-        case 'vendor_desc': return { field: 'vendorName', dir: 'desc' }
-        default: return { field: 'createdAt', dir: 'desc' }
+export function getQatarDayBounds(now = new Date()) {
+    const dateParts = new Intl.DateTimeFormat('en-CA', {
+        timeZone: QATAR_TIME_ZONE,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    }).formatToParts(now)
+    const part = (type: Intl.DateTimeFormatPartTypes) =>
+        Number(dateParts.find((datePart) => datePart.type === type)?.value)
+    const year = part('year')
+    const month = part('month')
+    const day = part('day')
+    const startMs = Date.UTC(year, month - 1, day) - QATAR_UTC_OFFSET_MS
+
+    return {
+        dayKey: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+        start: new Date(startMs),
+        end: new Date(startMs + 24 * 60 * 60 * 1000),
     }
 }
 
-export async function fetchTransactions(page: number, pageSize: number, vendorName?: string, sort?: SortOption) {
-    const collRef = collection(db, 'transactions')
-    const { field, dir } = getOrderBy(sort)
-
-    // Build base constraints
-    const baseConstraints: QueryConstraint[] = [orderBy(field, dir)]
-    if (vendorName) {
-        baseConstraints.push(where('vendorName', '==', vendorName))
-    }
-
-    // Get total count (1 read via aggregation)
-    const countConstraints: QueryConstraint[] = []
-    if (vendorName) countConstraints.push(where('vendorName', '==', vendorName))
-    const countSnap = await getCountFromServer(query(collRef, ...countConstraints))
-    const totalCount = countSnap.data().count
-
-    const pageResult = await getCursorPage(
-        collRef,
-        baseConstraints,
-        page,
-        pageSize,
-        `transactions:${vendorName || 'all'}:${sort || 'date_desc'}`,
+export function dailyTransactionsQuery(start: Date, end: Date) {
+    return query(
+        collection(db, 'transactions'),
+        where('createdAt', '>=', Timestamp.fromDate(start)),
+        where('createdAt', '<', Timestamp.fromDate(end)),
+        orderBy('createdAt', 'desc'),
     )
-
-    const transactions = pageResult.docs.map((docSnap) => {
-        const data = docSnap.data()
-        const dateValue = formatTimestamp(data.createdAt)
-
-        return {
-            id: docSnap.id,
-            ...data,
-            date: dateValue.toLocaleString() || 'Unknown Date',
-            rawDate: dateValue.toISOString(),
-            transactionId: data.pin || docSnap.id,
-            vendorName: data.vendorName || 'Unknown Vendor',
-            totalAmount: data.totalAmount ? `QAR ${data.totalAmount}` : 'QAR 0',
-            totalAmountNum: data.totalAmount || 0,
-            type: data.type || 'N/A',
-        } as Transaction
-    })
-
-    logAdminRead('transactions-page', {
-        page,
-        pageSize,
-        docsFetched: pageResult.docsFetched,
-        docsDisplayed: transactions.length,
-        totalCount,
-        vendorName: vendorName || null,
-        sort: sort || 'date_desc',
-    })
-
-    return { transactions, totalCount }
 }
+
+export function mapTransactionSnapshot(
+    snapshot: QueryDocumentSnapshot<DocumentData>,
+): Transaction {
+    const data = snapshot.data()
+    const createdAt = formatTimestamp(data.createdAt)
+    const totalAmount = typeof data.totalAmount === 'number' ? data.totalAmount : 0
+
+    return {
+        id: snapshot.id,
+        ...data,
+        date: createdAt.toLocaleString(),
+        rawDate: createdAt.toISOString(),
+        transactionId: data.pin || snapshot.id,
+        vendorName: data.vendorName || 'Unknown Vendor',
+        totalAmountNum: totalAmount,
+        totalAmount: `QAR ${totalAmount}`,
+        type: data.type || 'N/A',
+    } as Transaction
+}
+
+export async function fetchDailyTransactions(start: Date, end: Date) {
+    const snapshot = await getDocs(dailyTransactionsQuery(start, end))
+    return snapshot.docs.map(mapTransactionSnapshot)
+}
+
+export const Route = createFileRoute('/admin/transactions/')({})

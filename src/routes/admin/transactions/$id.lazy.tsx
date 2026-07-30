@@ -15,7 +15,7 @@ function TransactionDetailsRoute() {
     return (
         <div className="p-8 space-y-6 w-full max-w-[1200px] mx-auto">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                <Link to="/admin/transactions" search={{ page: 1, pageSize: 10 }}>
+                <Link to="/admin/transactions">
                     <Button variant="ghost" size="icon" className="h-10 w-10">
                         <ArrowLeft className="h-5 w-5" />
                     </Button>

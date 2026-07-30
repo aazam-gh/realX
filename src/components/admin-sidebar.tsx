@@ -38,12 +38,12 @@ const data = {
       icon: IconHome,
     },
     {
-      title: "Transactions",
+      title: "Daily Transactions",
       url: "/admin/transactions",
       icon: IconReceipt,
     },
     {
-      title: "BigQuery Transactions",
+      title: "Transactions",
       url: "/admin/bigquery-transactions",
       icon: IconDatabase,
     },
