@@ -7,7 +7,8 @@ import {
     Flame,
     GraduationCap,
     Sparkles,
-    CalendarDays
+    CalendarDays,
+    Rocket
 } from 'lucide-react'
 
 export const Route = createFileRoute('/admin/cms/')({
@@ -15,6 +16,14 @@ export const Route = createFileRoute('/admin/cms/')({
 })
 
 const CMS_ITEMS = [
+    {
+        title: 'Student Opportunities',
+        description: 'Publish careers, events, learning and experiences',
+        icon: Rocket,
+        color: 'bg-emerald-100 text-emerald-600',
+        hoverBorder: 'hover:border-emerald-200',
+        href: '/admin/cms/opportunities' as const,
+    },
     {
         title: 'Banner Management',
         description: 'Manage promotional banners across the app',

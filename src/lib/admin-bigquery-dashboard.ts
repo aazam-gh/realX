@@ -8,10 +8,17 @@ const dashboardResponseSchema = z.object({
     transactingVendors: z.number().nonnegative(),
     offerRedemptions: z.number().nonnegative(),
     transactions: z.number().nonnegative(),
+    transactionValue: z.number().nonnegative(),
   }),
-  monthlyRevenue: z.array(z.object({
-    month: z.string(),
-    amount: z.number(),
+  transactionTrend: z.array(z.object({
+    label: z.string(),
+    transactions: z.number().nonnegative(),
+    value: z.number().nonnegative(),
+  })),
+  transactionBreakdown: z.array(z.object({
+    type: z.string(),
+    transactions: z.number().nonnegative(),
+    value: z.number().nonnegative(),
   })),
   topVendors: z.array(z.object({
     name: z.string(),
@@ -35,12 +42,14 @@ const dashboardResponseSchema = z.object({
 })
 
 export type AdminBigQueryDashboard = z.infer<typeof dashboardResponseSchema>
+export const adminDashboardRangeSchema = z.enum(['30d', '90d', '6mo'])
+export type AdminDashboardRange = z.infer<typeof adminDashboardRangeSchema>
 
-export async function fetchAdminBigQueryDashboard() {
-  const callable = httpsCallable<Record<string, never>, unknown>(
+export async function fetchAdminBigQueryDashboard(range: AdminDashboardRange) {
+  const callable = httpsCallable<{ range: AdminDashboardRange }, unknown>(
     functions,
     'getAdminBigQueryDashboard',
   )
-  const result = await callable({})
+  const result = await callable({ range })
   return dashboardResponseSchema.parse(result.data)
 }

@@ -1,335 +1,228 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { useQuery, queryOptions } from '@tanstack/react-query'
+import { queryOptions, useQueries, useQuery } from '@tanstack/react-query'
 import {
-  AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  type TooltipProps,
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from 'recharts'
-import { Users, Store, TrendingUp, Tag, Bell, Search, ShoppingBag, Database, RefreshCw } from 'lucide-react'
+import {
+  IconActivity,
+  IconBuildingCommunity,
+  IconBuildingStore,
+  IconClipboardCheck,
+  IconCurrencyRiyal,
+  IconDatabase,
+  IconReceipt,
+  IconRefresh,
+  IconShoppingBag,
+  IconUsers,
+  type Icon,
+} from '@tabler/icons-react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Tooltip as AppTooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { STALE_TIME } from '@/lib/constants'
-import { fetchAdminBigQueryDashboard } from '@/lib/admin-bigquery-dashboard'
+import {
+  fetchAdminBigQueryDashboard,
+  type AdminDashboardRange,
+} from '@/lib/admin-bigquery-dashboard'
+import { adminOverviewQueryOptions } from '@/lib/admin-dashboard-overview'
 
 export const Route = createFileRoute('/admin/dashboard')({
   component: AdminDashboard,
 })
 
-// --- Query options ---
+const QAR = new Intl.NumberFormat('en-QA', {
+  style: 'currency',
+  currency: 'QAR',
+  maximumFractionDigits: 2,
+})
+const COUNT = new Intl.NumberFormat('en-QA', { maximumFractionDigits: 0 })
 
-const adminDashboardQueryOptions = () => queryOptions({
-  queryKey: ['admin-bigquery-dashboard'],
-  queryFn: fetchAdminBigQueryDashboard,
+const RANGE_LABELS: Record<AdminDashboardRange, string> = {
+  '30d': 'Last 30 days',
+  '90d': 'Last 90 days',
+  '6mo': 'Last 6 months',
+}
+
+const adminDashboardQueryOptions = (range: AdminDashboardRange) => queryOptions({
+  queryKey: ['admin-bigquery-dashboard', range],
+  queryFn: () => fetchAdminBigQueryDashboard(range),
   staleTime: STALE_TIME.MEDIUM,
   retry: 1,
   refetchOnWindowFocus: false,
 })
 
-// --- Components ---
+function formatDate(value: string | number) {
+  const date = new Date(value)
+  return Number.isNaN(date.getTime())
+    ? 'Unknown time'
+    : date.toLocaleString('en-QA', { dateStyle: 'medium', timeStyle: 'short' })
+}
 
-const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>) => {
-  if (!active || !payload?.length) return null
-  return (
-    <div className="bg-white border border-slate-100 rounded-lg p-3 shadow-md">
-      <p className="text-[11px] text-slate-500 mb-1">{label}</p>
-      {payload.map((p, i) => (
-        <p key={i} className="text-xs font-semibold" style={{ color: p.color }}>
-          {p.name === 'amount' || p.name === 'sales'
-            ? `QAR ${(p.value ?? 0).toLocaleString()}`
-            : p.value}
-        </p>
-      ))}
-    </div>
+function readableType(type: string) {
+  return type === 'unspecified'
+    ? 'Unspecified'
+    : type.replace(/[_-]+/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
+}
+
+function DashboardMetricCard({
+  label,
+  description,
+  value,
+  icon: Icon,
+  href,
+  loading,
+  error,
+  format = COUNT.format,
+}: {
+  label: string
+  description: string
+  value?: number
+  icon: Icon
+  href?: string
+  loading: boolean
+  error: boolean
+  format?: (value: number) => string
+}) {
+  const content = (
+    <Card className="gap-0 py-0 transition-colors hover:border-brand-green/50 hover:shadow-md">
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">{label}</p>
+              <AppTooltip>
+                <TooltipTrigger asChild>
+                  <span tabIndex={0} aria-label={`${label} definition`} className="cursor-help text-muted-foreground underline decoration-dotted underline-offset-2">?</span>
+                </TooltipTrigger>
+                <TooltipContent>{description}</TooltipContent>
+              </AppTooltip>
+            </div>
+            {loading ? <Skeleton className="mt-3 h-8 w-28" /> : error ? (
+              <p className="mt-3 text-sm font-medium text-destructive">Unavailable</p>
+            ) : (
+              <p className="mt-2 truncate font-heading text-2xl tabular-nums text-foreground" title={value === undefined ? undefined : format(value)}>
+                {value === undefined ? '—' : format(value)}
+              </p>
+            )}
+          </div>
+          <span className="rounded-lg bg-brand-green/10 p-2.5 text-brand-green" aria-hidden="true"><Icon className="size-5" stroke={1.8} /></span>
+        </div>
+        <p className="mt-3 text-xs text-muted-foreground">{href ? 'Open details' : description}</p>
+      </CardContent>
+    </Card>
   )
+
+  return href ? <a href={href} className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">{content}</a> : content
+}
+
+function LoadingPanel({ className }: { className?: string }) {
+  return <Card className={className}><CardContent className="space-y-4 p-6"><Skeleton className="h-5 w-40" /><Skeleton className="h-56 w-full" /></CardContent></Card>
+}
+
+function EmptyPanel({ title, detail, action }: { title: string; detail: string; action?: ReactNode }) {
+  return <div className="flex min-h-56 flex-col items-center justify-center gap-2 px-6 text-center"><p className="font-medium">{title}</p><p className="max-w-sm text-sm text-muted-foreground">{detail}</p>{action}</div>
 }
 
 function AdminDashboard() {
-  const [searchQuery, setSearchQuery] = useState('')
+  const [range, setRange] = useState<AdminDashboardRange>('6mo')
+  const dashboardQuery = useQuery(adminDashboardQueryOptions(range))
+  const [studentsQuery, vendorsQuery, onlineVendorsQuery, holdingGroupsQuery, verificationQuery] = useQueries({
+    queries: [
+      adminOverviewQueryOptions.students(),
+      adminOverviewQueryOptions.vendors(),
+      adminOverviewQueryOptions.onlineVendors(),
+      adminOverviewQueryOptions.holdingGroups(),
+      adminOverviewQueryOptions.pendingVerificationRequests(),
+    ],
+  })
 
-  const {
-    data: dashboard,
-    error,
-    isError,
-    isFetching,
-    isLoading,
-    refetch,
-  } = useQuery(adminDashboardQueryOptions())
-
+  const dashboard = dashboardQuery.data
   const stats = dashboard?.stats
-  const activity = dashboard?.recentActivity || []
-  const revenueData = dashboard?.monthlyRevenue || []
-  const vendorStats = dashboard?.topVendors || []
-  const transactionsByType = [
-    { name: 'Offer', value: stats?.offerRedemptions || 0 },
-    { name: 'Other', value: Math.max(0, (stats?.transactions || 0) - (stats?.offerRedemptions || 0)) },
-  ]
-
-  const statCards = [
-    { label: 'Transacting Students', value: stats?.transactingStudents, icon: Users },
-    { label: 'Transacting Vendors', value: stats?.transactingVendors, icon: Store },
-    { label: 'Offer Redemptions', value: stats?.offerRedemptions, icon: Tag },
-    { label: 'Total Transactions', value: stats?.transactions, icon: TrendingUp },
-  ]
-
-  const freshnessDate = dashboard?.freshness ? new Date(dashboard.freshness) : null
-  const freshnessLabel = freshnessDate && !Number.isNaN(freshnessDate.getTime())
-    ? freshnessDate.toLocaleString()
-    : 'No exported transactions yet'
-
-  const recentTxns = activity
-    .filter(txn =>
-      txn.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      txn.vendorName.toLowerCase().includes(searchQuery.toLowerCase()),
-    )
-    .slice(0, 15)
+  const analyticsLoading = dashboardQuery.isLoading
+  const analyticsError = dashboardQuery.isError
+  const updatedAt = dashboardQuery.dataUpdatedAt ? formatDate(dashboardQuery.dataUpdatedAt) : null
+  const exportFreshness = dashboard?.freshness ? formatDate(dashboard.freshness) : 'No exported transactions yet'
 
   return (
-    <div className="flex-1 overflow-y-auto bg-white font-sans">
-      {/* Header */}
-      <div className="border-b border-slate-100 bg-white sticky top-0 z-20 px-6 py-4 shadow-sm">
-        <div className="flex justify-between items-center">
+    <main className="min-h-full bg-muted/30">
+      <div className="mx-auto w-full max-w-[1600px] space-y-6 p-4 sm:p-6 lg:p-8">
+        <header className="flex flex-col gap-4 border-b border-border pb-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <h1 className="text-2xl font-bold m-0 text-slate-900">
-              Dashboard <span className="text-brand-green">Overview</span>
-            </h1>
-            <p className="text-sm text-slate-500 mt-1">Production analytics powered by the BigQuery transaction export.</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-green">Admin operations</p>
+            <h1 className="mt-1 font-heading text-2xl text-foreground sm:text-3xl">Operational overview</h1>
+            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">A live view of RealX’s registered network and exported transaction performance.</p>
           </div>
-          <div className="flex gap-4 items-center">
-            <div className="flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2 border border-slate-200 focus-within:border-brand-green transition-colors">
-              <Search size={16} className="text-slate-400" />
-              <input
-                placeholder="Search transactions..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-transparent border-none outline-none text-sm font-medium flex-1 text-slate-900 placeholder:text-slate-400"
-              />
-            </div>
-            <button className="relative bg-transparent border-none cursor-pointer p-2 hover:bg-slate-50 rounded-full transition-colors">
-              <Bell size={20} className="text-slate-500" />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full border-2 border-white" />
-            </button>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <Select value={range} onValueChange={(value) => setRange(value as AdminDashboardRange)}>
+              <SelectTrigger aria-label="Transaction date range" className="w-full bg-background sm:w-44"><SelectValue /></SelectTrigger>
+              <SelectContent>{Object.entries(RANGE_LABELS).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent>
+            </Select>
+            <Button variant="outline" onClick={() => void dashboardQuery.refetch()} disabled={dashboardQuery.isFetching} className="gap-2">
+              <IconRefresh className={dashboardQuery.isFetching ? 'size-4 animate-spin' : 'size-4'} /> Refresh analytics
+            </Button>
           </div>
-        </div>
-      </div>
+        </header>
 
-      {/* Content */}
-      <div className="p-6 flex flex-col gap-6">
-        <div className="flex flex-col gap-3 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-xs text-slate-600 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-2">
-            <Database size={16} className="text-brand-green" />
-            <span>
-              {isLoading ? 'Loading BigQuery analytics…' : `BigQuery data through ${freshnessLabel}`}
-            </span>
-          </div>
-          {dashboard && (
-            <span className="text-slate-400">
-              Query {dashboard.query.durationMs} ms · {dashboard.query.cacheHit ? 'cache hit' : 'cache miss'}
-            </span>
-          )}
-        </div>
+        <section aria-label="Data freshness" className="flex flex-col gap-2 rounded-xl border border-border bg-background px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2"><IconDatabase className="size-4 text-brand-green" stroke={1.8} /><span>Transaction export through <strong className="font-medium text-foreground">{exportFreshness}</strong></span></div>
+          {updatedAt && <span className="text-xs text-muted-foreground">Dashboard refreshed {updatedAt}</span>}
+        </section>
 
-        {isError && (
-          <div role="alert" className="flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-900 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="font-bold">Dashboard analytics could not be loaded.</p>
-              <p className="mt-1 text-xs text-red-700">
-                {error instanceof Error ? error.message : 'Please try again.'}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => void refetch()}
-              disabled={isFetching}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-red-900 px-3 py-2 text-xs font-bold text-white disabled:opacity-60"
-            >
-              <RefreshCw size={14} className={isFetching ? 'animate-spin' : ''} />
-              Retry
-            </button>
-          </div>
+        {analyticsError && (
+          <section role="alert" className="flex flex-col gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm sm:flex-row sm:items-center sm:justify-between">
+            <div><p className="font-medium text-foreground">Transaction analytics are unavailable.</p><p className="mt-1 text-muted-foreground">Network and verification metrics are still shown where their individual queries succeed.</p></div>
+            <Button variant="outline" onClick={() => void dashboardQuery.refetch()} disabled={dashboardQuery.isFetching}>Try again</Button>
+          </section>
         )}
 
-        {/* Stat Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {statCards.map(({ label, value, icon: Icon }) => (
-            <div key={label} className="bg-white border border-slate-100 rounded-xl p-5 hover:border-brand-green hover:shadow-md transition-all group">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-[11px] text-slate-500 font-bold mb-2 uppercase tracking-wider">{label}</p>
-                  <p className="text-2xl font-black m-0 text-slate-900">
-                    {typeof value === 'number' ? value.toLocaleString() : '—'}
-                  </p>
-                </div>
-                <div className="p-2.5 rounded-lg bg-emerald-50 text-brand-green group-hover:bg-brand-green group-hover:text-white transition-colors">
-                  <Icon size={20} />
-                </div>
-              </div>
-              <div className="mt-4 flex items-center gap-1.5 text-xs font-bold">
-                <span className="text-slate-400 font-medium ml-0.5">All exported history</span>
-              </div>
-            </div>
-          ))}
-        </div>
+        <section aria-label="Key performance indicators" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <DashboardMetricCard label="Total students" description="All student records in Firestore." value={studentsQuery.data} loading={studentsQuery.isLoading} error={studentsQuery.isError} icon={IconUsers} href="/admin/students" />
+          <DashboardMetricCard label="Total vendors" description="All vendor records, including online vendors." value={vendorsQuery.data} loading={vendorsQuery.isLoading} error={vendorsQuery.isError} icon={IconBuildingStore} href="/admin/vendors" />
+          <DashboardMetricCard label="Online vendors" description="Vendor records whose type is online." value={onlineVendorsQuery.data} loading={onlineVendorsQuery.isLoading} error={onlineVendorsQuery.isError} icon={IconShoppingBag} href="/admin/online-vendors" />
+          <DashboardMetricCard label="Holding groups" description="Configured holding groups, including disabled groups." value={holdingGroupsQuery.data} loading={holdingGroupsQuery.isLoading} error={holdingGroupsQuery.isError} icon={IconBuildingCommunity} href="/admin/holding-groups" />
+          <DashboardMetricCard label="Pending verification" description="Verification requests awaiting a decision." value={verificationQuery.data} loading={verificationQuery.isLoading} error={verificationQuery.isError} icon={IconClipboardCheck} href="/admin/verification-requests" />
+          <DashboardMetricCard label="Total transactions" description="All non-online-redemption transaction rows in the export." value={stats?.transactions} loading={analyticsLoading} error={analyticsError} icon={IconReceipt} href="/admin/bigquery-transactions?page=1&pageSize=10" />
+          <DashboardMetricCard label="Offer redemptions" description="Exported transactions whose type is offer." value={stats?.offerRedemptions} loading={analyticsLoading} error={analyticsError} icon={IconActivity} href="/admin/bigquery-transactions?page=1&pageSize=10" />
+          <DashboardMetricCard label="Transaction value" description="Sum of final amount, with total amount used when final amount is absent." value={stats?.transactionValue} loading={analyticsLoading} error={analyticsError} icon={IconCurrencyRiyal} href="/admin/bigquery-transactions?page=1&pageSize=10" format={QAR.format} />
+        </section>
 
-        {/* Charts Grid */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          {/* Revenue Chart */}
-          <div className="bg-white border border-slate-100 rounded-xl p-6 shadow-sm">
-            <div className="mb-6 flex justify-between items-end">
-              <div>
-                <h3 className="m-0 font-bold text-lg text-slate-900">Redemption Value Trend</h3>
-                <p className="text-xs text-slate-500 m-0">Final transaction value in QAR</p>
-              </div>
-              <div className="flex gap-2">
-                <span className="w-3 h-3 rounded-full bg-brand-green" />
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Revenue</span>
-              </div>
-            </div>
-            <div className="h-70 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={revenueData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#18B852" stopOpacity={0.15} />
-                      <stop offset="95%" stopColor="#18B852" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                  <XAxis dataKey="month" stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} dy={10} fontWeight={600} />
-                  <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} dx={-5} fontWeight={600} />
-                  <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#f1f5f9', strokeWidth: 2 }} />
-                  <Area
-                    type="monotone"
-                    dataKey="amount"
-                    stroke="#18B852"
-                    strokeWidth={3}
-                    fill="url(#revGrad)"
-                    animationDuration={1500}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
+        <section className="grid gap-6 xl:grid-cols-[minmax(0,1.65fr)_minmax(320px,0.9fr)]">
+          {analyticsLoading ? <LoadingPanel /> : <Card>
+            <CardHeader><CardTitle>Transaction trend</CardTitle><p className="text-sm text-muted-foreground">Transaction value and count for {RANGE_LABELS[range].toLowerCase()}.</p></CardHeader>
+            <CardContent>{analyticsError ? <EmptyPanel title="Trend unavailable" detail="Retry the analytics request to load the selected range." /> : !dashboard?.transactionTrend.length ? <EmptyPanel title="No transactions in this range" detail="Transaction trend will appear after eligible transactions are exported." /> : (
+              <div className="h-72"><ResponsiveContainer width="100%" height="100%"><AreaChart data={dashboard.transactionTrend} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}><defs><linearGradient id="transaction-value" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="var(--brand-green)" stopOpacity={0.24} /><stop offset="95%" stopColor="var(--brand-green)" stopOpacity={0} /></linearGradient></defs><CartesianGrid vertical={false} strokeDasharray="3 3" /><XAxis dataKey="label" tickLine={false} axisLine={false} minTickGap={24} /><YAxis tickFormatter={(value) => `QAR ${COUNT.format(value)}`} tickLine={false} axisLine={false} width={72} /><Tooltip formatter={(value: number) => [QAR.format(value), 'Transaction value']} labelFormatter={(label) => `Period starting ${label}`} /><Area type="monotone" dataKey="value" stroke="var(--brand-green)" strokeWidth={2.5} fill="url(#transaction-value)" /></AreaChart></ResponsiveContainer></div>
+            )}</CardContent>
+          </Card>}
 
-          {/* Transaction Mix */}
-          <div className="bg-white border border-slate-100 rounded-xl p-6 shadow-sm flex flex-col">
-            <h3 className="m-0 font-bold text-lg text-slate-900">Transaction Mix</h3>
-            <p className="text-xs text-slate-500 mb-6">Offer redemptions and other transaction types</p>
-            <div className="flex-1 flex flex-col md:flex-row items-center justify-around gap-10">
-              <div className="h-55 w-full max-w-55 relative">
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">Total</span>
-                  <span className="text-2xl font-black text-slate-900">{stats?.transactions.toLocaleString() || '—'}</span>
-                </div>
-                {(stats?.transactions || 0) > 0 && (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={transactionsByType}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={65}
-                        outerRadius={85}
-                        paddingAngle={8}
-                        dataKey="value"
-                        stroke="none"
-                      >
-                        {transactionsByType.map((_, i) => (
-                          <Cell key={i} fill={i === 0 ? '#18B852' : '#f1f5f9'} />
-                        ))}
-                      </Pie>
-                    </PieChart>
-                  </ResponsiveContainer>
-                )}
-              </div>
-              <div className="flex flex-col gap-3 w-full md:max-w-50">
-                {transactionsByType.map((item, i) => (
-                  <div key={item.name} className="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-transparent hover:border-slate-200 transition-all">
-                    <div className="flex items-center gap-2.5">
-                      <div className={`w-2.5 h-2.5 rounded-full ${i === 0 ? 'bg-brand-green' : 'bg-slate-300'}`} />
-                      <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">{item.name}</span>
-                    </div>
-                    <span className="text-sm font-black text-slate-900">{item.value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
+          {analyticsLoading ? <LoadingPanel /> : <Card>
+            <CardHeader><CardTitle>Transaction breakdown</CardTitle><p className="text-sm text-muted-foreground">Exact transaction types in the selected period.</p></CardHeader>
+            <CardContent className="space-y-3">{analyticsError ? <EmptyPanel title="Breakdown unavailable" detail="Retry to load transaction types." /> : !dashboard?.transactionBreakdown.length ? <EmptyPanel title="No transaction types yet" detail="Types appear when transactions are exported." /> : dashboard.transactionBreakdown.map((item) => <div key={item.type} className="rounded-lg border border-border bg-muted/30 p-3"><div className="flex items-center justify-between gap-3"><span className="font-medium">{readableType(item.type)}</span><span className="font-mono text-sm tabular-nums">{COUNT.format(item.transactions)}</span></div><div className="mt-2 flex items-center justify-between gap-3 text-xs text-muted-foreground"><span>Transactions</span><span className="font-mono tabular-nums">{QAR.format(item.value)}</span></div></div>)}</CardContent>
+          </Card>}
+        </section>
 
-        {/* Bottom Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Top Vendors */}
-          <div className="bg-white border border-slate-100 rounded-xl p-6 shadow-sm">
-            <h3 className="m-0 font-bold text-lg text-slate-900">Performance by Vendor</h3>
-            <p className="text-xs text-slate-500 mb-8">Last 30 days by final transaction value (QAR)</p>
-            {vendorStats.length > 0 ? (
-              <div className="h-60 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={vendorStats} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                    <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} dy={10} fontWeight={600} />
-                    <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} fontWeight={600} />
-                    <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f8fafc' }} />
-                    <Bar dataKey="sales" fill="#18B852" radius={[6, 6, 0, 0]} barSize={32} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            ) : (
-              <p className="text-center text-sm text-slate-400 py-16 italic font-medium">No sales data recorded yet</p>
-            )}
-          </div>
+        <section className="grid gap-6 xl:grid-cols-2">
+          {analyticsLoading ? <LoadingPanel /> : <Card>
+            <CardHeader><CardTitle>Vendor performance</CardTitle><p className="text-sm text-muted-foreground">Highest transaction value for {RANGE_LABELS[range].toLowerCase()}.</p></CardHeader>
+            <CardContent>{analyticsError ? <EmptyPanel title="Vendor performance unavailable" detail="Retry to load the selected range." /> : !dashboard?.topVendors.length ? <EmptyPanel title="No vendor performance yet" detail="Vendor ranking will appear after transactions are exported." /> : <div className="h-64"><ResponsiveContainer width="100%" height="100%"><BarChart data={dashboard.topVendors} layout="vertical" margin={{ left: 4, right: 12 }}><XAxis type="number" tickFormatter={(value) => `QAR ${COUNT.format(value)}`} tickLine={false} axisLine={false} /><YAxis type="category" dataKey="name" width={120} tickLine={false} axisLine={false} tickFormatter={(value) => String(value).length > 18 ? `${String(value).slice(0, 18)}…` : value} /><Tooltip formatter={(value: number) => [QAR.format(value), 'Transaction value']} /><Bar dataKey="sales" name="Transaction value" fill="var(--brand-green)" radius={[0, 5, 5, 0]} /></BarChart></ResponsiveContainer></div>}</CardContent>
+          </Card>}
 
-          {/* Recent Transactions */}
-          <div className="bg-white border border-slate-100 rounded-xl p-6 shadow-sm flex flex-col">
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <h3 className="m-0 font-bold text-lg text-slate-900">Recent Activity</h3>
-                <p className="text-xs text-slate-500 mt-1">Latest redemptions exported to BigQuery</p>
-              </div>
-              <Link
-                to="/admin/bigquery-transactions"
-                search={{ page: 1, pageSize: 10 }}
-                className="bg-emerald-50 text-brand-green text-[10px] uppercase font-black px-3 py-1.5 rounded-lg hover:bg-brand-green hover:text-white transition-all tracking-widest"
-              >
-                Full Log
-              </Link>
-            </div>
-            <div className="flex flex-col gap-2.5 max-h-70 overflow-y-auto pr-1 overflow-x-hidden">
-              {recentTxns.length > 0 ? (
-                recentTxns.map(txn => (
-                  <div key={txn.id} className="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl hover:bg-white border border-transparent hover:border-slate-100 hover:shadow-sm transition-all group">
-                    <div className="flex items-center gap-3.5 overflow-hidden">
-                      <div className="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-brand-green shadow-sm group-hover:bg-brand-green group-hover:text-white group-hover:border-brand-green transition-all">
-                        <ShoppingBag size={18} />
-                      </div>
-                      <div className="overflow-hidden">
-                        <p className="truncate m-0 text-sm font-black text-slate-900">{txn.studentName}</p>
-                        <p className="truncate m-0 text-[11px] font-bold text-slate-400 uppercase tracking-tighter mt-0.5">
-                          {txn.vendorName}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right shrink-0 ml-6">
-                      <p className="m-0 text-sm font-black text-slate-900">QAR {(txn.amount || 0).toFixed(0)}</p>
-                      <span className={`text-[9px] uppercase font-black px-2 py-0.5 rounded-md mt-1.5 inline-block tracking-widest ${
-                        txn.status === 'completed' ? 'bg-emerald-100 text-brand-green' : 'bg-red-100 text-primary'
-                      }`}>
-                        {txn.status || 'pending'}
-                      </span>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="flex flex-col items-center justify-center py-20 bg-slate-50 rounded-xl">
-                  <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-300 mb-3">
-                    <ShoppingBag size={24} />
-                  </div>
-                  <p className="text-xs text-slate-400 font-bold uppercase tracking-widest italic">Waiting for activity...</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+          {analyticsLoading ? <LoadingPanel /> : <Card>
+            <CardHeader className="flex-row items-start justify-between gap-3"><div><CardTitle>Recent transaction activity</CardTitle><p className="mt-2 text-sm text-muted-foreground">Latest eligible transactions in the export.</p></div><Link to="/admin/bigquery-transactions" search={{ page: 1, pageSize: 10 }} className="shrink-0 text-sm font-medium text-brand-green hover:underline">View all</Link></CardHeader>
+            <CardContent>{analyticsError ? <EmptyPanel title="Activity unavailable" detail="Retry to load recent transactions." /> : !dashboard?.recentActivity.length ? <EmptyPanel title="No recent activity" detail="Transactions will appear here after they are exported." /> : <div className="max-h-64 space-y-2 overflow-y-auto pr-1">{dashboard.recentActivity.map((activity) => <div key={activity.id} className="flex items-center justify-between gap-3 rounded-lg border border-border p-3"><div className="min-w-0"><p className="truncate font-medium">{activity.vendorName}</p><p className="truncate text-xs text-muted-foreground">{activity.studentName} · {formatDate(activity.createdAt)}</p></div><div className="shrink-0 text-right"><p className="font-mono text-sm font-medium tabular-nums">{QAR.format(activity.amount)}</p><p className="text-xs text-muted-foreground">{activity.status}</p></div></div>)}</div>}</CardContent>
+          </Card>}
+        </section>
       </div>
-    </div>
+    </main>
   )
 }
