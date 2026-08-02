@@ -57,6 +57,14 @@ const CMS_ITEMS = [
         href: '/admin/cms/trending-offer-banners' as const,
     },
     {
+        title: 'New Deal Banners',
+        description: 'Manage vendor-linked banners for the New Deals section',
+        icon: Sparkles,
+        color: 'bg-purple-100 text-purple-600',
+        hoverBorder: 'hover:border-purple-200',
+        href: '/admin/cms/new-deal-banners' as const,
+    },
+    {
         title: 'Student Events',
         description: 'Manage the mobile events feed and fallback data',
         icon: CalendarDays,

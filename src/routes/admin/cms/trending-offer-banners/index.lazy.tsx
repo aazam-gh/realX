@@ -20,16 +20,35 @@ import { uploadImage } from '@/lib/upload'
 import { cn } from '@/lib/utils'
 import type { TrendingOfferBannerItem, TrendingOfferBannersConfig } from '@/types/trending-offer-banners'
 
-const CMS_DOC_ID = 'trending-offer-banners'
 const MAX_ITEMS = 10
 
 export const Route = createLazyFileRoute('/admin/cms/trending-offer-banners/')({
-    component: TrendingOfferBannersManagement,
+    component: () => <OfferBannersManagement config={trendingOfferBannersConfig} />,
 })
 
-function createEmptyItem(): TrendingOfferBannerItem {
+export type OfferBannersConfig = {
+    cmsDocumentId: string
+    storageFolder: string
+    itemIdPrefix: string
+    title: string
+    sectionTitle: string
+    itemLabel: string
+    emptyMessage: string
+}
+
+export const trendingOfferBannersConfig: OfferBannersConfig = {
+    cmsDocumentId: 'trending-offer-banners',
+    storageFolder: 'trending-offer-banners',
+    itemIdPrefix: 'trending_offer',
+    title: 'Trending Offer Banners',
+    sectionTitle: 'Next App Trending Banners',
+    itemLabel: 'Trending Banner',
+    emptyMessage: 'No trending offer banners yet',
+}
+
+function createEmptyItem(itemIdPrefix: string): TrendingOfferBannerItem {
     return {
-        trendingOfferBannerId: `trending_offer_${Math.random().toString(36).slice(2, 11)}`,
+        trendingOfferBannerId: `${itemIdPrefix}_${Math.random().toString(36).slice(2, 11)}`,
         vendorId: '',
         images: {
             mobile: '',
@@ -39,7 +58,8 @@ function createEmptyItem(): TrendingOfferBannerItem {
     }
 }
 
-function TrendingOfferBannersManagement() {
+export function OfferBannersManagement({ config }: { config: OfferBannersConfig }) {
+    const { cmsDocumentId, storageFolder, itemIdPrefix, title, sectionTitle, itemLabel, emptyMessage } = config
     const navigate = useNavigate()
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [items, setItems] = useState<TrendingOfferBannerItem[]>([])
@@ -59,7 +79,7 @@ function TrendingOfferBannersManagement() {
         setLoading(true)
         try {
             const [cmsSnap, vendorOptions] = await Promise.all([
-                getDoc(doc(db, 'cms', CMS_DOC_ID)),
+                getDoc(doc(db, 'cms', cmsDocumentId)),
                 getVendorList(),
             ])
 
@@ -74,8 +94,8 @@ function TrendingOfferBannersManagement() {
 
             setVendors(vendorOptions)
         } catch (error) {
-            console.error('Error fetching trending offer banners:', error)
-            toast.error('Failed to load trending offer banners')
+            console.error(`Error fetching ${title.toLowerCase()}:`, error)
+            toast.error(`Failed to load ${title.toLowerCase()}`)
         } finally {
             setLoading(false)
         }
@@ -86,7 +106,7 @@ function TrendingOfferBannersManagement() {
         try {
             const now = new Date().toISOString()
 
-            await setDoc(doc(db, 'cms', CMS_DOC_ID), {
+            await setDoc(doc(db, 'cms', cmsDocumentId), {
                 items,
                 lastUpdated: now,
             })
@@ -103,7 +123,7 @@ function TrendingOfferBannersManagement() {
             }
 
             setLastUpdated(now)
-            toast.success('Trending offer banners saved')
+            toast.success(`${title} saved`)
         } catch (error) {
             console.error('Error saving trending offer banners:', error)
             toast.error('Failed to save changes')
@@ -114,11 +134,11 @@ function TrendingOfferBannersManagement() {
 
     const addItem = () => {
         if (items.length >= MAX_ITEMS) {
-            toast.error(`Maximum ${MAX_ITEMS} trending offer banners can be configured`)
+            toast.error(`Maximum ${MAX_ITEMS} ${itemLabel.toLowerCase()}s can be configured`)
             return
         }
 
-        setItems(prev => [...prev, createEmptyItem()])
+        setItems(prev => [...prev, createEmptyItem(itemIdPrefix)])
     }
 
     const updateItem = (itemId: string, updates: Partial<TrendingOfferBannerItem>) => {
@@ -140,7 +160,7 @@ function TrendingOfferBannersManagement() {
         setUploadingItemId(itemId)
         try {
             const downloadURL = await uploadImage(
-                `trending-offer-banners/mobile/${Date.now()}_${file.name}`,
+                `${storageFolder}/mobile/${Date.now()}_${file.name}`,
                 file,
                 { maxWidth: 1920, quality: 0.8 },
             )
@@ -162,7 +182,7 @@ function TrendingOfferBannersManagement() {
             }))
             toast.success('Banner image uploaded')
         } catch (error) {
-            console.error('Error uploading trending offer banner:', error)
+            console.error(`Error uploading ${itemLabel.toLowerCase()}:`, error)
             toast.error('Failed to upload image')
         } finally {
             setUploadingItemId(null)
@@ -170,7 +190,7 @@ function TrendingOfferBannersManagement() {
     }
 
     const deleteItem = async (itemId: string) => {
-        if (!confirm('Are you sure you want to delete this trending offer banner?')) return
+        if (!confirm(`Are you sure you want to delete this ${itemLabel.toLowerCase()}?`)) return
 
         const itemToDelete = items.find(item => item.trendingOfferBannerId === itemId)
         setItems(prev => prev.filter(item => item.trendingOfferBannerId !== itemId))
@@ -216,7 +236,7 @@ function TrendingOfferBannersManagement() {
                             <Flame className="w-5 h-5 fill-orange-500" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold tracking-tight">Trending Offer Banners</h1>
+                            <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
                             <p className="text-xs text-gray-500 font-medium">{items.length}/{MAX_ITEMS} configured for the next app version</p>
                         </div>
                     </div>
@@ -242,9 +262,9 @@ function TrendingOfferBannersManagement() {
 
             <div className="flex items-center justify-between border-b border-gray-100 pb-4">
                 <div>
-                    <h2 className="text-lg font-bold text-gray-900">Next App Trending Banners</h2>
+                    <h2 className="text-lg font-bold text-gray-900">{sectionTitle}</h2>
                     <p className="text-sm text-gray-500 mt-1">
-                        This writes to cms/{CMS_DOC_ID}; the current live app does not read this document.
+                        This writes to cms/{cmsDocumentId}; the mobile app reads this document when configured.
                     </p>
                 </div>
                 <Button
@@ -273,7 +293,7 @@ function TrendingOfferBannersManagement() {
                         <div key={item.trendingOfferBannerId} className="bg-[#F8F9F9] rounded-2xl p-6 space-y-5 border border-gray-100 shadow-sm relative group">
                             <div className="flex flex-col lg:flex-row gap-6">
                                 <div className="flex-1 space-y-1.5">
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Custom Trending Banner</p>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Custom {itemLabel}</p>
                                     <div
                                         onClick={() => triggerUpload(item.trendingOfferBannerId)}
                                         className="relative w-full aspect-[21/9] rounded-xl overflow-hidden bg-white border-2 border-dashed border-gray-200 cursor-pointer hover:border-orange-300 transition-all flex flex-col items-center justify-center group/img"
@@ -322,7 +342,7 @@ function TrendingOfferBannersManagement() {
                                             <input
                                                 value={item.altText}
                                                 onChange={(event) => updateItem(item.trendingOfferBannerId, { altText: event.target.value })}
-                                                placeholder="Custom trending offer banner"
+                                                placeholder={`Custom ${itemLabel.toLowerCase()}`}
                                                 className="w-full h-11 px-4 rounded-xl bg-white border border-gray-100 font-medium text-sm text-gray-900 outline-none focus:border-orange-300 transition-all shadow-sm"
                                             />
                                         </div>
@@ -387,7 +407,7 @@ function TrendingOfferBannersManagement() {
                         <div className="bg-white p-4 rounded-xl shadow-sm">
                             <Flame className="w-10 h-10 opacity-30 text-orange-500" />
                         </div>
-                        <p className="font-bold text-lg text-gray-500">No trending offer banners yet</p>
+                        <p className="font-bold text-lg text-gray-500">{emptyMessage}</p>
                         <p className="text-sm">Add a vendor-linked banner for the next app version.</p>
                     </div>
                 )}

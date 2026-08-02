@@ -53,6 +53,7 @@ export interface Vendor {
     mainCategory?: string
     subcategory?: string[]
     isTrending?: boolean
+    isNewDeal?: boolean
     searchTokens?: string[]
     shortDescription?: string
     shortDescriptionAr?: string

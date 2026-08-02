@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Upload, Loader2, CreditCard, X, Tag, Plus, TrendingUp, ArrowLeft, ArrowRight, Trash2 } from "lucide-react"
+import { Upload, Loader2, CreditCard, X, Tag, Plus, TrendingUp, ArrowLeft, ArrowRight, Trash2, Sparkles } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useEffect, useState, useRef } from "react"
 import { useQuery } from "@tanstack/react-query"
@@ -641,6 +641,21 @@ export function BrandingSettings({
                             Publish vendor
                         </Label>
                         <p className="text-xs text-slate-500 mt-1">Draft vendors stay editable in the admin panel and are hidden from the live app.</p>
+                    </div>
+                </div>
+
+                <div className="flex items-center space-x-3 bg-slate-50/50 p-4 rounded-2xl border border-slate-100/50">
+                    <Checkbox
+                        id="isNewDeal"
+                        checked={formData.isNewDeal || false}
+                        onCheckedChange={(checked) => setFormData({ ...formData, isNewDeal: !!checked })}
+                        className="h-5 w-5 rounded-md border-slate-300 data-[state=checked]:bg-purple-500 data-[state=checked]:border-purple-500"
+                    />
+                    <div className="flex items-center gap-2">
+                        <Sparkles className="w-5 h-5 text-slate-400" />
+                        <Label htmlFor="isNewDeal" className="text-base font-semibold text-slate-700 cursor-pointer">
+                            New Deal Vendor
+                        </Label>
                     </div>
                 </div>
 
