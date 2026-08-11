@@ -587,6 +587,24 @@ export function BrandingSettings({
                         )}
 
                         <div className="space-y-4">
+                            <Label className="text-sm font-medium text-slate-600 ml-1">How the offer works</Label>
+                            <Select
+                                value={onlineConfig.fulfillmentMode || 'coupon'}
+                                onValueChange={(value: OnlineRedemptionConfig['fulfillmentMode']) => setOnlineConfig({ ...onlineConfig, fulfillmentMode: value })}
+                            >
+                                <SelectTrigger className="w-full bg-slate-50 border-none h-14 rounded-2xl px-5 text-sm">
+                                    <SelectValue placeholder="Select fulfillment" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="coupon">Coupon code</SelectItem>
+                                    <SelectItem value="outbound_link">Direct website or app link</SelectItem>
+                                    <SelectItem value="partner_managed">Partner-managed access</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {onlineConfig.fulfillmentMode === 'coupon' && (
+                        <div className="space-y-4">
                             <Label className="text-sm font-medium text-slate-600 ml-1">Discount Code</Label>
                             <Input
                                 placeholder="REALX20"
@@ -595,15 +613,56 @@ export function BrandingSettings({
                                 className="bg-slate-50 border-none ring-0 focus-visible:ring-1 focus-visible:ring-blue-400 h-14 rounded-2xl px-5 text-sm font-mono tracking-[0.15em]"
                             />
                         </div>
+                        )}
 
                         <div className="space-y-4">
-                            <Label className="text-sm font-medium text-slate-600 ml-1">Purchase URL</Label>
+                            <Label className="text-sm font-medium text-slate-600 ml-1">Website URL</Label>
                             <Input
                                 placeholder="https://store.example.com"
                                 value={onlineConfig.purchaseUrl || ''}
                                 onChange={(e) => setOnlineConfig({ ...onlineConfig, purchaseUrl: e.target.value })}
                                 className="bg-slate-50 border-none ring-0 focus-visible:ring-1 focus-visible:ring-blue-400 h-14 rounded-2xl px-5 text-sm"
                             />
+                        </div>
+
+                        <div className="space-y-4">
+                            <Label className="text-sm font-medium text-slate-600 ml-1">iPhone destination (optional)</Label>
+                            <Input
+                                placeholder="https://apps.apple.com/app/..."
+                                value={onlineConfig.iosUrl || ''}
+                                onChange={(e) => setOnlineConfig({ ...onlineConfig, iosUrl: e.target.value })}
+                                className="bg-slate-50 border-none ring-0 focus-visible:ring-1 focus-visible:ring-blue-400 h-14 rounded-2xl px-5 text-sm"
+                            />
+                        </div>
+
+                        <div className="space-y-4">
+                            <Label className="text-sm font-medium text-slate-600 ml-1">Android destination (optional)</Label>
+                            <Input
+                                placeholder="https://play.google.com/store/apps/details?..."
+                                value={onlineConfig.androidUrl || ''}
+                                onChange={(e) => setOnlineConfig({ ...onlineConfig, androidUrl: e.target.value })}
+                                className="bg-slate-50 border-none ring-0 focus-visible:ring-1 focus-visible:ring-blue-400 h-14 rounded-2xl px-5 text-sm"
+                            />
+                        </div>
+
+                        <div className="space-y-4">
+                            <Label className="text-sm font-medium text-slate-600 ml-1">CTA label (English, optional)</Label>
+                            <Input value={onlineConfig.ctaLabel || ''} onChange={(e) => setOnlineConfig({ ...onlineConfig, ctaLabel: e.target.value })} className="bg-slate-50 border-none ring-0 focus-visible:ring-1 focus-visible:ring-blue-400 h-14 rounded-2xl px-5 text-sm" />
+                        </div>
+
+                        <div className="space-y-4 text-right">
+                            <Label className="text-sm font-medium text-slate-600 mr-1">CTA label (Arabic, optional)</Label>
+                            <Input dir="rtl" value={onlineConfig.ctaLabelAr || ''} onChange={(e) => setOnlineConfig({ ...onlineConfig, ctaLabelAr: e.target.value })} className="bg-slate-50 border-none ring-0 focus-visible:ring-1 focus-visible:ring-blue-400 h-14 rounded-2xl px-5 text-sm" />
+                        </div>
+
+                        <div className="space-y-4 md:col-span-2">
+                            <Label className="text-sm font-medium text-slate-600 ml-1">Instructions (English, optional)</Label>
+                            <Input value={onlineConfig.instructions || ''} onChange={(e) => setOnlineConfig({ ...onlineConfig, instructions: e.target.value })} className="bg-slate-50 border-none ring-0 focus-visible:ring-1 focus-visible:ring-blue-400 h-14 rounded-2xl px-5 text-sm" />
+                        </div>
+
+                        <div className="space-y-4 md:col-span-2 text-right">
+                            <Label className="text-sm font-medium text-slate-600 mr-1">Instructions (Arabic, optional)</Label>
+                            <Input dir="rtl" value={onlineConfig.instructionsAr || ''} onChange={(e) => setOnlineConfig({ ...onlineConfig, instructionsAr: e.target.value })} className="bg-slate-50 border-none ring-0 focus-visible:ring-1 focus-visible:ring-blue-400 h-14 rounded-2xl px-5 text-sm" />
                         </div>
 
                         <div className="flex items-center space-x-3 bg-slate-50/50 p-4 rounded-2xl border border-slate-100/50">
@@ -617,7 +676,7 @@ export function BrandingSettings({
                                 <Label htmlFor="onlineVendorEnabled" className="text-base font-semibold text-slate-700 cursor-pointer">
                                     Online offer enabled
                                 </Label>
-                                <p className="text-xs text-slate-500 mt-1">Controls whether eligible users can view the code and visit the store.</p>
+                                <p className="text-xs text-slate-500 mt-1">Controls whether eligible users can access this online offer.</p>
                             </div>
                         </div>
                     </div>

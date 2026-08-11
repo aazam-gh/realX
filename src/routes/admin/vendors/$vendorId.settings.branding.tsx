@@ -25,6 +25,7 @@ function BrandingSettingsComponent() {
     const [formData, setFormData] = useState<VendorBrandingForm | null>(null)
     const [uploadingImages, setUploadingImages] = useState(false)
     const [onlineConfig, setOnlineConfig] = useState<OnlineRedemptionConfig>({
+        fulfillmentMode: 'coupon',
         discountCode: '',
         purchaseUrl: '',
         enabled: false,
@@ -48,6 +49,7 @@ function BrandingSettingsComponent() {
 
             if (!snapshot.exists()) {
                 setOnlineConfig({
+                    fulfillmentMode: 'coupon',
                     discountCode: '',
                     purchaseUrl: '',
                     enabled: false,
@@ -57,8 +59,15 @@ function BrandingSettingsComponent() {
 
             const data = snapshot.data()
             setOnlineConfig({
+                fulfillmentMode: data.fulfillmentMode === 'outbound_link' || data.fulfillmentMode === 'partner_managed' ? data.fulfillmentMode : 'coupon',
                 discountCode: data.discountCode || '',
                 purchaseUrl: data.purchaseUrl || '',
+                iosUrl: data.iosUrl || '',
+                androidUrl: data.androidUrl || '',
+                ctaLabel: data.ctaLabel || '',
+                ctaLabelAr: data.ctaLabelAr || '',
+                instructions: data.instructions || '',
+                instructionsAr: data.instructionsAr || '',
                 enabled: data.enabled === true,
             })
         }
@@ -73,17 +82,20 @@ function BrandingSettingsComponent() {
     const updateMutation = useMutation({
         mutationFn: async ({ vendorData, configData }: { vendorData: VendorBrandingForm, configData: OnlineRedemptionConfig }) => {
             if (vendorData.vendorType === 'online') {
-                const discountCode = configData.discountCode.trim()
+                const discountCode = configData.discountCode?.trim() || ''
                 const purchaseUrl = configData.purchaseUrl.trim()
 
-                if (!discountCode || !purchaseUrl) {
-                    throw new Error('Online vendors require a discount code and purchase URL.')
+                if ((configData.fulfillmentMode === 'coupon' && !purchaseUrl) || (configData.fulfillmentMode === 'coupon' && !discountCode) || (configData.fulfillmentMode !== 'coupon' && !purchaseUrl && !configData.iosUrl?.trim() && !configData.androidUrl?.trim())) {
+                    throw new Error('Coupon offers require a website URL and discount code. Direct offers require at least one app destination.')
                 }
 
                 try {
-                    const parsed = new URL(purchaseUrl)
-                    if (parsed.protocol !== 'https:' || !parsed.hostname || parsed.username || parsed.password) {
-                        throw new Error('Unsafe URL')
+                    for (const url of [purchaseUrl, configData.iosUrl?.trim(), configData.androidUrl?.trim()]) {
+                        if (!url) continue
+                        const parsed = new URL(url)
+                        if (parsed.protocol !== 'https:' || !parsed.hostname || parsed.username || parsed.password) {
+                            throw new Error('Unsafe URL')
+                        }
                     }
                 } catch {
                     throw new Error('Purchase URL must be a valid HTTPS URL without embedded credentials.')
@@ -107,8 +119,15 @@ function BrandingSettingsComponent() {
             await updateDoc(vendorRef, dataToUpdate)
 
             await setDoc(doc(db, 'vendorOnlineRedemptionConfigs', vendorId), {
-                discountCode: configData.discountCode.trim(),
-                purchaseUrl: configData.purchaseUrl.trim(),
+                fulfillmentMode: configData.fulfillmentMode,
+                discountCode: configData.discountCode?.trim() || deleteField(),
+                purchaseUrl: configData.purchaseUrl?.trim() || deleteField(),
+                iosUrl: configData.iosUrl?.trim() || deleteField(),
+                androidUrl: configData.androidUrl?.trim() || deleteField(),
+                ctaLabel: configData.ctaLabel?.trim() || deleteField(),
+                ctaLabelAr: configData.ctaLabelAr?.trim() || deleteField(),
+                instructions: configData.instructions?.trim() || deleteField(),
+                instructionsAr: configData.instructionsAr?.trim() || deleteField(),
                 dailyLimitPerUser: deleteField(),
                 enabled: configData.enabled === true,
                 updatedAt: serverTimestamp(),
