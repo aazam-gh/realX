@@ -101,9 +101,21 @@ export interface HoldingTransaction {
   remainingAmount?: number | null
 }
 
+function normalizeHoldingGroupsResponse(data: unknown): HoldingGroupSummary[] {
+  if (Array.isArray(data)) {
+    return data as HoldingGroupSummary[]
+  }
+
+  if (data && typeof data === 'object' && Array.isArray((data as { groups?: unknown }).groups)) {
+    return (data as { groups: HoldingGroupSummary[] }).groups
+  }
+
+  throw new Error('Holding groups response was not a list')
+}
+
 export async function listHoldingGroups() {
-  const callable = httpsCallable<unknown, { groups: HoldingGroupSummary[] }>(functions, 'listHoldingGroups')
-  return (await callable({})).data.groups
+  const callable = httpsCallable<unknown, unknown>(functions, 'listHoldingGroups')
+  return normalizeHoldingGroupsResponse((await callable({})).data)
 }
 
 export async function createHoldingGroup(input: { name: string; vendorIds: string[] }) {

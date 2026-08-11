@@ -2,6 +2,7 @@ import {setGlobalOptions} from "firebase-functions";
 import {onCall, HttpsError, CallableRequest} from "firebase-functions/v2/https";
 import {onDocumentWritten} from "firebase-functions/v2/firestore";
 import {onObjectFinalized} from "firebase-functions/v2/storage";
+import {onSchedule} from "firebase-functions/v2/scheduler";
 import * as logger from "firebase-functions/logger";
 
 import {initializeApp} from "firebase-admin/app";
@@ -45,6 +46,7 @@ const PUBLIC_IMAGE_PATHS = [
   /^new-deal-banners\//,
   /^vendors\/[^/]+\/branding\//,
   /^vendors\/[^/]+\/gallery\//,
+  /^vendors\/[^/]+\/offers\//,
   /^categories\//,
   /^brands\//,
   /^universities\//,
@@ -53,6 +55,8 @@ const PUBLIC_IMAGE_PATHS = [
 ];
 const HOLDING_GROUP_MAX_VENDORS = 30;
 const HOLDING_TRANSACTION_MAX_PAGE_SIZE = 100;
+const VERIFICATION_REQUEST_RETENTION_DAYS = 7;
+const VERIFICATION_REQUEST_CLEANUP_BATCH_SIZE = 500;
 
 const {
   processNotificationBroadcast,
@@ -766,7 +770,45 @@ async function doCreateStudentUser(input: CreateStudentInput) {
       Math.random().toString(36).slice(-10),
   };
 
-  const user = await authAdmin.createUser(userConfig);
+  let user;
+  try {
+    user = await authAdmin.createUser(userConfig);
+  } catch (error: unknown) {
+    // Firebase Auth errors otherwise become an opaque callable "internal"
+    // error in the admin panel. Return actionable validation/conflict codes.
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+
+    const authError = error as {code?: string; message?: string};
+    switch (authError.code) {
+    case "auth/email-already-exists":
+      throw new HttpsError(
+        "already-exists",
+        "A user with this email address already exists.",
+      );
+    case "auth/invalid-email":
+      throw new HttpsError(
+        "invalid-argument",
+        "Please enter a valid email address.",
+      );
+    case "auth/password-does-not-meet-requirements":
+    case "auth/invalid-password":
+      throw new HttpsError(
+        "invalid-argument",
+        "The password does not meet the minimum requirements.",
+      );
+    default:
+      logger.error("Failed to create Firebase Auth user", {
+        email,
+        error: authError.message || error,
+      });
+      throw new HttpsError(
+        "internal",
+        "Unable to create the student account. Please try again.",
+      );
+    }
+  }
 
   const studentData: {
     firstName: string;
@@ -1435,11 +1477,27 @@ export const createStudentUser = onCall(
       throw new HttpsError("invalid-argument", "email is required");
     }
 
-    const result = await doCreateStudentUser({
-      firstName, lastName, email, password, gender, dob, role,
-    });
+    try {
+      const result = await doCreateStudentUser({
+        firstName, lastName, email, password, gender, dob, role,
+      });
 
-    return {uid: result.uid, creatorCode: result.creatorCode, success: true};
+      return {uid: result.uid, creatorCode: result.creatorCode, success: true};
+    } catch (error) {
+      if (error instanceof HttpsError) {
+        throw error;
+      }
+
+      logger.error("Student account creation failed", {
+        adminUid: auth.uid,
+        email,
+        error,
+      });
+      throw new HttpsError(
+        "internal",
+        "Unable to create the student account. Please try again.",
+      );
+    }
   }
 );
 
@@ -1571,7 +1629,7 @@ export const approveVerificationRequest = onCall(
     });
 
     // Delete ID images from Storage
-    const bucket = getStorage().bucket();
+    const bucket = getStorage().bucket(STORAGE_BUCKET);
     const deleteFile = async (filePath: string) => {
       if (filePath) {
         try {
@@ -1752,6 +1810,72 @@ export const deleteVerificationRequest = onCall(
     logger.info("Verification request deleted", {verificationRequestId});
 
     return {success: true};
+  }
+);
+
+/**
+ * Remove reviewed verification requests after the retention period.
+ * User/Auth records are created independently and are intentionally untouched.
+ */
+export const cleanupApprovedVerificationRequests = onSchedule(
+  {
+    schedule: "0 2 * * *",
+    timeZone: "Asia/Qatar",
+    region: REGION,
+    timeoutSeconds: 540,
+  },
+  async () => {
+    const db = getFirestore();
+    const bucket = getStorage().bucket(STORAGE_BUCKET);
+    const cutoff = Timestamp.fromMillis(
+      Date.now() - VERIFICATION_REQUEST_RETENTION_DAYS * 24 * 60 * 60 * 1000
+    );
+
+    const snapshot = await db
+      .collection("verification_requests")
+      .where("status", "in", ["approved", "verified"])
+      .where("reviewedAt", "<=", cutoff)
+      .get();
+
+    let imagesDeleted = 0;
+    let imageDeleteFailures = 0;
+
+    for (const doc of snapshot.docs) {
+      const idImagePath = doc.data().idImagePath;
+      if (typeof idImagePath !== "string" || !idImagePath) {
+        continue;
+      }
+
+      try {
+        await bucket.file(idImagePath).delete();
+        imagesDeleted += 1;
+      } catch (error) {
+        imageDeleteFailures += 1;
+        logger.warn("Failed to delete verification request image", {
+          verificationRequestId: doc.id,
+          idImagePath,
+          error,
+        });
+      }
+    }
+
+    for (let index = 0; index < snapshot.docs.length;
+      index += VERIFICATION_REQUEST_CLEANUP_BATCH_SIZE) {
+      const batch = db.batch();
+      const docs = snapshot.docs.slice(
+        index,
+        index + VERIFICATION_REQUEST_CLEANUP_BATCH_SIZE
+      );
+      docs.forEach((doc) => batch.delete(doc.ref));
+      await batch.commit();
+    }
+
+    logger.info("Verification request retention cleanup completed", {
+      cutoff: cutoff.toDate().toISOString(),
+      requestsDeleted: snapshot.size,
+      imagesDeleted,
+      imageDeleteFailures,
+    });
   }
 );
 

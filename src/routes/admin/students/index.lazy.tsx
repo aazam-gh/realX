@@ -179,7 +179,11 @@ function RouteComponent() {
         },
         onError: (error) => {
             console.error('Error adding student: ', error)
-            alert('Failed to add student: ' + (error instanceof Error ? error.message : 'Unknown error'))
+            const callableError = error as { code?: string; message?: string }
+            const message = (callableError.code === 'already-exists' || callableError.code === 'functions/already-exists')
+                ? 'A user with this email address already exists.'
+                : callableError.message || 'Unable to create the student account. Please try again.'
+            alert('Failed to add student: ' + message)
         }
     })
 

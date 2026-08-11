@@ -60,7 +60,12 @@ function HoldingGroupsAdmin() {
   const [editVendorIds, setEditVendorIds] = useState<string[]>([])
   const [userForm, setUserForm] = useState(EMPTY_USER_FORM)
 
-  const { data: groups = [], isLoading: groupsLoading } = useQuery({
+  const {
+    data: groups = [],
+    error: groupsError,
+    isError: groupsFailed,
+    isLoading: groupsLoading,
+  } = useQuery({
     queryKey: ['holding-groups'],
     queryFn: listHoldingGroups,
   })
@@ -171,6 +176,13 @@ function HoldingGroupsAdmin() {
       {loading ? (
         <div className="flex items-center justify-center h-64">
           <Loader2 className="animate-spin" />
+        </div>
+      ) : groupsFailed ? (
+        <div className="bg-white border rounded-xl p-8 space-y-2">
+          <h2 className="text-lg font-semibold">Holding groups could not be loaded</h2>
+          <p className="text-sm text-muted-foreground">
+            {groupsError instanceof Error ? groupsError.message : 'Please try again or contact an administrator.'}
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-[420px_1fr] gap-6">

@@ -37,7 +37,7 @@ function selectedPrefixes() {
 function isPublicMediaPath(filePath, prefix) {
   if (prefix !== "vendors/") return true;
 
-  return /^vendors\/[^/]+\/branding\//.test(filePath);
+  return /^vendors\/[^/]+\/(branding|gallery|offers)\//.test(filePath);
 }
 
 function createSummary() {
