@@ -105,10 +105,20 @@ function OnlineVendorBrandingSettingsComponent() {
                 }
             }
 
-            const dataToUpdate: Partial<VendorBrandingForm> & { isActive?: boolean } = { ...vendorData }
+            const dataToUpdate: Record<string, unknown> = { ...vendorData }
             delete dataToUpdate.id
             delete dataToUpdate.redemptionPin
             dataToUpdate.isActive = vendorData.status === 'Active' || vendorData.status === undefined
+
+            const vendorInformation = {
+                title: vendorData.vendorInformation?.title?.trim() || '',
+                titleAr: vendorData.vendorInformation?.titleAr?.trim() || '',
+                message: vendorData.vendorInformation?.message?.trim() || '',
+                messageAr: vendorData.vendorInformation?.messageAr?.trim() || '',
+            }
+            dataToUpdate.vendorInformation = vendorInformation.message || vendorInformation.messageAr
+                ? vendorInformation
+                : deleteField()
 
             const pin = vendorData.redemptionPin?.trim() || ''
             if (pin && !/^\d{4}$/.test(pin)) {

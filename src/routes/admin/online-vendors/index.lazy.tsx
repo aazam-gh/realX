@@ -331,13 +331,14 @@ function RouteComponent() {
                             <TableHead className="text-black font-bold text-base">Contact Info</TableHead>
                             <TableHead className="text-black font-bold text-base">Status</TableHead>
                             <TableHead className="text-black font-bold text-base">XCard</TableHead>
+                            <TableHead className="text-black font-bold text-base">Redemption PIN</TableHead>
                             <TableHead className="text-black font-bold text-base text-right pr-8">Actions:</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {loading ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="text-center py-10">
+                                <TableCell colSpan={7} className="text-center py-10">
                                     <div className="flex flex-col items-center gap-2">
                                         <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-green border-t-transparent" />
                                         <p className="text-muted-foreground font-medium">Loading vendors...</p>
@@ -346,7 +347,7 @@ function RouteComponent() {
                             </TableRow>
                         ) : vendorList.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
+                                <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
                                     {searchQuery || xcardFilter !== 'all'
                                         ? 'No online vendors match your filters.'
                                         : 'No online vendors found.'}
@@ -382,6 +383,9 @@ function RouteComponent() {
                                             onCheckedChange={(checked) => toggleXCardMutation.mutate({ vendorId: vendor.id, xcard: checked })}
                                             disabled={toggleXCardMutation.isPending}
                                         />
+                                    </TableCell>
+                                    <TableCell className="font-mono font-medium text-gray-900">
+                                        {vendor.redemptionPin || <span className="font-sans text-muted-foreground">Not set</span>}
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex items-center justify-end gap-2">

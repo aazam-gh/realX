@@ -1,5 +1,6 @@
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -403,6 +404,63 @@ export function BrandingSettings({
                         dir="rtl"
                         className="bg-slate-50 border-none ring-0 focus-visible:ring-1 focus-visible:ring-blue-400 h-14 rounded-2xl px-5 text-sm"
                     />
+                </div>
+
+                <div className="space-y-4 md:col-span-2 rounded-2xl border border-slate-100 bg-slate-50/50 p-5">
+                    <div>
+                        <Label className="text-base font-semibold text-slate-700">Store Information Notice</Label>
+                        <p className="mt-1 text-sm text-slate-500">Optional hours, availability, or conditions shown on the vendor page.</p>
+                    </div>
+                    <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                        <div className="space-y-2">
+                            <Label className="text-sm font-medium text-slate-600">Title (English)</Label>
+                            <Input
+                                placeholder="Store hours"
+                                value={formData.vendorInformation?.title || ''}
+                                onChange={(e) => setFormData({
+                                    ...formData,
+                                    vendorInformation: { ...formData.vendorInformation, title: e.target.value },
+                                })}
+                            />
+                        </div>
+                        <div className="space-y-2 text-right">
+                            <Label className="text-sm font-medium text-slate-600">Title (Arabic)</Label>
+                            <Input
+                                placeholder="ساعات العمل"
+                                dir="rtl"
+                                value={formData.vendorInformation?.titleAr || ''}
+                                onChange={(e) => setFormData({
+                                    ...formData,
+                                    vendorInformation: { ...formData.vendorInformation, titleAr: e.target.value },
+                                })}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="text-sm font-medium text-slate-600">Message (English)</Label>
+                            <Textarea
+                                placeholder="Open Sunday to Thursday, 9 AM to 10 PM"
+                                rows={4}
+                                value={formData.vendorInformation?.message || ''}
+                                onChange={(e) => setFormData({
+                                    ...formData,
+                                    vendorInformation: { ...formData.vendorInformation, message: e.target.value },
+                                })}
+                            />
+                        </div>
+                        <div className="space-y-2 text-right">
+                            <Label className="text-sm font-medium text-slate-600">Message (Arabic)</Label>
+                            <Textarea
+                                placeholder="نفتح من الأحد إلى الخميس، من 9 صباحًا إلى 10 مساءً"
+                                rows={4}
+                                dir="rtl"
+                                value={formData.vendorInformation?.messageAr || ''}
+                                onChange={(e) => setFormData({
+                                    ...formData,
+                                    vendorInformation: { ...formData.vendorInformation, messageAr: e.target.value },
+                                })}
+                            />
+                        </div>
+                    </div>
                 </div>
 
                 {/* Main Category */}

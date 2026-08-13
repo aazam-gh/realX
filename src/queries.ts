@@ -39,6 +39,13 @@ export interface VendorLocation {
     isPrimary?: boolean
 }
 
+export interface VendorInformation {
+    title?: string
+    titleAr?: string
+    message?: string
+    messageAr?: string
+}
+
 export interface Vendor {
     id: string
     name?: string
@@ -64,6 +71,7 @@ export interface Vendor {
     searchTokens?: string[]
     shortDescription?: string
     shortDescriptionAr?: string
+    vendorInformation?: VendorInformation
     brandOfferName?: string
     brandOfferNameAr?: string
     offers?: EmbeddedOffer[]
@@ -75,6 +83,7 @@ export interface Vendor {
     address?: string
     addressAr?: string
     locations?: VendorLocation[]
+    redemptionPin?: string
 }
 
 export interface Transaction {

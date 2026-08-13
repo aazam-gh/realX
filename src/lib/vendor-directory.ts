@@ -2,8 +2,10 @@ import { z } from 'zod'
 import { db } from '@/firebase/config'
 import {
     collection,
+    doc,
     getCountFromServer,
     getDocs,
+    getDoc,
     orderBy,
     query,
     where,
@@ -53,6 +55,18 @@ function mapVendor(docSnap: QueryDocumentSnapshot<DocumentData>): Vendor {
     } as Vendor
 }
 
+async function attachVendorPins(vendors: Vendor[]): Promise<Vendor[]> {
+    return Promise.all(vendors.map(async (vendor) => {
+        const snapshot = await getDoc(doc(db, 'vendor_pins', vendor.id))
+        const pin = snapshot.data()?.pin
+
+        return {
+            ...vendor,
+            redemptionPin: typeof pin === 'string' && /^\d{4}$/.test(pin) ? pin : undefined,
+        }
+    }))
+}
+
 function vendorMatchesSearch(docSnap: QueryDocumentSnapshot<DocumentData>, searchTerm: string): boolean {
     const data = docSnap.data()
     const searchableValues = [
@@ -92,7 +106,7 @@ export async function fetchVendorsPage(search: VendorsSearch, vendorScope: Vendo
         const pageDocs = matchedDocs.slice((search.page - 1) * search.pageSize, search.page * search.pageSize)
 
         return {
-            vendors: pageDocs.map(mapVendor),
+            vendors: await attachVendorPins(pageDocs.map(mapVendor)),
             totalCount: matchedDocs.length,
         }
     }
@@ -104,7 +118,7 @@ export async function fetchVendorsPage(search: VendorsSearch, vendorScope: Vendo
         getCountFromServer(countQuery),
         getCursorPage(collRef, [...constraints, sortConstraint], search.page, search.pageSize, cursorKey),
     ])
-    const vendors = pageResult.docs.map(mapVendor)
+    const vendors = await attachVendorPins(pageResult.docs.map(mapVendor))
     const totalCount = countSnapshot.data().count
 
     logAdminRead('vendors-page', {
