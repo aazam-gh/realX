@@ -76,6 +76,31 @@ export interface HoldingDashboardData {
   vendors: HoldingVendorBreakdown[]
 }
 
+function normalizeHoldingDashboardResponse(data: unknown): HoldingDashboardData {
+  if (!data || typeof data !== 'object') {
+    throw new Error('Holding dashboard response was not an object')
+  }
+
+  const response = data as Partial<HoldingDashboardData>
+  const totals = response.totals && typeof response.totals === 'object'
+    ? response.totals as Partial<HoldingTotals>
+    : {}
+
+  return {
+    groupId: typeof response.groupId === 'string' ? response.groupId : '',
+    groupName: typeof response.groupName === 'string' ? response.groupName : '',
+    totals: {
+      totalRevenue: Number(totals.totalRevenue) || 0,
+      totalRedemptions: Number(totals.totalRedemptions) || 0,
+      totalDiscount: Number(totals.totalDiscount) || 0,
+      pendingTransactions: Number(totals.pendingTransactions) || 0,
+      activeOffers: Number(totals.activeOffers) || 0,
+    },
+    chartData: Array.isArray(response.chartData) ? response.chartData : [],
+    vendors: Array.isArray(response.vendors) ? response.vendors : [],
+  }
+}
+
 export interface HoldingTransaction {
   id: string
   vendorId: string | null
@@ -160,8 +185,8 @@ export async function getMyHoldingProfile() {
 }
 
 export async function getHoldingDashboard(range: HoldingRange) {
-  const callable = httpsCallable<{ range: HoldingRange }, HoldingDashboardData>(functions, 'getHoldingDashboard')
-  return (await callable({ range })).data
+  const callable = httpsCallable<{ range: HoldingRange }, unknown>(functions, 'getHoldingDashboard')
+  return normalizeHoldingDashboardResponse((await callable({ range })).data)
 }
 
 export async function listHoldingTransactions(input: {

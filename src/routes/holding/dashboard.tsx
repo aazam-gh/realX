@@ -30,6 +30,8 @@ function HoldingDashboard() {
     queryFn: () => getHoldingDashboard(range),
   })
 
+  const chartData = Array.isArray(data?.chartData) ? data.chartData : []
+
   if (isLoading) {
     return <div className="flex justify-center items-center h-64"><Loader2 className="animate-spin" /></div>
   }
@@ -68,7 +70,7 @@ function HoldingDashboard() {
         <h2 className="text-lg font-semibold mb-6">Revenue Overview</h2>
         <div className="h-80">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data?.chartData || []}>
+            <AreaChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" />
               <YAxis />
