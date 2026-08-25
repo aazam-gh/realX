@@ -16,7 +16,7 @@ export interface EmbeddedOffer {
 export interface OnlineRedemptionConfig {
     fulfillmentMode: 'coupon' | 'outbound_link' | 'partner_managed'
     discountCode?: string
-    purchaseUrl: string
+    purchaseUrl?: string
     iosUrl?: string
     androidUrl?: string
     ctaLabel?: string

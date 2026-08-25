@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { createLazyFileRoute, useNavigate } from '@tanstack/react-router'
 import {
     ArrowLeft,
+    ArrowDown,
+    ArrowUp,
     Image as ImageIcon,
     Loader2,
     Save,
@@ -11,6 +13,7 @@ import {
 import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { db } from '@/firebase/config'
 import { uploadImage } from '@/lib/upload'
+import { getVendorList, type VendorOption } from '@/lib/vendorList'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
@@ -19,10 +22,9 @@ import type {
     FeaturedBrandShowcaseItem
 } from '@/types/featured-brand-showcase'
 
-const TILE_COUNT = 3
 const CMS_DOC_ID = 'featuredBrandShowcase'
 
-type UploadSlot = 'hero' | `tile-${number}`
+type UploadSlot = 'image'
 
 export const Route = createLazyFileRoute('/admin/cms/featured-brand-showcase/')({
     component: FeaturedBrandShowcaseManagement,
@@ -33,65 +35,37 @@ function createEmptyItem(): FeaturedBrandShowcaseItem {
         id: `showcase_${Math.random().toString(36).slice(2, 11)}`,
         title: '',
         titleAr: '',
-        orderUrl: '',
-        isActive: false,
-        heroImageUrl: '',
-        tileImageUrls: Array(TILE_COUNT).fill(''),
-        altText: '',
+        vendorId: '',
+        isActive: true,
+        imageUrl: '',
+        ctaText: '',
         order: 0,
     }
 }
 
 function normalizeItem(item: FeaturedBrandShowcaseItem): FeaturedBrandShowcaseItem {
-    const tileImageUrls = [...(item.tileImageUrls || [])]
-    while (tileImageUrls.length < TILE_COUNT) tileImageUrls.push('')
-
     return {
         ...createEmptyItem(),
         ...item,
-        tileImageUrls: tileImageUrls.slice(0, TILE_COUNT),
+        imageUrl: item.imageUrl || item.heroImageUrl || '',
+        ctaText: item.ctaText || '',
+        vendorId: item.vendorId || '',
     }
-}
-
-function getEditableItem(items: FeaturedBrandShowcaseItem[]) {
-    if (!items.length) return createEmptyItem()
-
-    const sortedItems = items
-        .map(normalizeItem)
-        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-
-    return sortedItems.find(isRenderableItem) || sortedItems[0]
-}
-
-function isValidUrl(value: string) {
-    try {
-        new URL(value)
-        return true
-    } catch {
-        return false
-    }
-}
-
-function isRenderableItem(item: FeaturedBrandShowcaseItem) {
-    return (
-        item.isActive &&
-        item.title.trim() &&
-        isValidUrl(item.orderUrl.trim()) &&
-        item.heroImageUrl &&
-        item.tileImageUrls.filter(Boolean).length >= TILE_COUNT
-    )
 }
 
 function FeaturedBrandShowcaseManagement() {
     const navigate = useNavigate()
-    const [item, setItem] = useState<FeaturedBrandShowcaseItem>(() => createEmptyItem())
+    const [items, setItems] = useState<FeaturedBrandShowcaseItem[]>([])
+    const [selectedId, setSelectedId] = useState('')
     const [lastUpdated, setLastUpdated] = useState('')
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [uploadingSlot, setUploadingSlot] = useState<UploadSlot | null>(null)
+    const [vendors, setVendors] = useState<VendorOption[]>([])
 
     useEffect(() => {
         fetchData()
+        getVendorList().then(setVendors).catch(error => console.error('Error fetching vendor list:', error))
     }, [])
 
     const fetchData = async () => {
@@ -102,10 +76,15 @@ function FeaturedBrandShowcaseManagement() {
 
             if (cmsSnap.exists()) {
                 const data = cmsSnap.data() as FeaturedBrandShowcaseConfig
-                setItem(getEditableItem(data.items || []))
+                const normalizedItems = (data.items || []).map(normalizeItem).sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+                const nextItems = normalizedItems.length > 0 ? normalizedItems : [createEmptyItem()]
+                setItems(nextItems)
+                setSelectedId(nextItems[0].id)
                 setLastUpdated(data.lastUpdated || '')
             } else {
-                setItem(createEmptyItem())
+                const emptyItem = createEmptyItem()
+                setItems([emptyItem])
+                setSelectedId(emptyItem.id)
                 setLastUpdated('')
             }
         } catch (error) {
@@ -116,22 +95,15 @@ function FeaturedBrandShowcaseManagement() {
         }
     }
 
-    const updateItem = (updates: Partial<FeaturedBrandShowcaseItem>) => {
-        setItem(prev => ({ ...prev, ...updates }))
-    }
+    const item = items.find((candidate) => candidate.id === selectedId) || items[0] || createEmptyItem()
 
-    const updateTileImage = (index: number, imageUrl: string) => {
-        setItem(prev => {
-            const tileImageUrls = [...prev.tileImageUrls]
-            tileImageUrls[index] = imageUrl
-            return { ...prev, tileImageUrls }
-        })
+    const updateItem = (updates: Partial<FeaturedBrandShowcaseItem>) => {
+        setItems(prev => prev.map(candidate => candidate.id === item.id ? { ...candidate, ...updates } : candidate))
     }
 
     const handleUpload = async (
         event: React.ChangeEvent<HTMLInputElement>,
         slot: UploadSlot,
-        tileIndex?: number
     ) => {
         const file = event.target.files?.[0]
         event.target.value = ''
@@ -141,18 +113,12 @@ function FeaturedBrandShowcaseManagement() {
         try {
             const timestamp = Date.now()
             const downloadURL = await uploadImage(
-                slot === 'hero'
-                    ? `featured-brand-showcase/${item.id}/hero/${timestamp}_${file.name}`
-                    : `featured-brand-showcase/${item.id}/tiles/${tileIndex}_${timestamp}_${file.name}`,
+                `featured-brand-showcase/${item.id}/image/${timestamp}_${file.name}`,
                 file,
-                { maxWidth: slot === 'hero' ? 1920 : 900, quality: 0.8 }
+                { maxWidth: 1920, quality: 0.8 }
             )
 
-            if (slot === 'hero') {
-                updateItem({ heroImageUrl: downloadURL })
-            } else if (typeof tileIndex === 'number') {
-                updateTileImage(tileIndex, downloadURL)
-            }
+            updateItem({ imageUrl: downloadURL })
 
             toast.success('Image uploaded')
         } catch (error) {
@@ -164,21 +130,16 @@ function FeaturedBrandShowcaseManagement() {
     }
 
     const validateItem = (draft: FeaturedBrandShowcaseItem) => {
-        const trimmedTitle = draft.title.trim()
-        const trimmedOrderUrl = draft.orderUrl.trim()
-        const tileImages = draft.tileImageUrls.filter(Boolean)
+        const trimmedVendorId = draft.vendorId.trim()
 
-        if (!trimmedTitle) return 'Title is required'
-        if (!trimmedOrderUrl) return 'Order URL is required'
-        if (!isValidUrl(trimmedOrderUrl)) return 'Order URL must be a valid URL'
-        if (!draft.heroImageUrl) return 'Hero image is required'
-        if (tileImages.length < TILE_COUNT) return 'Upload all 3 tile images before saving'
+        if (!trimmedVendorId) return 'Partner vendor is required'
+        if (!draft.imageUrl && !draft.heroImageUrl) return 'Banner image is required'
 
         return null
     }
 
     const saveShowcase = async () => {
-        const validationError = validateItem(item)
+        const validationError = items.map(validateItem).find(Boolean)
         if (validationError) {
             toast.error(validationError)
             return
@@ -187,22 +148,31 @@ function FeaturedBrandShowcaseManagement() {
         setSaving(true)
         try {
             const now = new Date().toISOString()
-            const cleanedItem: FeaturedBrandShowcaseItem = {
-                ...item,
-                title: item.title.trim(),
-                titleAr: item.titleAr?.trim() || '',
-                orderUrl: item.orderUrl.trim(),
-                altText: item.altText?.trim() || '',
-                order: Number.isFinite(Number(item.order)) ? Number(item.order) : 0,
-                tileImageUrls: item.tileImageUrls.slice(0, TILE_COUNT),
-            }
+            const cleanedItems = items.map((currentItem, index) => {
+                const {
+                    orderUrl: _legacyOrderUrl,
+                    heroImageUrl: _legacyHero,
+                    tileImageUrls: _legacyTiles,
+                    ...currentFields
+                } = currentItem
+                return {
+                ...currentFields,
+                title: currentItem.title?.trim() || '',
+                titleAr: currentItem.titleAr?.trim() || '',
+                imageUrl: currentItem.imageUrl || currentItem.heroImageUrl || '',
+                ctaText: currentItem.ctaText?.trim() || '',
+                vendorId: currentItem.vendorId?.trim() || '',
+                isActive: true,
+                order: Number.isFinite(Number(currentItem.order)) ? Number(currentItem.order) : index,
+                }
+            })
 
             await setDoc(doc(db, 'cms', CMS_DOC_ID), {
-                items: [cleanedItem],
+                items: cleanedItems,
                 lastUpdated: now,
             } satisfies FeaturedBrandShowcaseConfig)
 
-            setItem(cleanedItem)
+            setItems(cleanedItems)
             setLastUpdated(now)
             toast.success('Featured brand showcase saved')
         } catch (error) {
@@ -214,6 +184,33 @@ function FeaturedBrandShowcaseManagement() {
     }
 
     const uploadInProgress = uploadingSlot !== null
+
+    const addItem = () => {
+        const newItem = createEmptyItem()
+        newItem.order = items.length
+        setItems(prev => [...prev, newItem])
+        setSelectedId(newItem.id)
+    }
+
+    const deleteItem = () => {
+        if (items.length === 1) {
+            toast.error('Keep at least one showcase item')
+            return
+        }
+        const remaining = items.filter(candidate => candidate.id !== item.id)
+        setItems(remaining)
+        setSelectedId(remaining[0].id)
+    }
+
+    const moveItem = (direction: -1 | 1) => {
+        const index = items.findIndex(candidate => candidate.id === item.id)
+        const nextIndex = index + direction
+        if (index < 0 || nextIndex < 0 || nextIndex >= items.length) return
+        const nextItems = [...items]
+        const [moved] = nextItems.splice(index, 1)
+        nextItems.splice(nextIndex, 0, moved)
+        setItems(nextItems.map((candidate, order) => ({ ...candidate, order })))
+    }
 
     if (loading) {
         return (
@@ -228,6 +225,13 @@ function FeaturedBrandShowcaseManagement() {
             <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                     <Button
+                        variant="outline"
+                        onClick={addItem}
+                        className="rounded-xl px-4 h-10 font-bold"
+                    >
+                        Add Partner Banner
+                    </Button>
+                    <Button
                         variant="ghost"
                         size="icon"
                         className="rounded-xl bg-gray-100 hover:bg-gray-200"
@@ -241,8 +245,8 @@ function FeaturedBrandShowcaseManagement() {
                         </div>
                         <div>
                             <h1 className="text-2xl font-bold tracking-tight">Featured Brand Showcase</h1>
-                            <p className="text-xs text-gray-500 font-medium">
-                                Mobile hero campaign content
+                <p className="text-xs text-gray-500 font-medium">
+                                Partner banner content shown in the mobile app
                             </p>
                         </div>
                     </div>
@@ -270,64 +274,57 @@ function FeaturedBrandShowcaseManagement() {
                 </div>
             </div>
 
+            <div className="flex flex-wrap items-center gap-2">
+                {items.map((candidate, index) => (
+                    <button
+                        key={candidate.id}
+                        type="button"
+                        onClick={() => setSelectedId(candidate.id)}
+                        className={cn('rounded-xl border px-4 py-2 text-left text-sm font-bold transition-colors', selectedId === candidate.id ? 'border-purple-500 bg-purple-50 text-purple-700' : 'border-gray-200 bg-white text-gray-600')}
+                    >
+                        {index + 1}. {candidate.title || 'Untitled partner'}
+                    </button>
+                ))}
+                <Button variant="ghost" onClick={deleteItem} className="text-red-500">Delete selected</Button>
+                <Button variant="ghost" size="icon" onClick={() => moveItem(-1)} disabled={items.findIndex(candidate => candidate.id === item.id) <= 0}><ArrowUp className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" onClick={() => moveItem(1)} disabled={items.findIndex(candidate => candidate.id === item.id) === items.length - 1}><ArrowDown className="h-4 w-4" /></Button>
+            </div>
+
             <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)] gap-6">
                 <section className="bg-[#F8F9F9] rounded-2xl p-6 border border-gray-100 shadow-sm space-y-5">
                     <div className="flex items-center justify-between border-b border-gray-200/70 pb-4">
                         <div>
-                            <h2 className="text-lg font-bold text-gray-900">Showcase Images</h2>
-                            <p className="text-sm text-gray-500">Upload one hero image and three supporting tiles.</p>
+                            <h2 className="text-lg font-bold text-gray-900">Banner Image</h2>
+                            <p className="text-sm text-gray-500">Upload the single image used for this partner banner.</p>
                         </div>
-                        <span className={cn(
-                            'text-xs font-bold px-3 py-1 rounded-full',
-                            item.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-200 text-gray-600'
-                        )}>
-                            {item.isActive ? 'Active' : 'Inactive'}
-                        </span>
                     </div>
 
                     <ImageUploadSlot
-                        label="Hero Image"
-                        imageUrl={item.heroImageUrl}
+                        label="Banner Image"
+                        imageUrl={item.imageUrl || item.heroImageUrl || ''}
                         aspectClass="aspect-[16/10]"
-                        uploading={uploadingSlot === 'hero'}
+                        uploading={uploadingSlot === 'image'}
                         disabled={uploadInProgress}
-                        onChange={(event) => handleUpload(event, 'hero')}
+                        onChange={(event) => handleUpload(event, 'image')}
                     />
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {Array.from({ length: TILE_COUNT }).map((_, index) => {
-                            const slot = `tile-${index}` as UploadSlot
-                            return (
-                                <ImageUploadSlot
-                                    key={slot}
-                                    label={`Tile ${index + 1}`}
-                                    imageUrl={item.tileImageUrls[index]}
-                                    aspectClass="aspect-square"
-                                    uploading={uploadingSlot === slot}
-                                    disabled={uploadInProgress}
-                                    onChange={(event) => handleUpload(event, slot, index)}
-                                />
-                            )
-                        })}
-                    </div>
                 </section>
 
                 <section className="bg-[#F8F9F9] rounded-2xl p-6 border border-gray-100 shadow-sm space-y-5">
                     <div className="border-b border-gray-200/70 pb-4">
-                        <h2 className="text-lg font-bold text-gray-900">Campaign Details</h2>
-                        <p className="text-sm text-gray-500">These fields are read directly by the mobile component.</p>
+                        <h2 className="text-lg font-bold text-gray-900">Banner Details</h2>
+                        <p className="text-sm text-gray-500">Only the content and linked vendor are needed for this mobile banner.</p>
                     </div>
 
-                    <Field label="Title">
+                    <Field label="Name (English)">
                         <input
-                            value={item.title}
+                            value={item.title || ''}
                             onChange={(event) => updateItem({ title: event.target.value })}
                             placeholder="OMARA APPAREL"
                             className="w-full h-11 px-4 rounded-xl bg-white border border-gray-100 font-bold text-sm text-gray-900 outline-none focus:border-purple-400 transition-all shadow-sm"
                         />
                     </Field>
 
-                    <Field label="Title (Arabic)">
+                    <Field label="Name (Arabic)">
                         <input
                             dir="rtl"
                             value={item.titleAr || ''}
@@ -337,57 +334,28 @@ function FeaturedBrandShowcaseManagement() {
                         />
                     </Field>
 
-                    <Field label="Order URL">
+                    <Field label="Linked Vendor">
+                        <select
+                            value={item.vendorId || ''}
+                            onChange={(event) => updateItem({ vendorId: event.target.value })}
+                            className="w-full h-11 px-4 rounded-xl bg-white border border-gray-100 font-medium text-sm text-gray-900 outline-none focus:border-purple-400 transition-all shadow-sm"
+                        >
+                            <option value="">Select a vendor</option>
+                            {vendors.map((vendor) => (
+                                <option key={vendor.id} value={vendor.id}>{vendor.name}</option>
+                            ))}
+                        </select>
+                    </Field>
+
+                    <Field label="Button Text">
                         <input
-                            type="url"
-                            value={item.orderUrl}
-                            onChange={(event) => updateItem({ orderUrl: event.target.value })}
-                            placeholder="https://example.com/shop"
+                            value={item.ctaText || ''}
+                            onChange={(event) => updateItem({ ctaText: event.target.value })}
+                            placeholder="Shop Now"
                             className="w-full h-11 px-4 rounded-xl bg-white border border-gray-100 font-medium text-sm text-gray-900 outline-none focus:border-purple-400 transition-all shadow-sm"
                         />
                     </Field>
 
-                    <Field label="Alt Text">
-                        <input
-                            value={item.altText || ''}
-                            onChange={(event) => updateItem({ altText: event.target.value })}
-                            placeholder="Featured apparel campaign"
-                            className="w-full h-11 px-4 rounded-xl bg-white border border-gray-100 font-medium text-sm text-gray-900 outline-none focus:border-purple-400 transition-all shadow-sm"
-                        />
-                    </Field>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <Field label="Order">
-                            <input
-                                type="number"
-                                value={item.order ?? 0}
-                                onChange={(event) => updateItem({ order: Number(event.target.value) })}
-                                className="w-full h-11 px-4 rounded-xl bg-white border border-gray-100 font-bold text-sm text-gray-900 outline-none focus:border-purple-400 transition-all shadow-sm"
-                            />
-                        </Field>
-
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Status</label>
-                            <button
-                                type="button"
-                                onClick={() => updateItem({ isActive: !item.isActive })}
-                                className="w-full h-11 px-4 rounded-xl bg-white border border-gray-100 shadow-sm flex items-center justify-between"
-                            >
-                                <span className="text-sm font-bold text-gray-700">
-                                    {item.isActive ? 'Active' : 'Inactive'}
-                                </span>
-                                <span className={cn(
-                                    'w-11 h-6 rounded-full transition-colors relative shadow-inner',
-                                    item.isActive ? 'bg-purple-600' : 'bg-gray-200'
-                                )}>
-                                    <span className={cn(
-                                        'absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all transform shadow-sm',
-                                        item.isActive ? 'left-5.5' : 'left-0.5'
-                                    )} />
-                                </span>
-                            </button>
-                        </div>
-                    </div>
                 </section>
             </div>
 

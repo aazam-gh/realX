@@ -11,6 +11,7 @@ import { Loader2, Save } from 'lucide-react'
 import { refreshVendorList } from '@/lib/vendorList'
 import { deleteGalleryImages, getRemovedGalleryImages } from '@/lib/vendor-gallery'
 import { vendorPinQueryOptions, vendorQueryOptions, type OnlineRedemptionConfig, type Vendor } from '@/queries'
+import { validateOnlineRedemptionConfig } from '@/lib/online-vendor-config'
 
 export const Route = createFileRoute('/admin/vendors/$vendorId/settings/branding')({
     component: BrandingSettingsComponent,
@@ -82,24 +83,7 @@ function BrandingSettingsComponent() {
     const updateMutation = useMutation({
         mutationFn: async ({ vendorData, configData }: { vendorData: VendorBrandingForm, configData: OnlineRedemptionConfig }) => {
             if (vendorData.vendorType === 'online') {
-                const discountCode = configData.discountCode?.trim() || ''
-                const purchaseUrl = configData.purchaseUrl.trim()
-
-                if ((configData.fulfillmentMode === 'coupon' && !purchaseUrl) || (configData.fulfillmentMode === 'coupon' && !discountCode) || (configData.fulfillmentMode !== 'coupon' && !purchaseUrl && !configData.iosUrl?.trim() && !configData.androidUrl?.trim())) {
-                    throw new Error('Coupon offers require a website URL and discount code. Direct offers require at least one app destination.')
-                }
-
-                try {
-                    for (const url of [purchaseUrl, configData.iosUrl?.trim(), configData.androidUrl?.trim()]) {
-                        if (!url) continue
-                        const parsed = new URL(url)
-                        if (parsed.protocol !== 'https:' || !parsed.hostname || parsed.username || parsed.password) {
-                            throw new Error('Unsafe URL')
-                        }
-                    }
-                } catch {
-                    throw new Error('Purchase URL must be a valid HTTPS URL without embedded credentials.')
-                }
+                validateOnlineRedemptionConfig(configData)
             }
 
             const dataToUpdate: Record<string, unknown> = { ...vendorData }

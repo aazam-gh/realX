@@ -1,13 +1,17 @@
 export interface FeaturedBrandShowcaseItem {
     id: string
-    title: string
+    title?: string
     titleAr?: string
-    orderUrl: string
+    imageUrl?: string
+    ctaText?: string
+    vendorId: string
     isActive: boolean
-    heroImageUrl: string
-    tileImageUrls: string[]
-    altText?: string
     order?: number
+    // Legacy fields are retained only so existing Firestore documents can be read
+    // and migrated when the showcase is next saved.
+    orderUrl?: string
+    heroImageUrl?: string
+    tileImageUrls?: string[]
 }
 
 export interface FeaturedBrandShowcaseConfig {

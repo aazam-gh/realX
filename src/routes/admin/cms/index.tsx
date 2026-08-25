@@ -25,8 +25,8 @@ const CMS_ITEMS = [
         href: '/admin/cms/opportunities' as const,
     },
     {
-        title: 'Banner Management',
-        description: 'Manage promotional banners across the app',
+        title: 'Home Partner Carousel',
+        description: 'Configure partner banners shown on the mobile home screen',
         icon: Image,
         color: 'bg-violet-100 text-violet-600',
         hoverBorder: 'hover:border-violet-200',
