@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { vendorQueryOptions, type EmbeddedOffer } from '@/queries'
 import { refreshVendorList } from '@/lib/vendorList'
 
-export function generateSearchTokens({
+function generateSearchTokens({
     name,
     mainCategory,
     subcategory,

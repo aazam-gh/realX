@@ -94,15 +94,7 @@ function OnlineVendorBrandingSettingsComponent() {
             delete dataToUpdate.redemptionPin
             dataToUpdate.isActive = vendorData.status === 'Active' || vendorData.status === undefined
 
-            const vendorInformation = {
-                title: vendorData.vendorInformation?.title?.trim() || '',
-                titleAr: vendorData.vendorInformation?.titleAr?.trim() || '',
-                message: vendorData.vendorInformation?.message?.trim() || '',
-                messageAr: vendorData.vendorInformation?.messageAr?.trim() || '',
-            }
-            dataToUpdate.vendorInformation = vendorInformation.message || vendorInformation.messageAr
-                ? vendorInformation
-                : deleteField()
+            dataToUpdate.vendorInformation = deleteField()
 
             const pin = vendorData.redemptionPin?.trim() || ''
             if (pin && !/^\d{4}$/.test(pin)) {
@@ -125,7 +117,6 @@ function OnlineVendorBrandingSettingsComponent() {
                 ctaLabelAr: configData.ctaLabelAr?.trim() || deleteField(),
                 instructions: configData.instructions?.trim() || deleteField(),
                 instructionsAr: configData.instructionsAr?.trim() || deleteField(),
-                dailyLimitPerUser: deleteField(),
                 enabled: configData.enabled === true,
                 updatedAt: serverTimestamp(),
             }, { merge: true })

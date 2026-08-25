@@ -5,9 +5,7 @@ import {
     FolderOpen,
     Tag,
     Flame,
-    GraduationCap,
     Sparkles,
-    CalendarDays,
     Rocket
 } from 'lucide-react'
 
@@ -65,14 +63,6 @@ const CMS_ITEMS = [
         href: '/admin/cms/new-deal-banners' as const,
     },
     {
-        title: 'Student Events',
-        description: 'Manage the mobile events feed and fallback data',
-        icon: CalendarDays,
-        color: 'bg-sky-100 text-sky-600',
-        hoverBorder: 'hover:border-sky-200',
-        href: '/admin/cms/events' as const,
-    },
-    {
         title: 'Featured Brand Showcase',
         description: 'Edit the mobile featured brand hero',
         icon: Sparkles,
@@ -80,14 +70,6 @@ const CMS_ITEMS = [
         hoverBorder: 'hover:border-rose-200',
         href: '/admin/cms/featured-brand-showcase' as const,
     },
-    {
-        title: 'Universities',
-        description: 'Manage university logos, banners and links',
-        icon: GraduationCap,
-        color: 'bg-amber-100 text-amber-600',
-        hoverBorder: 'hover:border-amber-200',
-        href: '/admin/cms/universities' as const,
-    }
 ]
 
 function CMSIndex() {

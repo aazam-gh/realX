@@ -57,6 +57,7 @@ export interface Vendor {
     contact?: string
     profilePicture?: string
     coverImage?: string
+    coverImagePositionY?: number
     galleryImages?: string[]
     isFeatured?: boolean
     tagsEn?: string[]

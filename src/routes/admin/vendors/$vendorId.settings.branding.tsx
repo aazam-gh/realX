@@ -122,7 +122,6 @@ function BrandingSettingsComponent() {
                 ctaLabelAr: configData.ctaLabelAr?.trim() || deleteField(),
                 instructions: configData.instructions?.trim() || deleteField(),
                 instructionsAr: configData.instructionsAr?.trim() || deleteField(),
-                dailyLimitPerUser: deleteField(),
                 enabled: configData.enabled === true,
                 updatedAt: serverTimestamp(),
             }, { merge: true })

@@ -49,8 +49,6 @@ const PUBLIC_IMAGE_PATHS = [
   /^vendors\/[^/]+\/offers\//,
   /^categories\//,
   /^brands\//,
-  /^universities\//,
-  /^events\//,
   /^featured-brand-showcase\//,
 ];
 const HOLDING_GROUP_MAX_VENDORS = 30;

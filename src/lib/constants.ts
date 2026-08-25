@@ -6,4 +6,3 @@ export const STALE_TIME = {
 } as const
 
 export const FUNCTIONS_REGION = 'me-central1'
-export const PAGE_SIZE_DEFAULT = 10

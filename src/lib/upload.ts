@@ -1,7 +1,7 @@
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
 import { storage } from '@/firebase/config'
 
-export function compressImage(file: File, maxWidth: number, quality: number): Promise<File> {
+function compressImage(file: File, maxWidth: number, quality: number): Promise<File> {
     return new Promise((resolve, reject) => {
         const img = new Image()
         img.onload = () => {

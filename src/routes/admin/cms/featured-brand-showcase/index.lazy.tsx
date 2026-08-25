@@ -26,6 +26,11 @@ const CMS_DOC_ID = 'featuredBrandShowcase'
 
 type UploadSlot = 'image'
 
+function clampImagePositionY(value: number | undefined) {
+    if (!Number.isFinite(value)) return 50
+    return Math.min(100, Math.max(0, Number(value)))
+}
+
 export const Route = createLazyFileRoute('/admin/cms/featured-brand-showcase/')({
     component: FeaturedBrandShowcaseManagement,
 })
@@ -38,6 +43,7 @@ function createEmptyItem(): FeaturedBrandShowcaseItem {
         vendorId: '',
         isActive: true,
         imageUrl: '',
+        imagePositionY: 50,
         ctaText: '',
         order: 0,
     }
@@ -45,11 +51,15 @@ function createEmptyItem(): FeaturedBrandShowcaseItem {
 
 function normalizeItem(item: FeaturedBrandShowcaseItem): FeaturedBrandShowcaseItem {
     return {
-        ...createEmptyItem(),
-        ...item,
-        imageUrl: item.imageUrl || item.heroImageUrl || '',
+        id: item.id || createEmptyItem().id,
+        title: item.title || '',
+        titleAr: item.titleAr || '',
+        imageUrl: item.imageUrl || '',
+        imagePositionY: clampImagePositionY(item.imagePositionY),
         ctaText: item.ctaText || '',
         vendorId: item.vendorId || '',
+        isActive: item.isActive !== false,
+        order: item.order ?? 0,
     }
 }
 
@@ -133,7 +143,7 @@ function FeaturedBrandShowcaseManagement() {
         const trimmedVendorId = draft.vendorId.trim()
 
         if (!trimmedVendorId) return 'Partner vendor is required'
-        if (!draft.imageUrl && !draft.heroImageUrl) return 'Banner image is required'
+        if (!draft.imageUrl) return 'Banner image is required'
 
         return null
     }
@@ -149,17 +159,12 @@ function FeaturedBrandShowcaseManagement() {
         try {
             const now = new Date().toISOString()
             const cleanedItems = items.map((currentItem, index) => {
-                const {
-                    orderUrl: _legacyOrderUrl,
-                    heroImageUrl: _legacyHero,
-                    tileImageUrls: _legacyTiles,
-                    ...currentFields
-                } = currentItem
                 return {
-                ...currentFields,
+                id: currentItem.id,
                 title: currentItem.title?.trim() || '',
                 titleAr: currentItem.titleAr?.trim() || '',
-                imageUrl: currentItem.imageUrl || currentItem.heroImageUrl || '',
+                imageUrl: currentItem.imageUrl || '',
+                imagePositionY: clampImagePositionY(currentItem.imagePositionY),
                 ctaText: currentItem.ctaText?.trim() || '',
                 vendorId: currentItem.vendorId?.trim() || '',
                 isActive: true,
@@ -301,12 +306,39 @@ function FeaturedBrandShowcaseManagement() {
 
                     <ImageUploadSlot
                         label="Banner Image"
-                        imageUrl={item.imageUrl || item.heroImageUrl || ''}
-                        aspectClass="aspect-[16/10]"
+                        imageUrl={item.imageUrl || ''}
+                        imagePositionY={item.imagePositionY}
+                        aspectClass="aspect-[3.6/1]"
                         uploading={uploadingSlot === 'image'}
                         disabled={uploadInProgress}
                         onChange={(event) => handleUpload(event, 'image')}
                     />
+                    <div className="space-y-2">
+                        <div className="flex items-center justify-between gap-3">
+                            <label htmlFor="featured-banner-image-position" className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                                Mobile crop position
+                            </label>
+                            <span className="text-xs font-bold text-gray-500">
+                                {Math.round(clampImagePositionY(item.imagePositionY))}%
+                            </span>
+                        </div>
+                        <input
+                            id="featured-banner-image-position"
+                            type="range"
+                            min="0"
+                            max="100"
+                            step="1"
+                            value={clampImagePositionY(item.imagePositionY)}
+                            onChange={(event) => updateItem({ imagePositionY: Number(event.target.value) })}
+                            className="w-full accent-purple-600"
+                            aria-label="Mobile crop vertical position"
+                        />
+                        <div className="flex justify-between text-[10px] font-semibold text-gray-400">
+                            <span>Top</span>
+                            <span>Center</span>
+                            <span>Bottom</span>
+                        </div>
+                    </div>
                 </section>
 
                 <section className="bg-[#F8F9F9] rounded-2xl p-6 border border-gray-100 shadow-sm space-y-5">
@@ -376,6 +408,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 function ImageUploadSlot({
     label,
     imageUrl,
+    imagePositionY,
     aspectClass,
     uploading,
     disabled,
@@ -383,6 +416,7 @@ function ImageUploadSlot({
 }: {
     label: string
     imageUrl: string
+    imagePositionY?: number
     aspectClass: string
     uploading: boolean
     disabled: boolean
@@ -403,7 +437,13 @@ function ImageUploadSlot({
                     disabled={disabled}
                 />
                 {imageUrl ? (
-                    <img src={imageUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
+                    <img
+                        src={imageUrl}
+                        alt=""
+                        className="h-full w-full object-cover"
+                        style={{ objectPosition: `50% ${clampImagePositionY(imagePositionY)}%` }}
+                        loading="lazy"
+                    />
                 ) : (
                     <span className="flex flex-col items-center gap-2 text-gray-400">
                         <ImageIcon className="h-8 w-8 opacity-40" />

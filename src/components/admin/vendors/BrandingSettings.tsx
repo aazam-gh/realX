@@ -17,6 +17,11 @@ export type VendorBrandingForm = Vendor & {
     redemptionPin?: string
 }
 
+function clampCoverImagePositionY(value: number | undefined) {
+    if (!Number.isFinite(value)) return 50
+    return Math.min(100, Math.max(0, Number(value)))
+}
+
 interface BrandingSettingsProps {
     formData: VendorBrandingForm
     setFormData: (val: VendorBrandingForm) => void
@@ -55,6 +60,7 @@ export function BrandingSettings({
 
     const selectedCategory = categories.find(c => c.nameEnglish === formData.mainCategory)
     const availableSubcategories = selectedCategory?.subcategories || []
+    const coverImagePositionY = clampCoverImagePositionY(formData.coverImagePositionY)
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, type: 'profilePicture' | 'coverImage') => {
         const file = e.target.files?.[0]
@@ -219,6 +225,7 @@ export function BrandingSettings({
                                     src={formData.coverImage}
                                     alt="Cover"
                                     className="w-full h-full object-cover"
+                                    style={{ objectPosition: `50% ${coverImagePositionY}%` }}
                                 />
                             ) : (
                                 <div className="flex flex-col items-center gap-2">
@@ -243,6 +250,33 @@ export function BrandingSettings({
                         >
                             {uploadingCover ? 'Uploading...' : 'Change Cover'}
                         </Button>
+                    </div>
+                    <div className="max-w-2xl rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
+                        <div className="flex items-center justify-between gap-4">
+                            <div>
+                                <Label className="text-sm font-semibold text-slate-700">Cover Image Position</Label>
+                                <p className="mt-1 text-xs text-slate-500">Choose which vertical part of the banner appears on the mobile vendor page.</p>
+                            </div>
+                            <span className="text-xs font-semibold text-slate-500">{coverImagePositionY}%</span>
+                        </div>
+                        <input
+                            type="range"
+                            min={0}
+                            max={100}
+                            step={1}
+                            value={coverImagePositionY}
+                            onChange={(event) => setFormData({
+                                ...formData,
+                                coverImagePositionY: Number(event.target.value),
+                            })}
+                            className="mt-3 w-full accent-slate-900"
+                            aria-label="Cover image vertical position"
+                        />
+                        <div className="mt-1 flex justify-between text-[11px] font-medium text-slate-400">
+                            <span>Top</span>
+                            <span>Center</span>
+                            <span>Bottom</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -364,6 +398,20 @@ export function BrandingSettings({
                     />
                 </div>
 
+                {/* Vendor Phone Number */}
+                <div className="space-y-4">
+                    <Label className="text-base font-semibold text-slate-700">Phone Number (Optional)</Label>
+                    <Input
+                        type="tel"
+                        inputMode="tel"
+                        placeholder="+974 0000 0000"
+                        value={formData.phoneNumber || ''}
+                        onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                        className="bg-slate-50 border-none ring-0 focus-visible:ring-1 focus-visible:ring-blue-400 h-14 rounded-2xl px-5 text-sm"
+                    />
+                    <p className="text-xs text-slate-500">Shown as the vendor contact number when provided.</p>
+                </div>
+
                 {/* Vendor PIN */}
                 <div className="space-y-4">
                     <Label className="text-base font-semibold text-slate-700">Vendor Security PIN (4 Digits)</Label>
@@ -406,6 +454,7 @@ export function BrandingSettings({
                     />
                 </div>
 
+                {(formData.vendorType || 'in_store') !== 'online' && (
                 <div className="space-y-4 md:col-span-2 rounded-2xl border border-slate-100 bg-slate-50/50 p-5">
                     <div>
                         <Label className="text-base font-semibold text-slate-700">Store Information Notice</Label>
@@ -462,6 +511,7 @@ export function BrandingSettings({
                         </div>
                     </div>
                 </div>
+                )}
 
                 {/* Main Category */}
                 <div className="space-y-4">

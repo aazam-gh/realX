@@ -9,8 +9,6 @@ const DEFAULT_PREFIXES = [
   "vendors/",
   "categories/",
   "brands/",
-  "universities/",
-  "events/",
   "featured-brand-showcase/",
 ];
 const SUPPORTED_CONTENT_TYPES = new Set(["image/jpeg", "image/png"]);

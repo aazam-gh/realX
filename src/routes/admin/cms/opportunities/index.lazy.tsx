@@ -87,24 +87,11 @@ function toTimestamp(value: StudentOpportunity['startsAt']) {
   return normalized ? Timestamp.fromDate(new Date(normalized)) : null
 }
 
-function safeHttpsUrl(value: unknown) {
-  if (typeof value !== 'string') return ''
-  try {
-    const parsed = new URL(value)
-    return parsed.protocol === 'https:' && !parsed.username && !parsed.password
-      ? parsed.toString()
-      : ''
-  } catch {
-    return ''
-  }
-}
-
 function OpportunitiesManagement() {
   const navigate = useNavigate()
   const [items, setItems] = useState<StudentOpportunity[]>([])
   const [loading, setLoading] = useState(true)
   const [savingId, setSavingId] = useState<string | null>(null)
-  const [migrating, setMigrating] = useState(false)
 
   useEffect(() => {
     void loadOpportunities()
@@ -226,64 +213,6 @@ function OpportunitiesManagement() {
     }
   }
 
-  const migrateEvents = async () => {
-    setMigrating(true)
-    try {
-      const events = await getDocs(collection(db, 'events'))
-      let migrated = 0
-      for (const eventDoc of events.docs) {
-        const event = eventDoc.data()
-        const opportunityId = `event_${eventDoc.id}`
-        const actionUrl = safeHttpsUrl(event.link)
-        const opportunityRef = doc(db, 'opportunities', opportunityId)
-        const existing = await getDoc(opportunityRef)
-        if (existing.exists()) continue
-        await setDoc(opportunityRef, {
-          id: opportunityId,
-          kind: 'event',
-          status: event.isActive === false
-            ? 'archived'
-            : actionUrl
-              ? 'published'
-              : 'draft',
-          titleEn: event.titleEn || '',
-          titleAr: event.titleAr || '',
-          summaryEn: event.descriptionEn || '',
-          summaryAr: event.descriptionAr || '',
-          descriptionEn: event.descriptionEn || '',
-          descriptionAr: event.descriptionAr || '',
-          providerName: 'realX',
-          imageUrl: event.imageUrl || '',
-          locationEn: event.locationEn || '',
-          locationAr: event.locationAr || '',
-          locationMode: 'onsite',
-          startsAt: event.startsAt || null,
-          deadline: null,
-          publishedAt: Timestamp.now(),
-          expiresAt: null,
-          featured: false,
-          createdAt: event.createdAt || new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        })
-        if (actionUrl) {
-          await setDoc(doc(db, 'opportunityActionConfigs', opportunityId), {
-            opportunityId,
-            actionUrl,
-            updatedAt: Timestamp.now(),
-          })
-        }
-        migrated += 1
-      }
-      toast.success(`Migrated ${migrated} event${migrated === 1 ? '' : 's'}`)
-      await loadOpportunities()
-    } catch (error) {
-      console.error('Failed to migrate events', error)
-      toast.error('Failed to migrate events')
-    } finally {
-      setMigrating(false)
-    }
-  }
-
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-emerald-600" /></div>
   }
@@ -301,10 +230,6 @@ function OpportunitiesManagement() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" disabled={migrating} onClick={() => void migrateEvents()}>
-            {migrating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CalendarDays className="h-4 w-4 mr-2" />}
-            Migrate Events
-          </Button>
           <Button
             className="bg-emerald-600 hover:bg-emerald-700"
             onClick={() => setItems((current) => [createBlankOpportunity(), ...current])}
@@ -317,7 +242,7 @@ function OpportunitiesManagement() {
       {items.length === 0 ? (
         <div className="rounded-3xl border border-dashed p-14 text-center text-gray-500">
           <Sparkles className="h-8 w-8 mx-auto mb-3 text-emerald-500" />
-          Add the first student opportunity or migrate the existing Events feed.
+          Add the first student opportunity.
         </div>
       ) : (
         <div className="space-y-5">
