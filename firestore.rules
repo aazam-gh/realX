@@ -269,6 +269,31 @@ match /redemption_rate_limits/{rateLimitId} {
   allow read, write: if false;
 }
 
+// Pilot campaign inventory and claims are allocated only by trusted callables.
+// Admins may inspect campaign state in the console; coupon codes are never
+// readable directly by mobile clients.
+match /pilotCampaigns/{campaignId} {
+  allow read, write: if isAdmin();
+
+  match /codes/{codeId} {
+    allow read, write: if isAdmin();
+  }
+
+  match /claims/{userId} {
+    allow read: if request.auth != null
+      && (request.auth.uid == userId || isAdmin());
+    allow write: if false;
+  }
+}
+
+match /pilotCampaignIdentityClaims/{identityId} {
+  allow read, write: if false;
+}
+
+match /pilotCampaignNotificationDeliveries/{deliveryId} {
+  allow read, write: if false;
+}
+
 // ─── maps collection ──────────────────────────────────────────────────
 match /maps/{mapDocId} {
   allow read: if request.auth != null;

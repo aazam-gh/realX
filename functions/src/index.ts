@@ -21,6 +21,7 @@ import {
   listAdminBigQueryTransactionsHandler,
 } from "./admin-bigquery-transactions.js";
 import {createNotificationFunctions} from "./notifications.js";
+import {createPilotCampaignFunctions} from "./pilotCampaign.js";
 
 /* eslint-disable require-jsdoc, max-len */
 
@@ -69,6 +70,24 @@ export {
   registerPushToken,
   sendNotification,
   unregisterPushToken,
+};
+const {
+  assignBadrgoReservedCoupon,
+  claimBadrgoPilotCoupon,
+  configureBadrgoPilotCampaign,
+  getBadrgoPilotAdminSummary,
+  getBadrgoPilotCampaign,
+  sendBadrgoPilotClaimedNotification,
+  setBadrgoPilotCampaignStatus,
+} = createPilotCampaignFunctions(getFirestore());
+export {
+  assignBadrgoReservedCoupon,
+  claimBadrgoPilotCoupon,
+  configureBadrgoPilotCampaign,
+  getBadrgoPilotAdminSummary,
+  getBadrgoPilotCampaign,
+  sendBadrgoPilotClaimedNotification,
+  setBadrgoPilotCampaignStatus,
 };
 
 export const listAdminBigQueryTransactions = onCall(

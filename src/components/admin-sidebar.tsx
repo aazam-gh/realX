@@ -5,6 +5,7 @@ import {
   IconDatabase,
   IconHome,
   IconInfoCircle,
+  IconGift,
   IconReceipt,
   IconSparkles,
   IconShield,
@@ -86,6 +87,11 @@ const data = {
       title: "Notifications",
       url: "/admin/notifications",
       icon: IconBell,
+    },
+    {
+      title: "Pilot Campaign",
+      url: "/admin/pilot-campaign",
+      icon: IconGift,
     },
   ],
 }

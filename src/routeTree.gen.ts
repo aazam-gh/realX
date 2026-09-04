@@ -25,6 +25,7 @@ import { Route as AdminVerificationRequestsIndexRouteImport } from './routes/adm
 import { Route as AdminVendorsIndexRouteImport } from './routes/admin/vendors/index'
 import { Route as AdminTransactionsIndexRouteImport } from './routes/admin/transactions/index'
 import { Route as AdminStudentsIndexRouteImport } from './routes/admin/students/index'
+import { Route as AdminPilotCampaignIndexRouteImport } from './routes/admin/pilot-campaign/index'
 import { Route as AdminOnlineVendorsIndexRouteImport } from './routes/admin/online-vendors/index'
 import { Route as AdminNotificationsIndexRouteImport } from './routes/admin/notifications/index'
 import { Route as AdminHoldingGroupsIndexRouteImport } from './routes/admin/holding-groups/index'
@@ -155,6 +156,11 @@ const AdminStudentsIndexRoute = AdminStudentsIndexRouteImport.update({
 } as any).lazy(() =>
   import('./routes/admin/students/index.lazy').then((d) => d.Route),
 )
+const AdminPilotCampaignIndexRoute = AdminPilotCampaignIndexRouteImport.update({
+  id: '/pilot-campaign/',
+  path: '/pilot-campaign/',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminOnlineVendorsIndexRoute = AdminOnlineVendorsIndexRouteImport.update({
   id: '/online-vendors/',
   path: '/online-vendors/',
@@ -418,6 +424,7 @@ export interface FileRoutesByFullPath {
   '/admin/holding-groups/': typeof AdminHoldingGroupsIndexRoute
   '/admin/notifications/': typeof AdminNotificationsIndexRoute
   '/admin/online-vendors/': typeof AdminOnlineVendorsIndexRoute
+  '/admin/pilot-campaign/': typeof AdminPilotCampaignIndexRoute
   '/admin/students/': typeof AdminStudentsIndexRoute
   '/admin/transactions/': typeof AdminTransactionsIndexRoute
   '/admin/vendors/': typeof AdminVendorsIndexRoute
@@ -469,6 +476,7 @@ export interface FileRoutesByTo {
   '/admin/holding-groups': typeof AdminHoldingGroupsIndexRoute
   '/admin/notifications': typeof AdminNotificationsIndexRoute
   '/admin/online-vendors': typeof AdminOnlineVendorsIndexRoute
+  '/admin/pilot-campaign': typeof AdminPilotCampaignIndexRoute
   '/admin/students': typeof AdminStudentsIndexRoute
   '/admin/transactions': typeof AdminTransactionsIndexRoute
   '/admin/vendors': typeof AdminVendorsIndexRoute
@@ -523,6 +531,7 @@ export interface FileRoutesById {
   '/admin/holding-groups/': typeof AdminHoldingGroupsIndexRoute
   '/admin/notifications/': typeof AdminNotificationsIndexRoute
   '/admin/online-vendors/': typeof AdminOnlineVendorsIndexRoute
+  '/admin/pilot-campaign/': typeof AdminPilotCampaignIndexRoute
   '/admin/students/': typeof AdminStudentsIndexRoute
   '/admin/transactions/': typeof AdminTransactionsIndexRoute
   '/admin/vendors/': typeof AdminVendorsIndexRoute
@@ -579,6 +588,7 @@ export interface FileRouteTypes {
     | '/admin/holding-groups/'
     | '/admin/notifications/'
     | '/admin/online-vendors/'
+    | '/admin/pilot-campaign/'
     | '/admin/students/'
     | '/admin/transactions/'
     | '/admin/vendors/'
@@ -630,6 +640,7 @@ export interface FileRouteTypes {
     | '/admin/holding-groups'
     | '/admin/notifications'
     | '/admin/online-vendors'
+    | '/admin/pilot-campaign'
     | '/admin/students'
     | '/admin/transactions'
     | '/admin/vendors'
@@ -683,6 +694,7 @@ export interface FileRouteTypes {
     | '/admin/holding-groups/'
     | '/admin/notifications/'
     | '/admin/online-vendors/'
+    | '/admin/pilot-campaign/'
     | '/admin/students/'
     | '/admin/transactions/'
     | '/admin/vendors/'
@@ -834,6 +846,13 @@ declare module '@tanstack/react-router' {
       path: '/students'
       fullPath: '/admin/students/'
       preLoaderRoute: typeof AdminStudentsIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/pilot-campaign/': {
+      id: '/admin/pilot-campaign/'
+      path: '/pilot-campaign'
+      fullPath: '/admin/pilot-campaign/'
+      preLoaderRoute: typeof AdminPilotCampaignIndexRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/online-vendors/': {
@@ -1159,6 +1178,7 @@ interface AdminRouteChildren {
   AdminHoldingGroupsIndexRoute: typeof AdminHoldingGroupsIndexRoute
   AdminNotificationsIndexRoute: typeof AdminNotificationsIndexRoute
   AdminOnlineVendorsIndexRoute: typeof AdminOnlineVendorsIndexRoute
+  AdminPilotCampaignIndexRoute: typeof AdminPilotCampaignIndexRoute
   AdminStudentsIndexRoute: typeof AdminStudentsIndexRoute
   AdminTransactionsIndexRoute: typeof AdminTransactionsIndexRoute
   AdminVendorsIndexRoute: typeof AdminVendorsIndexRoute
@@ -1188,6 +1208,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminHoldingGroupsIndexRoute: AdminHoldingGroupsIndexRoute,
   AdminNotificationsIndexRoute: AdminNotificationsIndexRoute,
   AdminOnlineVendorsIndexRoute: AdminOnlineVendorsIndexRoute,
+  AdminPilotCampaignIndexRoute: AdminPilotCampaignIndexRoute,
   AdminStudentsIndexRoute: AdminStudentsIndexRoute,
   AdminTransactionsIndexRoute: AdminTransactionsIndexRoute,
   AdminVendorsIndexRoute: AdminVendorsIndexRoute,
