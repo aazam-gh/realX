@@ -89,7 +89,7 @@ const data = {
       icon: IconBell,
     },
     {
-      title: "Pilot Campaign",
+      title: "Badrgo Vouchers",
       url: "/admin/pilot-campaign",
       icon: IconGift,
     },
