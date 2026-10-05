@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { vendorTransactionsQueryOptions } from '@/queries'
+import { isCompletedTransaction } from '@/lib/transaction-accounting'
 import { useAuth } from '@/auth'
 import { Loader2 } from 'lucide-react'
 
@@ -64,11 +65,11 @@ function VendorTransactionHistory() {
                   <td className="px-6 py-4 font-medium">QAR {tx.finalAmount}</td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      tx.status === 'completed' ? 'bg-green-100 text-green-800' :
+                      isCompletedTransaction(tx) ? 'bg-green-100 text-green-800' :
                       tx.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                       'bg-red-100 text-red-800'
                     }`}>
-                      {tx.status}
+                      {tx.status || 'completed'}
                     </span>
                   </td>
                 </tr>

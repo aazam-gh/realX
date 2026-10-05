@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { transactionQueryOptions } from '@/queries'
+import { isCompletedTransaction } from '@/lib/transaction-accounting'
 import { Loader2, ArrowLeft } from 'lucide-react'
 
 export const Route = createFileRoute('/(vendor-panel)/_vendor/transaction-history/$transactionId')({
@@ -29,7 +30,7 @@ function TransactionDetail() {
     )
   }
 
-  const statusColor = tx.status === 'completed'
+  const statusColor = isCompletedTransaction(tx)
     ? 'bg-green-100 text-green-800'
     : tx.status === 'pending'
     ? 'bg-yellow-100 text-yellow-800'
@@ -47,7 +48,7 @@ function TransactionDetail() {
       {/* Status Banner */}
       <div className="flex items-center gap-3 bg-white rounded-xl shadow-sm border px-6 py-4">
         <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${statusColor}`}>
-          {tx.status}
+          {tx.status || 'completed'}
         </span>
         <span className="text-muted-foreground font-mono text-xs">{tx.id}</span>
       </div>
@@ -58,7 +59,7 @@ function TransactionDetail() {
           <DetailRow label="Transaction ID" value={tx.id} mono />
           <DetailRow label="Date" value={tx.createdAt?.toDate().toLocaleString() || 'N/A'} />
           <DetailRow label="Type" value={tx.type ? tx.type.charAt(0).toUpperCase() + tx.type.slice(1) : 'N/A'} />
-          <DetailRow label="Status" value={tx.status} badge={statusColor} />
+          <DetailRow label="Status" value={tx.status || 'completed'} badge={statusColor} />
         </DetailCard>
 
         <DetailCard title="Payment">

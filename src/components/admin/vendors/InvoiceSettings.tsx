@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { vendorTransactionsQueryOptions, vendorStatsQueryOptions } from '@/queries'
+import { vendorInvoiceTransactionsQueryOptions, vendorStatsQueryOptions } from '@/queries'
+import { isCompletedTransaction } from '@/lib/transaction-accounting'
 import { Loader2, FileText, DollarSign, Tag } from 'lucide-react'
 import { useMemo } from 'react'
 
@@ -8,22 +9,13 @@ interface InvoiceSettingsProps {
 }
 
 export function InvoiceSettings({ vendorId }: InvoiceSettingsProps) {
-    const { data: transactions, isLoading: txLoading } = useQuery(vendorTransactionsQueryOptions(vendorId))
-    const { data: stats } = useQuery(vendorStatsQueryOptions(vendorId))
+    const { data: transactions, isLoading: txLoading, error: txError } = useQuery(vendorInvoiceTransactionsQueryOptions(vendorId))
+    const { data: stats, error: statsError } = useQuery(vendorStatsQueryOptions(vendorId))
 
-    const lastMonthTransactions = useMemo(() => {
-        if (!transactions) return []
-        const now = new Date()
-        const oneMonthAgo = new Date()
-        oneMonthAgo.setMonth(now.getMonth() - 1)
-        return transactions.filter((tx) => {
-            if (!tx.createdAt) return false
-            return tx.createdAt.toDate() >= oneMonthAgo
-        })
-    }, [transactions])
+    const lastMonthTransactions = transactions ?? []
 
     const monthStats = useMemo(() => {
-        const completed = lastMonthTransactions.filter((tx) => tx.status === 'completed')
+        const completed = lastMonthTransactions.filter(isCompletedTransaction)
         return {
             count: lastMonthTransactions.length,
             revenue: completed.reduce((sum, tx) => sum + (tx.finalAmount || 0), 0),
@@ -37,6 +29,10 @@ export function InvoiceSettings({ vendorId }: InvoiceSettingsProps) {
                 <Loader2 className="animate-spin h-8 w-8 text-muted-foreground" />
             </div>
         )
+    }
+
+    if (txError || statsError) {
+        return <p className="pt-6 text-destructive">Failed to load invoice totals: {(txError || statsError)?.message}</p>
     }
 
     return (
@@ -113,13 +109,13 @@ export function InvoiceSettings({ vendorId }: InvoiceSettingsProps) {
                                     </td>
                                     <td className="px-6 py-4 font-medium">QAR {tx.finalAmount}</td>
                                     <td className="px-6 py-4">
-                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${tx.status === 'completed'
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${isCompletedTransaction(tx)
                                                 ? 'bg-green-100 text-green-800'
                                                 : tx.status === 'pending'
                                                     ? 'bg-yellow-100 text-yellow-800'
                                                     : 'bg-red-100 text-red-800'
                                             }`}>
-                                            {tx.status}
+                                            {tx.status || 'completed'}
                                         </span>
                                     </td>
                                 </tr>

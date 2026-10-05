@@ -2,6 +2,7 @@ import { queryOptions } from '@tanstack/react-query'
 import { db } from '@/firebase/config'
 import { doc, getDoc, query, collection, where, getDocs, Timestamp, DocumentReference, orderBy, limit, getAggregateFromServer, sum, count } from 'firebase/firestore'
 import { STALE_TIME } from '@/lib/constants'
+import { isCompletedTransaction } from '@/lib/transaction-accounting'
 import type { Category } from '@/types/categories'
 
 export interface EmbeddedOffer {
@@ -80,7 +81,7 @@ export interface Transaction {
     discountType: 'percentage' | 'amount' | 'buy1get1'
     discountValue?: number
     finalAmount: number
-    status: 'completed' | 'pending' | 'failed'
+    status?: 'completed' | 'pending' | 'failed'
     createdAt: Timestamp
     // Optional fields
     studentRef?: DocumentReference
@@ -159,6 +160,23 @@ export const vendorTransactionsQueryOptions = (vendorId: string) => queryOptions
     staleTime: STALE_TIME.MEDIUM,
 })
 
+export const vendorInvoiceTransactionsQueryOptions = (vendorId: string) => queryOptions({
+    queryKey: ['vendor-invoice-transactions', vendorId],
+    queryFn: async () => {
+        if (!vendorId) return []
+        const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+        const q = query(
+            collection(db, 'transactions'),
+            where('vendorId', '==', vendorId),
+            where('createdAt', '>=', Timestamp.fromDate(startDate)),
+            orderBy('createdAt', 'desc'),
+        )
+        const snapshot = await getDocs(q)
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Transaction[]
+    },
+    staleTime: STALE_TIME.MEDIUM,
+})
+
 export const transactionQueryOptions = (transactionId: string) => queryOptions({
     queryKey: ['transaction', transactionId],
     queryFn: async () => {
@@ -176,11 +194,16 @@ export const vendorStatsQueryOptions = (vendorId: string) => queryOptions({
     queryFn: async () => {
         if (!vendorId) return null
 
-        // ?? HUGE OPTIMIZATION: Database-level aggregations
-        // These cost exactly 1 document read each, no matter if there are 1,000,000 transactions!
-        
-        const completedQ = query(collection(db, 'transactions'), where('vendorId', '==', vendorId), where('status', '==', 'completed'))
-        const completedAgg = await getAggregateFromServer(completedQ, {
+        const totalQ = query(collection(db, 'transactions'), where('vendorId', '==', vendorId))
+        const totalAgg = await getAggregateFromServer(totalQ, {
+            totalRevenue: sum('finalAmount'),
+            totalDiscount: sum('discountAmount'),
+            count: count()
+        })
+
+        // Earlier successful redemptions have no status field.
+        const excludedQ = query(totalQ, where('status', 'in', ['pending', 'failed']))
+        const excludedAgg = await getAggregateFromServer(excludedQ, {
             totalRevenue: sum('finalAmount'),
             totalDiscount: sum('discountAmount'),
             count: count()
@@ -189,16 +212,13 @@ export const vendorStatsQueryOptions = (vendorId: string) => queryOptions({
         const pendingQ = query(collection(db, 'transactions'), where('vendorId', '==', vendorId), where('status', '==', 'pending'))
         const pendingAgg = await getAggregateFromServer(pendingQ, { count: count() })
 
-        const totalQ = query(collection(db, 'transactions'), where('vendorId', '==', vendorId))
-        const totalAgg = await getAggregateFromServer(totalQ, { count: count() })
-
         const vendorSnap = await getDoc(doc(db, 'vendors', vendorId))
         const offerCount = vendorSnap.exists() ? (vendorSnap.data()?.offers?.length || 0) : 0
 
         return {
-            totalRedemptions: totalAgg.data().count,
-            totalRevenue: completedAgg.data().totalRevenue,
-            totalDiscount: completedAgg.data().totalDiscount,
+            totalRedemptions: totalAgg.data().count - excludedAgg.data().count,
+            totalRevenue: totalAgg.data().totalRevenue - excludedAgg.data().totalRevenue,
+            totalDiscount: totalAgg.data().totalDiscount - excludedAgg.data().totalDiscount,
             activeOffers: offerCount,
             pendingTransactions: pendingAgg.data().count,
             redemptionsTrend: 5.2,
@@ -239,7 +259,7 @@ export const vendorChartDataQueryOptions = (vendorId: string, range: ChartRange)
 
         snapshot.docs.forEach(doc => {
             const data = doc.data() as Transaction
-            if (data.status === 'completed' && data.createdAt) {
+            if (isCompletedTransaction(data) && data.createdAt) {
                 const dateData = data.createdAt.toDate()
                 const dateStr = dateData.toISOString().split('T')[0]
                 if (result[dateStr]) {

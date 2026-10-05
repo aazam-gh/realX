@@ -105,11 +105,11 @@ function VendorDashboard() {
     ...vendorQueryOptions(vendorId),
     enabled: Boolean(vendorId),
   })
-  const { data: stats, isLoading: statsLoading } = useQuery({
+  const { data: stats, isLoading: statsLoading, error: statsError } = useQuery({
     ...vendorStatsQueryOptions(vendorId),
     enabled: Boolean(vendorId),
   })
-  const { data: chartData = [], isLoading: chartLoading } = useQuery({
+  const { data: chartData = [], isLoading: chartLoading, error: chartError } = useQuery({
     ...vendorChartDataQueryOptions(vendorId, range),
     enabled: Boolean(vendorId),
   })
@@ -174,7 +174,7 @@ function VendorDashboard() {
     {
       label: 'Total redemptions',
       value: String(stats?.totalRedemptions || 0),
-      helper: 'Across all transactions',
+      helper: 'Completed redemptions',
       icon: ReceiptText,
     },
     {
@@ -205,6 +205,10 @@ function VendorDashboard() {
         </div>
       </div>
     )
+  }
+
+  if (statsError || chartError) {
+    return <p className="p-6 text-destructive">Failed to load dashboard totals: {(statsError || chartError)?.message}</p>
   }
 
   return (
