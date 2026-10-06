@@ -7,38 +7,18 @@ import {
   type TooltipProps,
 } from 'recharts'
 import { Users, Store, TrendingUp, Tag, Bell, Search, ShoppingBag } from 'lucide-react'
-import { format, subMonths } from 'date-fns'
 import { db } from '@/firebase/config'
 import {
-  collection, query, getCountFromServer, where, orderBy, limit, getDocs,
-  getAggregateFromServer, sum, Timestamp,
+  collection, query, getCountFromServer, where, orderBy, getDocs,
 } from 'firebase/firestore'
 import { STALE_TIME } from '@/lib/constants'
 import { formatTimestamp } from '@/lib/format-timestamp'
 import { logAdminRead } from '@/lib/admin-read-logging'
+import { fetchAdminBigQueryDashboard } from '@/lib/admin-bigquery-dashboard'
 
 export const Route = createFileRoute('/admin/dashboard')({
   component: AdminDashboard,
 })
-
-interface MonthlyRevenue {
-  month: string
-  amount: number
-}
-
-interface TopVendor {
-  name: string
-  sales: number
-}
-
-interface LiveActivityItem {
-  id: string
-  studentName: string
-  vendorName: string
-  amount: number
-  createdAt: Date
-  status: string
-}
 
 // --- Query options ---
 
@@ -48,21 +28,9 @@ const dashboardStatsQueryOptions = () => queryOptions({
   staleTime: STALE_TIME.MEDIUM,
 })
 
-const liveFeedQueryOptions = () => queryOptions({
-  queryKey: ['liveFeed'],
-  queryFn: fetchLiveFeed,
-  staleTime: STALE_TIME.MEDIUM,
-})
-
-const monthlyRevenueQueryOptions = () => queryOptions({
-  queryKey: ['monthlyRevenue'],
-  queryFn: fetchMonthlyRevenue,
-  staleTime: STALE_TIME.MEDIUM,
-})
-
-const topVendorsQueryOptions = () => queryOptions({
-  queryKey: ['topVendors'],
-  queryFn: fetchTopVendors,
+const bigQueryDashboardQueryOptions = () => queryOptions({
+  queryKey: ['admin-bigquery-dashboard', '6mo'],
+  queryFn: () => fetchAdminBigQueryDashboard('6mo'),
   staleTime: STALE_TIME.MEDIUM,
 })
 
@@ -72,12 +40,10 @@ async function fetchDashboardStats() {
   const [
     studentsCount,
     activeVendorsCount,
-    totalTransactionsCount,
     offerCountSnap,
   ] = await Promise.all([
     getCountFromServer(collection(db, 'students')),
     getCountFromServer(query(collection(db, 'vendors'), where('status', '==', 'Active'))),
-    getCountFromServer(collection(db, 'transactions')),
     getDocs(query(collection(db, 'vendors'), orderBy('name'))),
   ])
 
@@ -105,82 +71,7 @@ async function fetchDashboardStats() {
     offers: totalOffers,
     vendorsWithOffers,
     vendorsWithoutOffers,
-    transactions: totalTransactionsCount.data().count,
   }
-}
-
-async function fetchLiveFeed(): Promise<LiveActivityItem[]> {
-  const q = query(collection(db, 'transactions'), orderBy('createdAt', 'desc'), limit(15))
-  const snap = await getDocs(q)
-
-  return snap.docs.map(docSnap => {
-    const data = docSnap.data()
-    return {
-      id: docSnap.id,
-      studentName: data.studentName || 'Unknown Student',
-      vendorName: data.vendorName || 'Unknown Vendor',
-      amount: typeof data.finalAmount === 'number' ? data.finalAmount : 0,
-      createdAt: formatTimestamp(data.createdAt),
-      status: data.status || 'completed',
-    }
-  })
-}
-
-async function fetchMonthlyRevenue(): Promise<MonthlyRevenue[]> {
-  const monthData: Record<string, number> = {}
-
-  for (let i = 5; i >= 0; i--) {
-    const d = subMonths(new Date(), i)
-    monthData[format(d, 'MMM')] = 0
-  }
-
-  // Use aggregation queries per month for the last 6 months
-  const now = new Date()
-  await Promise.all(
-    Object.keys(monthData).map(async (month, i) => {
-      const monthIndex = 5 - i
-      const startDate = new Date(now.getFullYear(), now.getMonth() - monthIndex, 1)
-      const endDate = new Date(now.getFullYear(), now.getMonth() - monthIndex + 1, 0, 23, 59, 59, 999)
-
-      const q = query(
-        collection(db, 'transactions'),
-        where('status', '==', 'completed'),
-        where('createdAt', '>=', Timestamp.fromDate(startDate)),
-        where('createdAt', '<=', Timestamp.fromDate(endDate)),
-      )
-      const agg = await getAggregateFromServer(q, { totalRevenue: sum('finalAmount') })
-      monthData[month] = agg.data().totalRevenue ?? 0
-    }),
-  )
-
-  return Object.entries(monthData).map(([month, amount]) => ({ month, amount }))
-}
-
-async function fetchTopVendors(): Promise<TopVendor[]> {
-  // Fetch recent transactions to compute top vendors by revenue
-  const thirtyDaysAgo = new Date()
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-
-  const q = query(
-    collection(db, 'transactions'),
-    where('status', '==', 'completed'),
-    where('createdAt', '>=', Timestamp.fromDate(thirtyDaysAgo)),
-    orderBy('createdAt', 'desc'),
-    limit(200),
-  )
-  const snap = await getDocs(q)
-
-  const sales: Record<string, number> = {}
-  snap.docs.forEach(docSnap => {
-    const data = docSnap.data()
-    const name = data.vendorName || 'Unknown Vendor'
-    sales[name] = (sales[name] || 0) + (data.finalAmount || 0)
-  })
-
-  return Object.entries(sales)
-    .map(([name, salesAmount]) => ({ name, sales: salesAmount }))
-    .sort((a, b) => b.sales - a.sales)
-    .slice(0, 5)
 }
 
 // --- Components ---
@@ -202,10 +93,18 @@ const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>)
 function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState('')
 
-  const { data: stats = { students: 0, activeVendors: 0, offers: 0, vendorsWithOffers: 0, vendorsWithoutOffers: 0, transactions: 0 } } = useQuery(dashboardStatsQueryOptions())
-  const { data: activity = [] } = useQuery(liveFeedQueryOptions())
-  const { data: revenueData = [] } = useQuery(monthlyRevenueQueryOptions())
-  const { data: vendorStats = [] } = useQuery(topVendorsQueryOptions())
+  const { data: stats = { students: 0, activeVendors: 0, offers: 0, vendorsWithOffers: 0, vendorsWithoutOffers: 0 } } = useQuery(dashboardStatsQueryOptions())
+  const bigQuery = useQuery(bigQueryDashboardQueryOptions())
+  const activity = bigQuery.data?.recentActivity.map(item => ({
+    id: item.id,
+    studentName: item.studentName,
+    vendorName: item.vendorName,
+    amount: item.amount,
+    createdAt: formatTimestamp(item.createdAt),
+    status: item.status,
+  })) ?? []
+  const revenueData = bigQuery.data?.transactionTrend.map(item => ({ month: item.label, amount: item.value })) ?? []
+  const vendorStats = bigQuery.data?.topVendors ?? []
 
   const offersByCategory = [
     { name: 'With Offers', value: stats.vendorsWithOffers },
@@ -216,7 +115,7 @@ function AdminDashboard() {
     { label: 'Total Students', value: stats.students.toString(), icon: Users },
     { label: 'Active Vendors', value: stats.activeVendors.toString(), icon: Store },
     { label: 'Total Offers', value: stats.offers.toString(), icon: Tag },
-    { label: 'Total Transactions', value: stats.transactions.toString(), icon: TrendingUp },
+    { label: 'Total Transactions', value: bigQuery.data?.stats.transactions.toString() ?? (bigQuery.isLoading ? '…' : 'Unavailable'), icon: TrendingUp },
   ]
 
   const recentTxns = activity
@@ -277,6 +176,10 @@ function AdminDashboard() {
           ))}
         </div>
 
+        <p className="text-xs text-slate-500" aria-live="polite">
+          {bigQuery.isLoading ? 'Loading transaction analytics from BigQuery…' : bigQuery.isError ? 'BigQuery transaction analytics are unavailable.' : `Revenue, vendor performance, and activity use exported BigQuery data${bigQuery.data?.freshness ? ` through ${formatTimestamp(bigQuery.data.freshness).toLocaleString()}` : ''}.`}
+        </p>
+
         {/* Charts Grid */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
           {/* Revenue Chart */}
@@ -292,7 +195,7 @@ function AdminDashboard() {
               </div>
             </div>
             <div className="h-70 w-full">
-              <ResponsiveContainer width="100%" height="100%">
+              {bigQuery.isLoading ? <p className="py-20 text-center text-sm text-slate-400">Loading BigQuery revenue trend…</p> : bigQuery.isError ? <p role="alert" className="py-20 text-center text-sm text-primary">Revenue trend unavailable</p> : revenueData.length ? <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={revenueData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
@@ -313,7 +216,7 @@ function AdminDashboard() {
                     animationDuration={1500}
                   />
                 </AreaChart>
-              </ResponsiveContainer>
+              </ResponsiveContainer> : <p className="py-20 text-center text-sm text-slate-400">No exported revenue data for the last six months</p>}
             </div>
           </div>
 
@@ -369,7 +272,7 @@ function AdminDashboard() {
           <div className="bg-white border border-slate-100 rounded-xl p-6 shadow-sm">
             <h3 className="m-0 font-bold text-lg text-slate-900">Performance by Vendor</h3>
             <p className="text-xs text-slate-500 mb-8">Sales volume (QAR)</p>
-            {vendorStats.length > 0 ? (
+            {bigQuery.isLoading ? <p className="py-16 text-center text-sm text-slate-400">Loading BigQuery vendor performance…</p> : bigQuery.isError ? <p role="alert" className="py-16 text-center text-sm text-primary">Vendor performance unavailable</p> : vendorStats.length > 0 ? (
               <div className="h-60 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={vendorStats} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
@@ -398,7 +301,7 @@ function AdminDashboard() {
               </button>
             </div>
             <div className="flex flex-col gap-2.5 max-h-70 overflow-y-auto pr-1 overflow-x-hidden">
-              {recentTxns.length > 0 ? (
+              {bigQuery.isLoading ? <p className="py-16 text-center text-xs text-slate-400">Loading exported activity…</p> : bigQuery.isError ? <p role="alert" className="py-16 text-center text-xs text-primary">Activity unavailable</p> : recentTxns.length > 0 ? (
                 recentTxns.map(txn => (
                   <div key={txn.id} className="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl hover:bg-white border border-transparent hover:border-slate-100 hover:shadow-sm transition-all group">
                     <div className="flex items-center gap-3.5 overflow-hidden">
